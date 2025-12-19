@@ -1,0 +1,348 @@
+import 'package:flutter/material.dart';
+import '../../../gallery/presentation/screens/gallery_screen.dart';
+import '../../../matchmaking/presentation/screens/create_game_screen.dart';
+import '../../../matchmaking/presentation/screens/join_game_screen.dart';
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _titleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+
+    _titleAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    );
+
+    // Démarrer l'animation après un court délai
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _controller.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final size = MediaQuery.of(context).size;
+    final isSmallScreen = size.width < 600;
+
+    return Scaffold(
+      body: Stack(
+        children: [
+          // Image de fond en plein écran
+          Positioned.fill(
+            child: Image.asset(
+              'assets/data/intro.png',
+              fit: BoxFit.cover,
+              alignment: Alignment.topCenter,
+            ),
+          ),
+
+          // Overlay gradient pour assurer la lisibilité
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.3),
+                    Colors.black.withOpacity(0.5),
+                    Colors.black.withOpacity(0.7),
+                  ],
+                  stops: const [0.0, 0.5, 1.0],
+                ),
+              ),
+            ),
+          ),
+
+          // Titre animé en haut
+          AnimatedBuilder(
+            animation: _titleAnimation,
+            builder: (context, child) {
+              final screenHeight = MediaQuery.of(context).size.height;
+              final isMobile = MediaQuery.of(context).size.width < 600;
+              final mobileAdjustment = isMobile ? screenHeight * 0.2 : 0;
+              final targetPosition =
+                  MediaQuery.of(context).padding.top + 40 - mobileAdjustment;
+              return Positioned(
+                top: -200 + (targetPosition + 200) * _titleAnimation.value,
+                left: 0,
+                right: 0,
+                child: Opacity(
+                  opacity: _titleAnimation.value,
+                  child: _buildTitle(theme),
+                ),
+              );
+            },
+          ),
+
+          // Contenu par-dessus
+          SafeArea(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                const Spacer(),
+
+                // Tagline
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Text(
+                    'Un jeu sensuel pour pimenter vos soirées',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontStyle: FontStyle.italic,
+                      letterSpacing: 0.5,
+                      height: 1.3,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withOpacity(0.8),
+                          offset: const Offset(0, 2),
+                          blurRadius: 8,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 40),
+
+                // Boutons
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isSmallScreen ? 24 : 48,
+                  ),
+                  child: Column(
+                    children: [
+                      _MenuButton(
+                        label: 'Créer une partie',
+                        icon: Icons.favorite_border,
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.white.withOpacity(0.95),
+                            Colors.white.withOpacity(0.9),
+                          ],
+                        ),
+                        textColor: Colors.white,
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const CreateGameScreen(),
+                            ),
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      _MenuButton(
+                        label: 'Rejoindre une partie',
+                        icon: Icons.people_outline,
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.white.withOpacity(0.85),
+                            Colors.white.withOpacity(0.8),
+                          ],
+                        ),
+                        textColor: Colors.white,
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const JoinGameScreen(),
+                            ),
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      _MenuButton(
+                        label: 'Galerie',
+                        icon: Icons.photo_library_outlined,
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.white.withOpacity(0.3),
+                            Colors.white.withOpacity(0.25),
+                          ],
+                        ),
+                        textColor: Colors.white,
+                        isOutlined: true,
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const GalleryScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 48),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Widget titre avec image
+  Widget _buildTitle(ThemeData theme) {
+    return Center(
+      child: Image.asset(
+        'assets/data/titre.png',
+        width: 1200,
+        height: 480,
+        fit: BoxFit.contain,
+      ),
+    );
+  }
+}
+
+class _MenuButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback onPressed;
+  final Gradient gradient;
+  final Color textColor;
+  final bool isOutlined;
+
+  const _MenuButton({
+    required this.label,
+    required this.icon,
+    required this.onPressed,
+    required this.gradient,
+    required this.textColor,
+    this.isOutlined = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: 60,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          // Ombre portée
+          BoxShadow(
+            color: Colors.black.withOpacity(0.25),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Corps principal transparent
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white.withOpacity(isOutlined ? 0.15 : 0.35),
+                  Colors.white.withOpacity(isOutlined ? 0.08 : 0.20),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(30),
+              border:
+                  isOutlined
+                      ? Border.all(
+                        color: Colors.white.withOpacity(0.4),
+                        width: 1.5,
+                      )
+                      : null,
+            ),
+          ),
+
+          // Reflet/brillance en haut
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 25,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.white.withOpacity(0.5),
+                    Colors.white.withOpacity(0.0),
+                  ],
+                ),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(30),
+                  topRight: Radius.circular(30),
+                ),
+              ),
+            ),
+          ),
+
+          // Contenu
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onPressed,
+              borderRadius: BorderRadius.circular(30),
+              splashColor: Colors.white.withOpacity(0.2),
+              highlightColor: Colors.white.withOpacity(0.1),
+              child: Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(icon, size: 26, color: textColor),
+                    const SizedBox(width: 12),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                        color: textColor,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black.withOpacity(0.3),
+                            offset: const Offset(0, 1),
+                            blurRadius: 3,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

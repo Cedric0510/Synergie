@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "44056119704",
+    "project_id": "fir-card-f1873",
+    "storage_bucket": "fir-card-f1873.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:44056119704:android:3abfbfb4192a9393a783ed",
+        "android_client_info": {
+          "package_name": "com.scard.scard_game"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzoTlScqIC05dNFf155yS_JhCNMSqd7zA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,61 @@
+Carte Blanche				
+Nom de la carte	Type	Coût	Effet en jeu	Effet IRL
+Déshabillage	Rituel	Aucun	Moins 3PI si action refusé	Le joueur ciblé enleves un vêtement de son choix
+Pioche	Rituel	Enlève un vêtement	Piochez 2 cartes	2 Maximum / Deck
+Désenchanter	Rituel	Applique une fois l'effet de la carte à désenchanter	Supprime un enchantement du jeu	Le joueur lanceur doit accomplir 1 fois l'action de l'enchantement qu'il désenchante
+Compliment	Rituel	Aucun	Moins 3PI si action refusé	Le joueur ciblé doit complimenter son adversaire de façon sincère, si le compliment ne semble pas sincère, il subbit 2PI de dégats
+Pose Sexy	Rituel	Aucun	Moins 3PI si action refusé	Le joueur ciblé doit prendre une pose sexy pendant 15 sec
+Miroir	Ephémère	Aucun	Copie et renvoit le sort	Le joueur ciblé doit également faire l'action qu'il impose a son adversaire.Le joueur Lanceur doit aussi faire l'action initiale
+Contre	Ephémère	Enlève un vêtement	Annule le sort lancer par l'adversaire	2 Maximum / Deck
+Echange	Ephémère	Sacrifies une carte	Remplace le sort par celui de la carte sacrifié	Le joueur ciblé par le sort original fais l'action à la place de la carte sacrifié
+Chasteté	Enchantement	Aucun	Aucun	Tant que l'enchantement est en jeu, le joueur propriétaire ne peux pas enlever ses sous vêtements
+Striptease	Enchantement	Aucun	Moins 3PI si action refusé	Tant que l'enchantement est en jeu le joueur adverse doit enlever un vêtement à chaque tour (si il est déjà nu il perd 3PI)
+50/50	Enchantement	Aucun	Moins 3PI si action refusé	Tant que l'enchantement est en jeu chaque joueur pioche une carte supplémentaire au début de son tour , si il désire la garder il doit soit perdre 3PI soit enlever un vêtement
+Carte Bleu				
+Nom de la carte	Type	Coût	Effet en jeu	Effet IRL
+Déshabillage X2	Rituel	Le joueur Lanceur sacrifie un permanent ou se défausse d'une carte	Moins 3PI si action refusé	Le joueur ciblé pose 2 vêtements de son choix
+Rhabillage	Rituel	Le joueur lanceur se defausse d'une carte	Le joueur advers pioche une carte et le joueur lanceur gagne 3PI	Le joueur ciblé se Rhabille d' 1 vêtement 
+Chuchoter	Rituel	Aucun	Moins 3PI si action refusé	Le joueur ciblé dois chuchoter des mots coquin à l'oreille de l'adversaire
+Révélation	Rituel	Nudité en sous-vêtement minimum	Détruit un enchantement ciblé. Les 2 joueurs piochent 1 carte	Le joueur lanceur doit révéler son secret e plus intime ou son plus grand fatasme refoulé a voix haute.
+Carresse	Rituel	Aucun	Moins 3PI si action refusé	Le joueur ciblé doit carresser de façon douce le joueur lanceur a l'endroit de son choix pendant 1mn
+Massage	Rituel	Aucun	Moins 3PI si action refusé	Le joueur ciblé doit masser le joueur lanceur a l'endroit de son choix pendant 1mn
+Rebuild	Rituel	Le joueur adverse peut lancer un rituel de plus pendant son tour	L'adversaire peut jouer un sort de rituel en plus pendant sont tour	Le joueur mélange ca main et repioche autant de carte
+Ping Pong	Ephémère	Aucun	Les joueurs vont pioché des cartes et les révélé, le 1er a pioché une carte rouge gagne le pingpong. Si le lanceur gagne le pingpong, le sort lancé par l'adversaire est renvoyé dans le de deck n'a aucun effet.Sinon le sort passe 	2 Maximum / Deck
+5mn	Ephémère	Le joueur lanceur perd 2PI	Le joueur mets en attente le sort du joueur ciblé. Le joueur propriétaire de 5mn à 5 tours pour faire l'action de la carte mise en attente. Au bout de 5 tours si la partie n'est pas fini et qu'il n'a pas réalisé l'action de la carte mise en attente, il perd 5PI	2 Maximum / Deck
+Magiiie	Ephémère	moins 1 vêtement ou moins 3PI	Le joueur lanceur, pioche une carte et le sort de l'adversaire est remplacé par la carte qui vient d'être pioché, si elle est jouable a cette phase de jeu. Sinon rien ne se passe et le sort initialement lancé est effectif.	2 Maximum / Deck
+Scroutch-Scroutch	Enchantement	La carte Scroutch-scroutch ne peut être lancer que si un des 2 joueurs est en sous vêtements	Moins 3PI si action refusé	Tant que cet enchantement est en jeu le joueur adverse doit masser la tête du joueur propriétaire a chaque tour
+Pied	Enchantement	La carte pied ne peut être lancer que si le joueur lanceur est nu	Moins 3PI si action refusé	Tant que cet enchantement est en jeu le joueur adverse doit masser les pieds du joueur propriétaire a chaque tour
+Bisous	Enchantement	La carte bisous remplace un autre enchantement présent en jeu	Moins 3PI si action refusé	Tant que cet enchantement est en jeu le joueur adverse doit embrasser le joueur propriétaire a chaque tour
+Carte Jaune				
+Nom de la carte	Type	Coût	Effet en jeu	Effet IRL
+Pincement	Rituel	Nudité totale (le joueur lanceur se met nu si il ne l'est pas déjà)	Moins 3PI si action refusé	Le joueur ciblé doit jouer avec ces tétons (pincement, rotation, etc…)
+Tentation	Rituel	Nudité totale (le joueur lanceur se met nu si il ne l'est pas déjà)	Le joueur adverse choisit: soit il détruit un enchantement qu'il contrôle ,soit vou spiochez 3 cartes et gagnez 3PI	Si le joueur ciblé vous laisse piocher il doit danser sensuellement pendant 30 sec.
+Carresse intime (caché)	Rituel	Nudité totale (le joueur lanceur se met nu si il ne l'est pas déjà)	Le joueur lanceur peut se rhabiller d'1 vêtement et gagne 2PI	Le joueur ciblé doit caché ses partis intimes (coussin, draps, vêtements,etc…) et dois se caresser (simuler marche aussi vue que c'est caché)
+Fantasme	Rituel	Nudité totale (le joueur lanceur se met nu si il ne l'est pas déjà)	Moins 3PI si action refusé	Le joueur ciblé doit révélé quel fantasme il aiemrait faire avec son adversaire
+SexToys (caché)	Rituel	Le joueur ne peut pas joueur d'éphémère au prochain tour de l'adversaire	Le joueur lanceur peut se rhabiller d'1 vêtement et gagne 2PI	Le joueur ciblé choisit un sextoy qu'il possède et l'utilise pendant 2mns en se cachant (coussin, draps, vêtements,etc… ). Si le joueur ne possède pas de sextoys (menteur) il doit simuler un orgasme à la place
+Exitation	Rituel	Ne peux être lancé que si un des 2 joueurs est nu (si les 2 sont nus le rituel ne peut être lancé)	Le joueur ciblé pioche une carte à la fin du tour	Le joueur ciblé doit tout mettre en œuvre pour augmenter votre exitation, il n'a en revanche pas le droits de vous toucher.
+Miroir X2	Ephémère	Le joueur propriétaire doit sacrifier un enchantement en jeu pour lancer ce sort	Copie et renvoit le sort et en lance un 2eme	Le joueur propriétaire qui est ciblé par un sort, pioche une carte. Les 2 joueurs vont devoir faire les 2 actions, celle du sort lancer en 1er et celle de la carte piocher (si possible)
+Absolutoin	Ephémère	Le joueur lanceur perd 3PI	Détruit tous les enchantements que vous contrôlez. Gagnez 2PI par enchantement détruit de cette façon. SI votre adversaire contrôle plus d'enchantement que vous détruisez l'un d'eux.	2 Maximum / Deck
+A mon niveau	Ephémère	L'adversaire remet un vêtement	Contre le sort si il n'est pas de la couleur du niveau du lanceur	2 Maximum / Deck
+Transformation	Ephémère	Le joueur propriétaire doit être à un niveau d'intensité inférieure au joueur lanceur de sort	Contre le sort  	2 Maximum / Deck
+Piège	Enchantement	Le piège arrive en jeu avec autant de charge que vous possédez de vêtement (minimum 1)	Tant que cet enchantement est en jeu, chaque fois que vous êtes la cible d'un sort, vous posez un vêtement, vous contrez le sort et enlevé une charge au piège à 0 le piège disparait.	Un vêtement de moins par contre de sort
+Bisous coquin	Enchantement	La carte Bisous coquin remplace un autre enchantement présent en jeu	Moins 3PI si action refusé	Tant que cet enchantement est en jeu le joueur adverse doit embrasser les parties intimes du joueur propriétaire a chaque tour
+Rhabillage DX	Enchantement	Nudité totale (le joueur lanceur se met nu si il ne l'est pas déjà)	Gagne 1PI par tour tant que l'enchantement est en jeu	Tant que cet enchantement est en jeu, le joueur propriétaire se rhabille d'1 vêtement au début de son tour
+Carte Rouge				
+Nom de la carte	Type	Coût	Effet en jeu	Effet IRL
+Plaisir (bouche)	Rituel	Nudité totale (le joueur lanceur se met nu si il ne l'est pas déjà)	Moins 3PI si action refusé	Le joueur ciblé doit donner du plaisir a son adversaire avec sa bouche (cunnilingus, félation, ou autres(soyez inventif))
+Plaisir (main)	Rituel	Nudité totale (le joueur lanceur se met nu si il ne l'est pas déjà)	Moins 3PI si action refusé	Le joueur ciblé doit donner du plaisir a son adversaire avec ses mains (masturbation, caresse, ou autres(soyez inventif))
+Plaisir (sextoys)	Rituel	Nudité totale (le joueur lanceur se met nu si il ne l'est pas déjà)	Moins 3PI si action refusé	Le joueur ciblé doit donner du plaisir a son adversaire avec un sextoy (soyez inventif)
+Sextoys  	Rituel	Le joueur ne peut pas joueur d'éphémère au prochain tour de l'adversaire	Moins 3PI si action refusé	Le joueur ciblé choisit un sextoy qu'il possède et l'utilise pendant 2mns sans se cacher. Si le joueur ne possède pas de sextoys (menteur) il doit se plier à la volonté de son adversaire pendant 2mns
+Caresse intime	Rituel	Nudité totale (le joueur lanceur se met nu si il ne l'est pas déjà)	Moins 3PI si action refusé	Le joueur ciblé doit exposé ses partis intimes et dois se caresser
+Frotter	Rituel	Nudité totale (le joueur lanceur se met nu si il ne l'est pas déjà)	Moins 3PI si action refusé	Le joueur ciblé doit frotter ses parties intimes contre celle du joueur propriétaire.
+Point G	Rituel	Nudité totale (le joueur lanceur se met nu si il ne l'est pas déjà)	Moins 3PI si action refusé	Le joueur ciblé doit masser le point G de son adversaire 2mns
+Bis	Ephémère	Pour le prochain tour le joueur lanceur ne pourra joué que des cartes jaune	Annule le sort lancer par l'adversaire et le remplace par votre sort précédent.	Le joueur refait l'action dictée par le sort précédent de son adversaire
+Reset	Ephémère	Le joueur mélange sa main dans son deck et pioche 3 cartes	Si le sort que viens de lancer l'adversaire nécéssite d'être nu comme cout il est annulé.	Les 2 joueurs se rhabille (en sous vêtements)
+Echange de plaisir	Ephémère	Le joueur perd 1 PI	Le joueur lanceur pioche des cartes jusqu’à trouvé une carte Plaisir (bouche) ou (main) , la carte plaisir remplace le sort de l'adversaire	Le joueur adverse profite de la carte plaisir du lanceur
+Soin	Ephémère	Le joueur passe son prochain tour	Le joueur lanceur gagne 5 PI	2 Maximum / Deck
+Morphose	Ephémère	Vous ne pouvez plus jouer d'éphémère pendant 3 tours	Remplace l'enchantement ciblé par un enchantement Blanc que le joueur ciblé pioche	2 Maximum / Deck
+Caresse ou rien	Enchantement	La carte Caresse ou rien remplace un autre enchantement présent en jeu	Ne peut jouer si action refusé	Tant que cet enchantement est présent en jeu l'adversaire doit se caressé pour pouvoir jouer son tour. Si il ne le fait pas recommencer un tour
+Gagné?	Enchantement	La carte Gagné? remplace un autre enchantement présent en jeu	Point de vie bloqué, obligation de réaliser toutes les actions des sorts adverse	Tant que cet enchantement est en jeu vous ne pouvez plus perdre la partie, vos point de vie sont bloqué à la même valeur, le joueur propriétaire ne peux pas refuser d'action.
+Extase	Enchantement	La carte Extase remplace un enchantement adverse présent en jeu	Au début du tour du joueur adverse, il doit payer 2PI ou détruire un enchantement qu'il contrôle (son choix). Si il ne peut pas, Extase est détruit	Tant que cet enchantement est en jeu, le joueur adverse doit gémir de plaisir a chaque action qu'il effectue.
+Ultima	Enchantement	L'adersaire doit être a 0PI, vous devez avoir plus de PI que lui, l'adversaire doit être nu.	Victoire totale au bout de 3 tours si Ultima est toujours en jeu	Au bout de 3 tours de jeu ou Ultima est présent, vous gagnez la partie. Votre adversaire vous doit un orgasme (vous d'abord) 1X/Deck
