@@ -343,157 +343,155 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   /// Zone de jeu centrale (cartes jouées ce tour)
   Widget _buildPlayZone(GameSession session, bool isMyTurn) {
     final isMobile = MediaQuery.of(context).size.width < 600;
-    final horizontalMargin = isMobile ? 8.0 : 16.0;
-    final padding = isMobile ? 8.0 : 12.0;
-    final fontSize = isMobile ? 12.0 : 16.0;
-    final smallFontSize = isMobile ? 11.0 : 14.0;
-    final iconSize = isMobile ? 16.0 : 20.0;
+    final smallFontSize = isMobile ? 11.0 : 13.0;
 
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: horizontalMargin),
-      padding: EdgeInsets.all(padding),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color:
-              isMyTurn
-                  ? Colors.green.withOpacity(0.5)
-                  : Colors.orange.withOpacity(0.5),
-          width: 2,
-        ),
-      ),
-      child: Column(
-        children: [
-          // Indicateur de tour
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: isMobile ? 12 : 16,
-              vertical: isMobile ? 6 : 8,
-            ),
-            decoration: BoxDecoration(
-              color:
-                  isMyTurn
-                      ? Colors.green.withOpacity(0.3)
-                      : Colors.orange.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isMyTurn ? Colors.green : Colors.orange,
-                width: 2,
-              ),
-            ),
-            child: Text(
-              isMyTurn ? '🎮 Votre tour' : '⏳ Tour adversaire',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: fontSize,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+    return Column(
+      children: [
+        // Info Phase en haut (compact)
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(12),
           ),
-
-          SizedBox(height: isMobile ? 12 : 24),
-
-          // Phase actuelle
-          Text(
-            'Phase: ${session.currentPhase.displayName}',
+          child: Text(
+            session.currentPhase.displayName,
             style: TextStyle(
-              color: Colors.white70,
-              fontSize: fontSize,
+              color: Colors.white,
+              fontSize: smallFontSize,
               fontWeight: FontWeight.bold,
             ),
           ),
+        ),
 
-          SizedBox(height: isMobile ? 8 : 16),
+        const SizedBox(height: 12),
 
-          // Message pour l'adversaire en phase response
-          if (!isMyTurn && session.currentPhase == GamePhase.response)
-            Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: isMobile ? 12 : 16,
-                vertical: isMobile ? 6 : 8,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue),
-              ),
-              child: Text(
-                '💭 Vous pouvez jouer une carte en réponse',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: smallFontSize,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-
-          // Bouton pour passer la phase réponse (si adversaire ne veut pas jouer)
-          if (!isMyTurn && session.currentPhase == GamePhase.response)
-            GameButton(
-              label: 'Passer (pas de réponse)',
-              icon: Icons.arrow_forward,
-              style: GameButtonStyle.secondary,
-              height: isMobile ? 35 : 40,
-              onPressed: () => _skipResponse(),
-            ),
-
-          SizedBox(height: isMobile ? 8 : 16),
-
-          // Cartes jouées ce tour (pile de résolution)
-          Expanded(
-            child:
-                session.resolutionStack.isNotEmpty
-                    ? FutureBuilder(
-                      future: ref.read(cardServiceProvider).loadAllCards(),
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData) {
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        }
-
-                        final allCards = snapshot.data!;
-                        final cardWidth = isMobile ? 70.0 : 120.0;
-                        final cardHeight = isMobile ? 105.0 : 180.0;
-                        final cardSpacing = isMobile ? 6.0 : 12.0;
-
-                        return ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: session.resolutionStack.length,
-                          itemBuilder: (context, index) {
-                            final cardId = session.resolutionStack[index];
-                            final card = allCards.firstWhere(
-                              (c) => c.id == cardId,
-                              orElse: () => allCards.first,
-                            );
-                            return Padding(
-                              padding: EdgeInsets.only(right: cardSpacing),
-                              child: CardWidget(
-                                card: card,
-                                width: cardWidth,
-                                height: cardHeight,
-                                compact: true,
-                                showPreviewOnHover: true,
-                              ),
-                            );
-                          },
+        // Cartes jouées - affichées côté joueur (ma carte en bas, adversaire en haut)
+        Expanded(
+          child:
+              session.resolutionStack.isNotEmpty
+                  ? FutureBuilder(
+                    future: ref.read(cardServiceProvider).loadAllCards(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const Center(
+                          child: CircularProgressIndicator(color: Colors.white),
                         );
-                      },
-                    )
-                    : Center(
-                      child: Text(
-                        'Aucune carte jouée',
-                        style: TextStyle(
-                          color: Colors.white38,
-                          fontSize: smallFontSize,
-                          fontStyle: FontStyle.italic,
-                        ),
+                      }
+
+                      final allCards = snapshot.data!;
+                      // Cartes réduites pour voir les 2 si réponse
+                      final cardWidth = isMobile ? 140.0 : 200.0;
+                      final cardHeight = isMobile ? 196.0 : 280.0;
+
+                      // Déterminer qui a joué quelle carte
+                      final firstCardId = session.resolutionStack[0];
+                      final firstCard = allCards.firstWhere(
+                        (c) => c.id == firstCardId,
+                        orElse: () => allCards.first,
+                      );
+
+                      final firstCardIsMe = isMyTurn;
+
+                      Widget? responseCard;
+                      bool? responseCardIsMe;
+                      if (session.resolutionStack.length > 1) {
+                        final responseCardId = session.resolutionStack[1];
+                        final responseCardData = allCards.firstWhere(
+                          (c) => c.id == responseCardId,
+                          orElse: () => allCards.first,
+                        );
+                        responseCardIsMe = !firstCardIsMe;
+                        responseCard = CardWidget(
+                          card: responseCardData,
+                          width: cardWidth,
+                          height: cardHeight,
+                          showPreviewOnHover: false,
+                        );
+                      }
+
+                      return Column(
+                        children: [
+                          // Zone adversaire (haut)
+                          Expanded(
+                            child: Center(
+                              child:
+                                  (!firstCardIsMe)
+                                      ? CardWidget(
+                                        card: firstCard,
+                                        width: cardWidth,
+                                        height: cardHeight,
+                                        showPreviewOnHover: false,
+                                      )
+                                      : (responseCardIsMe != null &&
+                                          !responseCardIsMe!)
+                                      ? responseCard!
+                                      : const SizedBox.shrink(),
+                            ),
+                          ),
+
+                          const Divider(color: Colors.white24, thickness: 1),
+
+                          // Zone moi (bas) avec carte + boutons à droite
+                          Expanded(
+                            child: Stack(
+                              children: [
+                                // Carte centrée
+                                Center(
+                                  child:
+                                      firstCardIsMe
+                                          ? CardWidget(
+                                            card: firstCard,
+                                            width: cardWidth,
+                                            height: cardHeight,
+                                            showPreviewOnHover: false,
+                                          )
+                                          : (responseCardIsMe != null &&
+                                              responseCardIsMe!)
+                                          ? responseCard!
+                                          : const SizedBox.shrink(),
+                                ),
+
+                                // Boutons et infos en bas à droite
+                                if (!isMyTurn &&
+                                    session.currentPhase == GamePhase.response)
+                                  Positioned(
+                                    right: 8,
+                                    bottom: 8,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        GameButton(
+                                          label: 'Passer',
+                                          icon: Icons.arrow_forward,
+                                          style: GameButtonStyle.secondary,
+                                          height: isMobile ? 35 : 40,
+                                          onPressed: () => _skipResponse(),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  )
+                  : Center(
+                    child: Text(
+                      'Aucune carte jouée',
+                      style: TextStyle(
+                        color: Colors.white38,
+                        fontSize: smallFontSize,
+                        fontStyle: FontStyle.italic,
                       ),
                     ),
-          ),
-        ],
-      ),
+                  ),
+        ),
+      ],
     );
   }
 
@@ -1351,24 +1349,61 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                         const SizedBox(width: 8),
                         // Bouton pioche compact
                         InkWell(
-                          onTap: _manualDrawCard,
+                          onTap:
+                              myData.handCardIds.length >= 7
+                                  ? null
+                                  : _manualDrawCard,
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: Colors.blue.withOpacity(0.3),
+                              color:
+                                  myData.handCardIds.length >= 7
+                                      ? Colors.grey.withOpacity(0.3)
+                                      : Colors.blue.withOpacity(0.3),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: Colors.blue,
+                                color:
+                                    myData.handCardIds.length >= 7
+                                        ? Colors.grey
+                                        : Colors.blue,
                                 width: 1.5,
                               ),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.layers,
-                              color: Colors.white,
+                              color:
+                                  myData.handCardIds.length >= 7
+                                      ? Colors.white38
+                                      : Colors.white,
                               size: 16,
                             ),
                           ),
                         ),
+                        // Indicateur main pleine
+                        if (myData.handCardIds.length >= 7)
+                          Container(
+                            margin: const EdgeInsets.only(left: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: Colors.orange,
+                                width: 1,
+                              ),
+                            ),
+                            child: const Text(
+                              '7/7',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                     // Ligne 2 : Enchantements si présents
@@ -1460,39 +1495,59 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                             const SizedBox(width: 16),
                             // Bouton pioche
                             InkWell(
-                              onTap: _manualDrawCard,
+                              onTap:
+                                  myData.handCardIds.length >= 7
+                                      ? null
+                                      : _manualDrawCard,
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 10,
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.blue.withOpacity(0.3),
+                                  color:
+                                      myData.handCardIds.length >= 7
+                                          ? Colors.grey.withOpacity(0.3)
+                                          : Colors.blue.withOpacity(0.3),
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                    color: Colors.blue,
+                                    color:
+                                        myData.handCardIds.length >= 7
+                                            ? Colors.grey
+                                            : Colors.blue,
                                     width: 2,
                                   ),
                                 ),
-                                child: const Row(
+                                child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(
                                       Icons.layers,
-                                      color: Colors.white,
+                                      color:
+                                          myData.handCardIds.length >= 7
+                                              ? Colors.white38
+                                              : Colors.white,
                                       size: 16,
                                     ),
-                                    SizedBox(width: 4),
+                                    const SizedBox(width: 4),
                                     Icon(
                                       Icons.touch_app,
-                                      color: Colors.white70,
+                                      color:
+                                          myData.handCardIds.length >= 7
+                                              ? Colors.white24
+                                              : Colors.white70,
                                       size: 14,
                                     ),
-                                    SizedBox(width: 4),
+                                    const SizedBox(width: 4),
                                     Text(
-                                      'Piocher',
+                                      myData.handCardIds.length >= 7
+                                          ? 'Main pleine'
+                                          : 'Piocher',
                                       style: TextStyle(
-                                        color: Colors.white,
+                                        color:
+                                            myData.handCardIds.length >= 7
+                                                ? Colors.white38
+                                                : Colors.white,
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -1835,6 +1890,31 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   Future<void> _manualDrawCard() async {
     final firebaseService = ref.read(firebaseServiceProvider);
+
+    // Vérifier la limite de main (7 cartes max)
+    try {
+      final session = await firebaseService.getGameSession(widget.sessionId);
+      final isPlayer1 = session.player1Id == widget.playerId;
+      final myData = isPlayer1 ? session.player1Data : session.player2Data!;
+
+      if (myData.handCardIds.length >= 7) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                '⚠️ Main pleine (7/7) - Jouez ou sacrifiez une carte',
+              ),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        return;
+      }
+    } catch (e) {
+      // Si erreur lors de la vérification, on laisse passer
+    }
+
     try {
       await firebaseService.drawCard(widget.sessionId, widget.playerId);
       if (mounted) {
