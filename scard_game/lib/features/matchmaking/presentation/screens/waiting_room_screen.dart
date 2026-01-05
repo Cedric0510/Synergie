@@ -342,33 +342,35 @@ class _WaitingRoomScreenState extends ConsumerState<WaitingRoomScreen> {
                     // Bouton Prêt / Lancer
                     if (opponentData != null)
                       GestureDetector(
-                        onTap:
-                            myData.isReady && opponentData.isReady
-                                ? () async {
-                                  await firebaseService.determineStartingPlayer(
-                                    widget.sessionId,
-                                  );
+                        onTap: () async {
+                          // Si je ne suis pas prêt, je me marque comme prêt
+                          if (!myData.isReady) {
+                            await firebaseService.setPlayerReady(
+                              widget.sessionId,
+                              widget.playerId,
+                              true,
+                            );
+                          }
+                          // Si les deux joueurs sont prêts, on lance la partie
+                          else if (myData.isReady && opponentData.isReady) {
+                            await firebaseService.determineStartingPlayer(
+                              widget.sessionId,
+                            );
 
-                                  if (mounted) {
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder:
-                                            (context) => CardDistributionScreen(
-                                              sessionId: widget.sessionId,
-                                              playerId: widget.playerId,
-                                            ),
+                            if (mounted) {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) => CardDistributionScreen(
+                                        sessionId: widget.sessionId,
+                                        playerId: widget.playerId,
                                       ),
-                                    );
-                                  }
-                                }
-                                : (!myData.isReady
-                                    ? () => firebaseService.setPlayerReady(
-                                      widget.sessionId,
-                                      widget.playerId,
-                                      true,
-                                    )
-                                    : null),
+                                ),
+                              );
+                            }
+                          }
+                        },
                         child: Container(
                           height: 60,
                           decoration: BoxDecoration(

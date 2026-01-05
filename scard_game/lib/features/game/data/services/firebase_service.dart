@@ -26,8 +26,12 @@ class FirebaseService {
   /// Connexion anonyme
   Future<String> signInAnonymously() async {
     try {
-      // Force une nouvelle connexion en se déconnectant d'abord
-      await _auth.signOut();
+      // Vérifier si l'utilisateur est déjà connecté
+      if (_auth.currentUser != null) {
+        return _auth.currentUser!.uid;
+      }
+
+      // Sinon, créer une nouvelle connexion anonyme
       final userCredential = await _auth.signInAnonymously();
       return userCredential.user!.uid;
     } catch (e) {
