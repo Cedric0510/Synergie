@@ -373,9 +373,60 @@ class FirebaseService {
         break;
     }
 
+    // === RESET FLAG SACRIFICE AU DÉBUT DU NOUVEAU TOUR ===
+    PlayerData? updatedPlayer1Data;
+    PlayerData? updatedPlayer2Data;
+
+    if (session.currentPhase == GamePhase.end && nextPhase == GamePhase.draw) {
+      // Nouveau tour : réinitialiser le flag de sacrifice pour les deux joueurs
+      updatedPlayer1Data = session.player1Data.copyWith(
+        hasSacrificedThisTurn: false,
+      );
+      updatedPlayer2Data = session.player2Data?.copyWith(
+        hasSacrificedThisTurn: false,
+      );
+    }
+
+    // === GESTION COMPTEUR ULTIMA ===
+    int newUltimaTurnCount = session.ultimaTurnCount;
+    String? newWinnerId = session.winnerId;
+    GameStatus newStatus = session.status;
+
+    // Si on passe en phase end ET qu'un joueur a le compteur Ultima actif
+    if (session.currentPhase == GamePhase.resolution &&
+        nextPhase == GamePhase.end) {
+      if (session.ultimaOwnerId != null) {
+        // Vérifier que le joueur qui a le compteur a toujours Ultima en jeu
+        final isOwnerPlayer1 = session.ultimaOwnerId == session.player1Id;
+        final ownerData =
+            isOwnerPlayer1 ? session.player1Data : session.player2Data!;
+        final ownerHasUltima = ownerData.activeEnchantmentIds.any(
+          (id) => id.contains('red_016'),
+        );
+
+        if (ownerHasUltima) {
+          // Incrémenter le compteur
+          newUltimaTurnCount = session.ultimaTurnCount + 1;
+
+          // Vérifier si le compteur atteint 3
+          if (newUltimaTurnCount >= 3) {
+            newWinnerId = session.ultimaOwnerId;
+            newStatus = GameStatus.finished;
+          }
+        }
+      }
+    }
+
     await docRef.update({
       'currentPhase': nextPhase.name,
       'currentPlayerId': nextPlayerId,
+      'ultimaTurnCount': newUltimaTurnCount,
+      'winnerId': newWinnerId,
+      'status': newStatus.name,
+      if (updatedPlayer1Data != null)
+        'player1Data': updatedPlayer1Data.toJson(),
+      if (updatedPlayer2Data != null)
+        'player2Data': updatedPlayer2Data.toJson(),
     });
   }
 
@@ -587,6 +638,8 @@ class FirebaseService {
   }
 
   /// Sacrifier une carte (sans bonus de tension, géré séparément)
+  /// Sacrifice une carte : retourne au bas du deck, +2% tension, pioche 1, fin de tour
+  /// Limite : 1 sacrifice par tour. Ultima ne peut pas être sacrifiée (→ perte)
   Future<void> sacrificeCard(
     String sessionId,
     String playerId,
@@ -599,45 +652,58 @@ class FirebaseService {
 
     final session = GameSession.fromJson(snapshot.data()!);
     final isPlayer1 = session.player1Id == playerId;
+    final playerData = isPlayer1 ? session.player1Data : session.player2Data!;
 
-    GameSession updatedSession;
-    if (isPlayer1) {
-      final hand = List<String>.from(session.player1Data.handCardIds);
-
-      if (cardIndex < 0 || cardIndex >= hand.length) {
-        throw Exception('Index de carte invalide');
-      }
-
-      final sacrificedCard = hand.removeAt(cardIndex);
-      final graveyard = List<String>.from(session.player1Data.graveyardCardIds);
-      graveyard.add(sacrificedCard);
-
-      updatedSession = session.copyWith(
-        player1Data: session.player1Data.copyWith(
-          handCardIds: hand,
-          graveyardCardIds: graveyard,
-        ),
-      );
-    } else {
-      final hand = List<String>.from(session.player2Data!.handCardIds);
-
-      if (cardIndex < 0 || cardIndex >= hand.length) {
-        throw Exception('Index de carte invalide');
-      }
-
-      final sacrificedCard = hand.removeAt(cardIndex);
-      final graveyard = List<String>.from(
-        session.player2Data!.graveyardCardIds,
-      );
-      graveyard.add(sacrificedCard);
-
-      updatedSession = session.copyWith(
-        player2Data: session.player2Data!.copyWith(
-          handCardIds: hand,
-          graveyardCardIds: graveyard,
-        ),
-      );
+    // Vérifier si déjà sacrifié ce tour
+    if (playerData.hasSacrificedThisTurn) {
+      throw Exception('Vous avez déjà sacrifié une carte ce tour !');
     }
+
+    final hand = List<String>.from(playerData.handCardIds);
+
+    if (cardIndex < 0 || cardIndex >= hand.length) {
+      throw Exception('Index de carte invalide');
+    }
+
+    final sacrificedCard = hand.removeAt(cardIndex);
+
+    // RÈGLE SPÉCIALE ULTIMA : Sacrifice interdit → Perte de la partie
+    if (sacrificedCard.contains('red_016')) {
+      // Déclarer l'adversaire comme gagnant
+      final winnerId = isPlayer1 ? session.player2Id : session.player1Id;
+      await docRef.update({
+        'winnerId': winnerId,
+        'status': GameStatus.finished.name,
+      });
+      throw Exception('❌ ULTIMA SACRIFIÉE ! Vous avez perdu la partie !');
+    }
+
+    // Retourner la carte au BAS du deck
+    final deck = List<String>.from(playerData.deckCardIds);
+    deck.add(sacrificedCard); // Ajout à la fin (pas mélangée)
+
+    // +2% tension
+    final newTension = (playerData.tension + 2.0).clamp(0.0, 100.0);
+
+    // Piocher 1 carte
+    String? drawnCard;
+    if (deck.isNotEmpty) {
+      drawnCard = deck.removeAt(0);
+      hand.add(drawnCard);
+    }
+
+    // Mettre à jour les données joueur
+    final updatedPlayerData = playerData.copyWith(
+      handCardIds: hand,
+      deckCardIds: deck,
+      tension: newTension,
+      hasSacrificedThisTurn: true,
+    );
+
+    final updatedSession =
+        isPlayer1
+            ? session.copyWith(player1Data: updatedPlayerData)
+            : session.copyWith(player2Data: updatedPlayerData);
 
     final sessionJson = updatedSession.toJson();
     sessionJson['player1Data'] = updatedSession.player1Data.toJson();
@@ -646,6 +712,10 @@ class FirebaseService {
     }
 
     await docRef.set(sessionJson, SetOptions(merge: true));
+
+    // FIN DE TOUR automatique après sacrifice
+    // On passe directement à la phase End puis au tour adverse
+    await nextPhase(sessionId); // Draw → Main → ... → End
   }
 
   /// Ajoute ou retire des PI d'un joueur
@@ -900,6 +970,26 @@ class FirebaseService {
     // Ajouter les nouveaux enchantements
     currentEnchantments.addAll(enchantments);
 
+    // === GESTION COMPTEUR ULTIMA ===
+    String? newUltimaOwnerId = session.ultimaOwnerId;
+    int newUltimaTurnCount = session.ultimaTurnCount;
+    DateTime? newUltimaPlayedAt = session.ultimaPlayedAt;
+
+    // Vérifier si Ultima vient d'être jouée
+    final ultimaJustPlayed = enchantments.any((id) => id.contains('red_016'));
+    if (ultimaJustPlayed) {
+      final currentPlayerId = session.currentPlayerId;
+      if (newUltimaOwnerId == null) {
+        // Premier joueur à poser Ultima
+        newUltimaOwnerId = currentPlayerId;
+        newUltimaTurnCount = 0;
+        newUltimaPlayedAt = DateTime.now();
+      } else if (newUltimaOwnerId != currentPlayerId) {
+        // Le 2ème joueur pose Ultima - le compteur reste sur le premier
+        // Pas de changement
+      }
+    }
+
     // Mettre à jour la session
     final updatedSession =
         isPlayer1
@@ -908,12 +998,18 @@ class FirebaseService {
                 activeEnchantmentIds: currentEnchantments,
               ),
               resolutionStack: [], // Vider la pile
+              ultimaOwnerId: newUltimaOwnerId,
+              ultimaTurnCount: newUltimaTurnCount,
+              ultimaPlayedAt: newUltimaPlayedAt,
             )
             : session.copyWith(
               player2Data: session.player2Data!.copyWith(
                 activeEnchantmentIds: currentEnchantments,
               ),
               resolutionStack: [], // Vider la pile
+              ultimaOwnerId: newUltimaOwnerId,
+              ultimaTurnCount: newUltimaTurnCount,
+              ultimaPlayedAt: newUltimaPlayedAt,
             );
 
     final docRef = _firestore.collection('game_sessions').doc(sessionId);
@@ -975,9 +1071,37 @@ class FirebaseService {
 
     // LOGIQUE SPÉCIALE POUR ULTIMA : La remettre en main au lieu de la retirer
     final updatedHand = List<String>.from(playerData.handCardIds);
-    if (enchantmentId.contains('red_016')) {
+    final isUltima = enchantmentId.contains('red_016');
+    if (isUltima) {
       // C'est Ultima - la remettre en main
       updatedHand.add(enchantmentId);
+    }
+
+    // === RÉINITIALISATION COMPTEUR ULTIMA ===
+    String? newUltimaOwnerId = session.ultimaOwnerId;
+    int newUltimaTurnCount = session.ultimaTurnCount;
+    DateTime? newUltimaPlayedAt = session.ultimaPlayedAt;
+
+    if (isUltima && session.ultimaOwnerId == playerId) {
+      // Le joueur qui avait le compteur actif a retiré son Ultima
+      // Vérifier si l'adversaire a Ultima en jeu
+      final opponentData =
+          isPlayer1 ? session.player2Data! : session.player1Data;
+      final opponentHasUltima = opponentData.activeEnchantmentIds.any(
+        (id) => id.contains('red_016'),
+      );
+
+      if (opponentHasUltima) {
+        // L'adversaire a Ultima - lui transférer le compteur en partant de 0
+        newUltimaOwnerId = isPlayer1 ? session.player2Id : session.player1Id;
+        newUltimaTurnCount = 0;
+        newUltimaPlayedAt = DateTime.now();
+      } else {
+        // Personne n'a plus Ultima - réinitialiser
+        newUltimaOwnerId = null;
+        newUltimaTurnCount = 0;
+        newUltimaPlayedAt = null;
+      }
     }
 
     final updatedSession =
@@ -987,12 +1111,18 @@ class FirebaseService {
                 activeEnchantmentIds: updatedEnchantments,
                 handCardIds: updatedHand,
               ),
+              ultimaOwnerId: newUltimaOwnerId,
+              ultimaTurnCount: newUltimaTurnCount,
+              ultimaPlayedAt: newUltimaPlayedAt,
             )
             : session.copyWith(
               player2Data: playerData.copyWith(
                 activeEnchantmentIds: updatedEnchantments,
                 handCardIds: updatedHand,
               ),
+              ultimaOwnerId: newUltimaOwnerId,
+              ultimaTurnCount: newUltimaTurnCount,
+              ultimaPlayedAt: newUltimaPlayedAt,
             );
 
     final docRef = _firestore.collection('game_sessions').doc(sessionId);

@@ -22,56 +22,132 @@ class GameButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = _getColors();
+    final isDisabled = onPressed == null;
 
     return SizedBox(
       width: width,
       height: height ?? 48,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: colors.background,
-          foregroundColor: colors.foreground,
-          disabledBackgroundColor: Colors.grey[300],
-          disabledForegroundColor: Colors.grey[600],
-          elevation: style == GameButtonStyle.flat ? 0 : 4,
-          shadowColor: Colors.black.withOpacity(0.3),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side:
-                style == GameButtonStyle.outlined
-                    ? BorderSide(color: colors.background, width: 2)
-                    : BorderSide.none,
+      child: GestureDetector(
+        onTap: onPressed,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors:
+                  isDisabled
+                      ? [
+                        Colors.white.withOpacity(0.15),
+                        Colors.white.withOpacity(0.10),
+                      ]
+                      : colors.gradientColors,
+            ),
+            boxShadow:
+                style == GameButtonStyle.flat
+                    ? null
+                    : [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.25),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+          ),
+          child: Stack(
+            children: [
+              // Brillance en haut
+              if (style != GameButtonStyle.flat)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    height: 20,
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(20),
+                        topRight: Radius.circular(20),
+                      ),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.white.withOpacity(isDisabled ? 0.2 : 0.5),
+                          Colors.white.withOpacity(0),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              Center(
+                child:
+                    icon != null
+                        ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              icon,
+                              size: 20,
+                              color:
+                                  isDisabled
+                                      ? Colors.white38
+                                      : colors.foreground,
+                              shadows: const [
+                                Shadow(
+                                  color: Colors.black38,
+                                  offset: Offset(0, 1),
+                                  blurRadius: 3,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              label,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color:
+                                    isDisabled
+                                        ? Colors.white38
+                                        : colors.foreground,
+                                shadows: const [
+                                  Shadow(
+                                    color: Colors.black38,
+                                    offset: Offset(0, 1),
+                                    blurRadius: 3,
+                                  ),
+                                ],
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ],
+                        )
+                        : Text(
+                          label,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color:
+                                isDisabled ? Colors.white38 : colors.foreground,
+                            shadows: const [
+                              Shadow(
+                                color: Colors.black38,
+                                offset: Offset(0, 1),
+                                blurRadius: 3,
+                              ),
+                            ],
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          textAlign: TextAlign.center,
+                        ),
+              ),
+            ],
           ),
         ),
-        child:
-            icon != null
-                ? Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(icon, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      label,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
-                  ],
-                )
-                : Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  textAlign: TextAlign.center,
-                ),
       ),
     );
   }
@@ -80,37 +156,58 @@ class GameButton extends StatelessWidget {
     switch (style) {
       case GameButtonStyle.primary:
         return _ButtonColors(
-          background: const Color(0xFF2980B9),
+          gradientColors: [
+            Colors.blue.withOpacity(0.45),
+            Colors.blue.withOpacity(0.30),
+          ],
           foreground: Colors.white,
         );
       case GameButtonStyle.secondary:
         return _ButtonColors(
-          background: Colors.white,
-          foreground: const Color(0xFF2980B9),
+          gradientColors: [
+            Colors.white.withOpacity(0.45),
+            Colors.white.withOpacity(0.30),
+          ],
+          foreground: Colors.white,
         );
       case GameButtonStyle.success:
         return _ButtonColors(
-          background: const Color(0xFF27AE60),
+          gradientColors: [
+            Colors.green.withOpacity(0.45),
+            Colors.green.withOpacity(0.30),
+          ],
           foreground: Colors.white,
         );
       case GameButtonStyle.danger:
         return _ButtonColors(
-          background: const Color(0xFFE74C3C),
+          gradientColors: [
+            Colors.red.withOpacity(0.45),
+            Colors.red.withOpacity(0.30),
+          ],
           foreground: Colors.white,
         );
       case GameButtonStyle.warning:
         return _ButtonColors(
-          background: const Color(0xFFF39C12),
+          gradientColors: [
+            Colors.orange.withOpacity(0.45),
+            Colors.orange.withOpacity(0.30),
+          ],
           foreground: Colors.white,
         );
       case GameButtonStyle.outlined:
         return _ButtonColors(
-          background: Colors.transparent,
-          foreground: const Color(0xFF2980B9),
+          gradientColors: [
+            Colors.white.withOpacity(0.25),
+            Colors.white.withOpacity(0.15),
+          ],
+          foreground: Colors.white,
         );
       case GameButtonStyle.flat:
         return _ButtonColors(
-          background: Colors.white.withOpacity(0.2),
+          gradientColors: [
+            Colors.white.withOpacity(0.2),
+            Colors.white.withOpacity(0.1),
+          ],
           foreground: Colors.white,
         );
     }
@@ -128,8 +225,8 @@ enum GameButtonStyle {
 }
 
 class _ButtonColors {
-  final Color background;
+  final List<Color> gradientColors;
   final Color foreground;
 
-  _ButtonColors({required this.background, required this.foreground});
+  _ButtonColors({required this.gradientColors, required this.foreground});
 }

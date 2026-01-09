@@ -1,0 +1,364 @@
+Catalogue des cartes
+====================
+Total: 45 cartes
+
+Nom: Déshabillage
+Couleur: white
+Coût: Aucun
+En jeu: Moins 3PI si action refusé
+IRL: Le joueur ciblé enleves un vêtement de son choix
+
+---
+
+Nom: Pioche
+Couleur: white
+Coût: Enlève un vêtement
+En jeu: Piochez 2 cartes. Si le joueur ne peut pas piocher, rien ne se passe
+IRL: -
+
+---
+
+Nom: Désenchanter
+Couleur: white
+Coût: Applique une fois l'effet de la carte à désenchanter
+En jeu: Supprime un enchantement du jeu
+IRL: Le joueur lanceur doit accomplir 1 fois l'action de l'enchantement qu'il désenchante
+
+---
+
+Nom: Compliment
+Couleur: white
+Coût: Aucun
+En jeu: Moins 3PI si action refusé
+IRL: Le joueur ciblé doit complimenter son adversaire de façon sincère, si le compliment ne semble pas sincère, il subbit 2PI de dégats
+
+---
+
+Nom: Pose Sexy
+Couleur: white
+Coût: Aucun
+En jeu: Moins 3PI si action refusé
+IRL: Le joueur ciblé doit prendre une pose sexy pendant 15 sec
+
+---
+
+Nom: Chasteté
+Couleur: white
+Coût: Aucun
+En jeu: Aucun
+IRL: Tant que l'enchantement est en jeu, le joueur propriétaire ne peux pas enlever ses sous vêtements
+
+---
+
+Nom: Striptease
+Couleur: white
+Coût: Aucun
+En jeu: Moins 3PI si action refusé
+IRL: Tant que l'enchantement est en jeu le joueur adverse doit enlever un vêtement à chaque tour (si il est déjà nu il perd 3PI)
+
+---
+
+Nom: 50/50
+Couleur: white
+Coût: Aucun
+En jeu: Moins 3PI si action refusé
+IRL: Tant que l'enchantement est en jeu chaque joueur pioche une carte supplémentaire au début de son tour , si il désire la garder il doit soit perdre 3PI soit enlever un vêtement. Si le joueur ne peut pas piocher, rien ne se passe
+
+---
+
+Nom: Déshabillage X2
+Couleur: blue
+Coût: Le joueur Lanceur sacrifie un permanent ou se défausse d'une carte
+En jeu: Moins 3PI si action refusé
+IRL: Le joueur ciblé pose 2 vêtements de son choix
+
+---
+
+Nom: Rhabillage
+Couleur: blue
+Coût: Le joueur lanceur se defausse d'une carte
+En jeu: Le joueur advers pioche une carte et le joueur lanceur gagne 3PI
+IRL: Le joueur ciblé se Rhabille d' 1 vêtement
+
+---
+
+Nom: Chuchoter
+Couleur: blue
+Coût: Aucun
+En jeu: Moins 3PI si action refusé
+IRL: Le joueur ciblé dois chuchoter des mots coquin à l'oreille de l'adversaire
+
+---
+
+Nom: Révélation
+Couleur: blue
+Coût: Nudité en sous-vêtement minimum
+En jeu: Détruit un enchantement ciblé. Les 2 joueurs piochent 1 carte
+IRL: Le joueur lanceur doit révéler son secret e plus intime ou son plus grand fatasme refoulé a voix haute.
+
+---
+
+Nom: Carresse
+Couleur: blue
+Coût: Aucun
+En jeu: Moins 3PI si action refusé
+IRL: Le joueur ciblé doit carresser de façon douce le joueur lanceur a l'endroit de son choix pendant 1mn
+
+---
+
+Nom: Massage
+Couleur: blue
+Coût: Aucun
+En jeu: Moins 3PI si action refusé
+IRL: Le joueur ciblé doit masser le joueur lanceur a l'endroit de son choix pendant 1mn
+
+---
+
+Nom: Scroutch-Scroutch
+Couleur: blue
+Coût: La carte Scroutch-scroutch ne peut être lancer que si un des 2 joueurs est en sous vêtements
+En jeu: Moins 3PI si action refusé
+IRL: Tant que cet enchantement est en jeu le joueur adverse doit masser la tête du joueur propriétaire a chaque tour
+
+---
+
+Nom: Pied
+Couleur: blue
+Coût: La carte pied ne peut être lancer que si le joueur lanceur est nu
+En jeu: Moins 3PI si action refusé
+IRL: Tant que cet enchantement est en jeu le joueur adverse doit masser les pieds du joueur propriétaire a chaque tour
+
+---
+
+Nom: Bisous
+Couleur: blue
+Coût: La carte bisous remplace un autre enchantement présent en jeu
+En jeu: Moins 3PI si action refusé
+IRL: Tant que cet enchantement est en jeu le joueur adverse doit embrasser le joueur propriétaire a chaque tour
+
+---
+
+Nom: Pincement
+Couleur: yellow
+Coût: Nudité totale (le joueur lanceur se met nu si il ne l'est pas déjà)
+En jeu: Moins 3PI si action refusé
+IRL: Le joueur ciblé doit jouer avec ces tétons (pincement, rotation, etc…)
+
+---
+
+Nom: Tentation
+Couleur: yellow
+Coût: Nudité totale (le joueur lanceur se met nu si il ne l'est pas déjà)
+En jeu: Le joueur adverse choisit: soit il détruit un enchantement qu'il contrôle ,soit vou spiochez 3 cartes et gagnez 3PI
+IRL: Si le joueur ciblé vous laisse piocher il doit danser sensuellement pendant 30 sec.
+
+---
+
+Nom: Carresse intime (caché)
+Couleur: yellow
+Coût: Nudité totale (le joueur lanceur se met nu si il ne l'est pas déjà)
+En jeu: Le joueur lanceur peut se rhabiller d'1 vêtement et gagne 2PI
+IRL: Le joueur ciblé doit caché ses partis intimes (coussin, draps, vêtements,etc…) et dois se caresser (simuler marche aussi vue que c'est caché)
+
+---
+
+Nom: Fantasme
+Couleur: yellow
+Coût: Nudité totale (le joueur lanceur se met nu si il ne l'est pas déjà)
+En jeu: Moins 3PI si action refusé
+IRL: Le joueur ciblé doit révélé quel fantasme il aiemrait faire avec son adversaire
+
+---
+
+Nom: SexToys (caché)
+Couleur: yellow
+Coût: Le joueur ne peut pas joueur d'éphémère au prochain tour de l'adversaire
+En jeu: Le joueur lanceur peut se rhabiller d'1 vêtement et gagne 2PI
+IRL: Le joueur ciblé choisit un sextoy qu'il possède et l'utilise pendant 2mns en se cachant (coussin, draps, vêtements,etc… ). Si le joueur ne possède pas de sextoys (menteur) il doit simuler un orgasme à la place
+
+---
+
+Nom: Exitation
+Couleur: yellow
+Coût: Ne peux être lancé que si un des 2 joueurs est nu (si les 2 sont nus le rituel ne peut être lancé)
+En jeu: Le joueur ciblé pioche une carte à la fin du tour
+IRL: Le joueur ciblé doit tout mettre en œuvre pour augmenter votre exitation, il n'a en revanche pas le droits de vous toucher.
+
+---
+
+Nom: Piège
+Couleur: yellow
+Coût: Le piège arrive en jeu avec autant de charge que vous possédez de vêtement (minimum 1)
+En jeu: Tant que cet enchantement est en jeu, chaque fois que vous êtes la cible d'un sort, vous posez un vêtement, vous contrez le sort et enlevé une charge au piège à 0 le piège disparait.
+IRL: Un vêtement de moins par contre de sort
+
+---
+
+Nom: Bisous coquin
+Couleur: yellow
+Coût: La carte Bisous coquin remplace un autre enchantement présent en jeu
+En jeu: Moins 3PI si action refusé
+IRL: Tant que cet enchantement est en jeu le joueur adverse doit embrasser les parties intimes du joueur propriétaire a chaque tour
+
+---
+
+Nom: Rhabillage DX
+Couleur: yellow
+Coût: Nudité totale (le joueur lanceur se met nu si il ne l'est pas déjà)
+En jeu: Gagne 1PI par tour tant que l'enchantement est en jeu
+IRL: Tant que cet enchantement est en jeu, le joueur propriétaire se rhabille d'1 vêtement au début de son tour. Annule l'enchantement Striptease de l'adversaire
+
+---
+
+Nom: Plaisir (bouche)
+Couleur: red
+Coût: Nudité totale (le joueur lanceur se met nu si il ne l'est pas déjà)
+En jeu: Moins 3PI si action refusé
+IRL: Le joueur ciblé doit donner du plaisir a son adversaire avec sa bouche (cunnilingus, félation, ou autres(soyez inventif))
+
+---
+
+Nom: Plaisir (main)
+Couleur: red
+Coût: Nudité totale (le joueur lanceur se met nu si il ne l'est pas déjà)
+En jeu: Moins 3PI si action refusé
+IRL: Le joueur ciblé doit donner du plaisir a son adversaire avec ses mains (masturbation, caresse, ou autres(soyez inventif))
+
+---
+
+Nom: Plaisir (sextoys)
+Couleur: red
+Coût: Nudité totale (le joueur lanceur se met nu si il ne l'est pas déjà)
+En jeu: Moins 3PI si action refusé
+IRL: Le joueur ciblé doit donner du plaisir a son adversaire avec un sextoy (soyez inventif)
+
+---
+
+Nom: Sextoys
+Couleur: red
+Coût: Le joueur ne peut pas joueur d'éphémère au prochain tour de l'adversaire
+En jeu: Moins 3PI si action refusé
+IRL: Le joueur ciblé choisit un sextoy qu'il possède et l'utilise pendant 2mns sans se cacher. Si le joueur ne possède pas de sextoys (menteur) il doit se plier à la volonté de son adversaire pendant 2mns
+
+---
+
+Nom: Caresse intime
+Couleur: red
+Coût: Nudité totale (le joueur lanceur se met nu si il ne l'est pas déjà)
+En jeu: Moins 3PI si action refusé
+IRL: Le joueur ciblé doit exposé ses partis intimes et dois se caresser
+
+---
+
+Nom: Frotter
+Couleur: red
+Coût: Nudité totale (le joueur lanceur se met nu si il ne l'est pas déjà)
+En jeu: Moins 3PI si action refusé
+IRL: Le joueur ciblé doit frotter ses parties intimes contre celle du joueur propriétaire.
+
+---
+
+Nom: Point G
+Couleur: red
+Coût: Nudité totale (le joueur lanceur se met nu si il ne l'est pas déjà)
+En jeu: Moins 3PI si action refusé
+IRL: Le joueur ciblé doit masser le point G de son adversaire 2mns
+
+---
+
+Nom: Caresse ou rien
+Couleur: red
+Coût: La carte Caresse ou rien remplace un autre enchantement présent en jeu
+En jeu: Ne peut jouer si action refusé
+IRL: Tant que cet enchantement est présent en jeu l'adversaire doit se caressé pour pouvoir jouer son tour. Si il ne le fait pas recommencer un tour
+
+---
+
+Nom: Gagné?
+Couleur: red
+Coût: La carte Gagné? remplace un autre enchantement présent en jeu
+En jeu: Point de vie bloqué, obligation de réaliser toutes les actions des sorts adverse
+IRL: Tant que cet enchantement est en jeu vous ne pouvez plus perdre la partie, vos point de vie sont bloqué à la même valeur, le joueur propriétaire ne peux pas refuser d'action.
+
+---
+
+Nom: Extase
+Couleur: red
+Coût: La carte Extase remplace un enchantement adverse présent en jeu
+En jeu: Au début du tour du joueur adverse, il doit payer 2PI ou détruire un enchantement qu'il contrôle (son choix). Si il ne peut pas, Extase est détruit
+IRL: Tant que cet enchantement est en jeu, le joueur adverse doit gémir de plaisir a chaque action qu'il effectue.
+
+---
+
+Nom: Ultima
+Couleur: red
+Coût: Vous devez avoir plus de PI que l'adversaire et l'adversaire doit être nu.
+En jeu: Victoire totale au bout de 3 tours si Ultima est toujours en jeu
+IRL: Au bout de 3 tours de jeu ou Ultima est présent, vous gagnez la partie. Votre adversaire vous doit un orgasme (vous d'abord)
+
+---
+
+Nom: Négociations
+Couleur: green
+Coût: Ne peut se jouer qu'en réponse
+En jeu: Contre le sort de l'adversaire
+IRL: Le joueur contré peut demander ce qu'il veut en échange de son sort contré. À vous de négocier
+
+---
+
+Nom: Négociations
+Couleur: green
+Coût: Ne peut se jouer qu'en réponse
+En jeu: Contre le sort de l'adversaire
+IRL: Le joueur contré peut demander ce qu'il veut en échange de son sort contré. À vous de négocier
+
+---
+
+Nom: Négociations
+Couleur: green
+Coût: Ne peut se jouer qu'en réponse
+En jeu: Contre le sort de l'adversaire
+IRL: Le joueur contré peut demander ce qu'il veut en échange de son sort contré. À vous de négocier
+
+---
+
+Nom: Négociations
+Couleur: green
+Coût: Ne peut se jouer qu'en réponse
+En jeu: Contre le sort de l'adversaire
+IRL: Le joueur contré peut demander ce qu'il veut en échange de son sort contré. À vous de négocier
+
+---
+
+Nom: Négociations
+Couleur: green
+Coût: Ne peut se jouer qu'en réponse
+En jeu: Contre le sort de l'adversaire
+IRL: Le joueur contré peut demander ce qu'il veut en échange de son sort contré. À vous de négocier
+
+---
+
+Nom: Négociations
+Couleur: green
+Coût: Ne peut se jouer qu'en réponse
+En jeu: Contre le sort de l'adversaire
+IRL: Le joueur contré peut demander ce qu'il veut en échange de son sort contré. À vous de négocier
+
+---
+
+Nom: Négociations
+Couleur: green
+Coût: Ne peut se jouer qu'en réponse
+En jeu: Contre le sort de l'adversaire
+IRL: Le joueur contré peut demander ce qu'il veut en échange de son sort contré. À vous de négocier
+
+---
+
+Nom: Négociations
+Couleur: green
+Coût: Ne peut se jouer qu'en réponse
+En jeu: Contre le sort de l'adversaire
+IRL: Le joueur contré peut demander ce qu'il veut en échange de son sort contré. À vous de négocier
+
+---
+

@@ -9,7 +9,7 @@ class ScardApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'S\'Card - Jeu de Cartes Coquin',
+      title: 'Synergie',
       theme: AppTheme.darkTheme,
       debugShowCheckedModeBanner: false,
       home: const HomeScreen(),

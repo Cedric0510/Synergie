@@ -70,6 +70,16 @@ mixin _$GameSession {
   /// ID du gagnant (null si partie en cours)
   String? get winnerId => throw _privateConstructorUsedError;
 
+  /// === COMPTEUR ULTIMA ===
+  /// ID du joueur qui a le compteur Ultima actif (premier à avoir posé Ultima)
+  String? get ultimaOwnerId => throw _privateConstructorUsedError;
+
+  /// Nombre de tours écoulés depuis que Ultima est en jeu
+  int get ultimaTurnCount => throw _privateConstructorUsedError;
+
+  /// Timestamp de pose d'Ultima pour déterminer qui l'a posé en premier
+  DateTime? get ultimaPlayedAt => throw _privateConstructorUsedError;
+
   /// Timestamp de création
   DateTime get createdAt => throw _privateConstructorUsedError;
 
@@ -115,6 +125,9 @@ abstract class $GameSessionCopyWith<$Res> {
     List<String> awaitingValidationFrom,
     Map<String, bool> validationResponses,
     String? winnerId,
+    String? ultimaOwnerId,
+    int ultimaTurnCount,
+    DateTime? ultimaPlayedAt,
     DateTime createdAt,
     DateTime? startedAt,
     DateTime? finishedAt,
@@ -155,6 +168,9 @@ class _$GameSessionCopyWithImpl<$Res, $Val extends GameSession>
     Object? awaitingValidationFrom = null,
     Object? validationResponses = null,
     Object? winnerId = freezed,
+    Object? ultimaOwnerId = freezed,
+    Object? ultimaTurnCount = null,
+    Object? ultimaPlayedAt = freezed,
     Object? createdAt = null,
     Object? startedAt = freezed,
     Object? finishedAt = freezed,
@@ -237,6 +253,21 @@ class _$GameSessionCopyWithImpl<$Res, $Val extends GameSession>
                     ? _value.winnerId
                     : winnerId // ignore: cast_nullable_to_non_nullable
                         as String?,
+            ultimaOwnerId:
+                freezed == ultimaOwnerId
+                    ? _value.ultimaOwnerId
+                    : ultimaOwnerId // ignore: cast_nullable_to_non_nullable
+                        as String?,
+            ultimaTurnCount:
+                null == ultimaTurnCount
+                    ? _value.ultimaTurnCount
+                    : ultimaTurnCount // ignore: cast_nullable_to_non_nullable
+                        as int,
+            ultimaPlayedAt:
+                freezed == ultimaPlayedAt
+                    ? _value.ultimaPlayedAt
+                    : ultimaPlayedAt // ignore: cast_nullable_to_non_nullable
+                        as DateTime?,
             createdAt:
                 null == createdAt
                     ? _value.createdAt
@@ -312,6 +343,9 @@ abstract class _$$GameSessionImplCopyWith<$Res>
     List<String> awaitingValidationFrom,
     Map<String, bool> validationResponses,
     String? winnerId,
+    String? ultimaOwnerId,
+    int ultimaTurnCount,
+    DateTime? ultimaPlayedAt,
     DateTime createdAt,
     DateTime? startedAt,
     DateTime? finishedAt,
@@ -353,6 +387,9 @@ class __$$GameSessionImplCopyWithImpl<$Res>
     Object? awaitingValidationFrom = null,
     Object? validationResponses = null,
     Object? winnerId = freezed,
+    Object? ultimaOwnerId = freezed,
+    Object? ultimaTurnCount = null,
+    Object? ultimaPlayedAt = freezed,
     Object? createdAt = null,
     Object? startedAt = freezed,
     Object? finishedAt = freezed,
@@ -435,6 +472,21 @@ class __$$GameSessionImplCopyWithImpl<$Res>
                 ? _value.winnerId
                 : winnerId // ignore: cast_nullable_to_non_nullable
                     as String?,
+        ultimaOwnerId:
+            freezed == ultimaOwnerId
+                ? _value.ultimaOwnerId
+                : ultimaOwnerId // ignore: cast_nullable_to_non_nullable
+                    as String?,
+        ultimaTurnCount:
+            null == ultimaTurnCount
+                ? _value.ultimaTurnCount
+                : ultimaTurnCount // ignore: cast_nullable_to_non_nullable
+                    as int,
+        ultimaPlayedAt:
+            freezed == ultimaPlayedAt
+                ? _value.ultimaPlayedAt
+                : ultimaPlayedAt // ignore: cast_nullable_to_non_nullable
+                    as DateTime?,
         createdAt:
             null == createdAt
                 ? _value.createdAt
@@ -479,6 +531,9 @@ class _$GameSessionImpl implements _GameSession {
     final List<String> awaitingValidationFrom = const [],
     final Map<String, bool> validationResponses = const {},
     this.winnerId,
+    this.ultimaOwnerId,
+    this.ultimaTurnCount = 0,
+    this.ultimaPlayedAt,
     required this.createdAt,
     this.startedAt,
     this.finishedAt,
@@ -591,6 +646,20 @@ class _$GameSessionImpl implements _GameSession {
   @override
   final String? winnerId;
 
+  /// === COMPTEUR ULTIMA ===
+  /// ID du joueur qui a le compteur Ultima actif (premier à avoir posé Ultima)
+  @override
+  final String? ultimaOwnerId;
+
+  /// Nombre de tours écoulés depuis que Ultima est en jeu
+  @override
+  @JsonKey()
+  final int ultimaTurnCount;
+
+  /// Timestamp de pose d'Ultima pour déterminer qui l'a posé en premier
+  @override
+  final DateTime? ultimaPlayedAt;
+
   /// Timestamp de création
   @override
   final DateTime createdAt;
@@ -609,7 +678,7 @@ class _$GameSessionImpl implements _GameSession {
 
   @override
   String toString() {
-    return 'GameSession(sessionId: $sessionId, player1Id: $player1Id, player2Id: $player2Id, player1Data: $player1Data, player2Data: $player2Data, currentPlayerId: $currentPlayerId, currentPhase: $currentPhase, status: $status, resolutionStack: $resolutionStack, pendingSpellActions: $pendingSpellActions, responseEffect: $responseEffect, cardAwaitingValidation: $cardAwaitingValidation, awaitingValidationFrom: $awaitingValidationFrom, validationResponses: $validationResponses, winnerId: $winnerId, createdAt: $createdAt, startedAt: $startedAt, finishedAt: $finishedAt, updatedAt: $updatedAt)';
+    return 'GameSession(sessionId: $sessionId, player1Id: $player1Id, player2Id: $player2Id, player1Data: $player1Data, player2Data: $player2Data, currentPlayerId: $currentPlayerId, currentPhase: $currentPhase, status: $status, resolutionStack: $resolutionStack, pendingSpellActions: $pendingSpellActions, responseEffect: $responseEffect, cardAwaitingValidation: $cardAwaitingValidation, awaitingValidationFrom: $awaitingValidationFrom, validationResponses: $validationResponses, winnerId: $winnerId, ultimaOwnerId: $ultimaOwnerId, ultimaTurnCount: $ultimaTurnCount, ultimaPlayedAt: $ultimaPlayedAt, createdAt: $createdAt, startedAt: $startedAt, finishedAt: $finishedAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -654,6 +723,12 @@ class _$GameSessionImpl implements _GameSession {
             ) &&
             (identical(other.winnerId, winnerId) ||
                 other.winnerId == winnerId) &&
+            (identical(other.ultimaOwnerId, ultimaOwnerId) ||
+                other.ultimaOwnerId == ultimaOwnerId) &&
+            (identical(other.ultimaTurnCount, ultimaTurnCount) ||
+                other.ultimaTurnCount == ultimaTurnCount) &&
+            (identical(other.ultimaPlayedAt, ultimaPlayedAt) ||
+                other.ultimaPlayedAt == ultimaPlayedAt) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.startedAt, startedAt) ||
@@ -683,6 +758,9 @@ class _$GameSessionImpl implements _GameSession {
     const DeepCollectionEquality().hash(_awaitingValidationFrom),
     const DeepCollectionEquality().hash(_validationResponses),
     winnerId,
+    ultimaOwnerId,
+    ultimaTurnCount,
+    ultimaPlayedAt,
     createdAt,
     startedAt,
     finishedAt,
@@ -720,6 +798,9 @@ abstract class _GameSession implements GameSession {
     final List<String> awaitingValidationFrom,
     final Map<String, bool> validationResponses,
     final String? winnerId,
+    final String? ultimaOwnerId,
+    final int ultimaTurnCount,
+    final DateTime? ultimaPlayedAt,
     required final DateTime createdAt,
     final DateTime? startedAt,
     final DateTime? finishedAt,
@@ -790,6 +871,19 @@ abstract class _GameSession implements GameSession {
   /// ID du gagnant (null si partie en cours)
   @override
   String? get winnerId;
+
+  /// === COMPTEUR ULTIMA ===
+  /// ID du joueur qui a le compteur Ultima actif (premier à avoir posé Ultima)
+  @override
+  String? get ultimaOwnerId;
+
+  /// Nombre de tours écoulés depuis que Ultima est en jeu
+  @override
+  int get ultimaTurnCount;
+
+  /// Timestamp de pose d'Ultima pour déterminer qui l'a posé en premier
+  @override
+  DateTime? get ultimaPlayedAt;
 
   /// Timestamp de création
   @override

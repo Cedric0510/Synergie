@@ -48,6 +48,9 @@ class PlayerData with _$PlayerData {
     /// Le joueur est-il prêt ?
     @Default(false) bool isReady,
 
+    /// Le joueur a-t-il déjà sacrifié une carte ce tour ?
+    @Default(false) bool hasSacrificedThisTurn,
+
     /// Timestamp de connexion
     @JsonKey(includeIfNull: false) DateTime? connectedAt,
 

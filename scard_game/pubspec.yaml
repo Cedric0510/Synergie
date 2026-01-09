@@ -57,6 +57,9 @@ dependencies:
   
   # Animations
   animations: ^2.0.11
+  
+  # Video Player
+  video_player: ^2.8.0
 
 dev_dependencies:
   flutter_test:
@@ -111,6 +114,7 @@ flutter:
     - assets/images/cards/yellow/
     - assets/images/cards/red/
     - assets/images/cards/green/
+    - assets/videos/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

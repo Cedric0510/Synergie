@@ -43,6 +43,7 @@ _$PlayerDataImpl _$$PlayerDataImplFromJson(Map<String, dynamic> json) =>
           $enumDecodeNullable(_$CardLevelEnumMap, json['currentLevel']) ??
           CardLevel.white,
       isReady: json['isReady'] as bool? ?? false,
+      hasSacrificedThisTurn: json['hasSacrificedThisTurn'] as bool? ?? false,
       connectedAt:
           json['connectedAt'] == null
               ? null
@@ -68,6 +69,7 @@ Map<String, dynamic> _$$PlayerDataImplToJson(_$PlayerDataImpl instance) =>
       'isNaked': instance.isNaked,
       'currentLevel': _$CardLevelEnumMap[instance.currentLevel]!,
       'isReady': instance.isReady,
+      'hasSacrificedThisTurn': instance.hasSacrificedThisTurn,
       if (instance.connectedAt?.toIso8601String() case final value?)
         'connectedAt': value,
       if (instance.lastActivityAt?.toIso8601String() case final value?)

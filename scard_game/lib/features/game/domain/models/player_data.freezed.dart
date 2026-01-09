@@ -60,6 +60,9 @@ mixin _$PlayerData {
   /// Le joueur est-il prêt ?
   bool get isReady => throw _privateConstructorUsedError;
 
+  /// Le joueur a-t-il déjà sacrifié une carte ce tour ?
+  bool get hasSacrificedThisTurn => throw _privateConstructorUsedError;
+
   /// Timestamp de connexion
   @JsonKey(includeIfNull: false)
   DateTime? get connectedAt => throw _privateConstructorUsedError;
@@ -99,6 +102,7 @@ abstract class $PlayerDataCopyWith<$Res> {
     bool isNaked,
     CardLevel currentLevel,
     bool isReady,
+    bool hasSacrificedThisTurn,
     @JsonKey(includeIfNull: false) DateTime? connectedAt,
     @JsonKey(includeIfNull: false) DateTime? lastActivityAt,
   });
@@ -132,6 +136,7 @@ class _$PlayerDataCopyWithImpl<$Res, $Val extends PlayerData>
     Object? isNaked = null,
     Object? currentLevel = null,
     Object? isReady = null,
+    Object? hasSacrificedThisTurn = null,
     Object? connectedAt = freezed,
     Object? lastActivityAt = freezed,
   }) {
@@ -202,6 +207,11 @@ class _$PlayerDataCopyWithImpl<$Res, $Val extends PlayerData>
                     ? _value.isReady
                     : isReady // ignore: cast_nullable_to_non_nullable
                         as bool,
+            hasSacrificedThisTurn:
+                null == hasSacrificedThisTurn
+                    ? _value.hasSacrificedThisTurn
+                    : hasSacrificedThisTurn // ignore: cast_nullable_to_non_nullable
+                        as bool,
             connectedAt:
                 freezed == connectedAt
                     ? _value.connectedAt
@@ -241,6 +251,7 @@ abstract class _$$PlayerDataImplCopyWith<$Res>
     bool isNaked,
     CardLevel currentLevel,
     bool isReady,
+    bool hasSacrificedThisTurn,
     @JsonKey(includeIfNull: false) DateTime? connectedAt,
     @JsonKey(includeIfNull: false) DateTime? lastActivityAt,
   });
@@ -273,6 +284,7 @@ class __$$PlayerDataImplCopyWithImpl<$Res>
     Object? isNaked = null,
     Object? currentLevel = null,
     Object? isReady = null,
+    Object? hasSacrificedThisTurn = null,
     Object? connectedAt = freezed,
     Object? lastActivityAt = freezed,
   }) {
@@ -343,6 +355,11 @@ class __$$PlayerDataImplCopyWithImpl<$Res>
                 ? _value.isReady
                 : isReady // ignore: cast_nullable_to_non_nullable
                     as bool,
+        hasSacrificedThisTurn:
+            null == hasSacrificedThisTurn
+                ? _value.hasSacrificedThisTurn
+                : hasSacrificedThisTurn // ignore: cast_nullable_to_non_nullable
+                    as bool,
         connectedAt:
             freezed == connectedAt
                 ? _value.connectedAt
@@ -375,6 +392,7 @@ class _$PlayerDataImpl implements _PlayerData {
     this.isNaked = false,
     this.currentLevel = CardLevel.white,
     this.isReady = false,
+    this.hasSacrificedThisTurn = false,
     @JsonKey(includeIfNull: false) this.connectedAt,
     @JsonKey(includeIfNull: false) this.lastActivityAt,
   }) : _handCardIds = handCardIds,
@@ -485,6 +503,11 @@ class _$PlayerDataImpl implements _PlayerData {
   @JsonKey()
   final bool isReady;
 
+  /// Le joueur a-t-il déjà sacrifié une carte ce tour ?
+  @override
+  @JsonKey()
+  final bool hasSacrificedThisTurn;
+
   /// Timestamp de connexion
   @override
   @JsonKey(includeIfNull: false)
@@ -497,7 +520,7 @@ class _$PlayerDataImpl implements _PlayerData {
 
   @override
   String toString() {
-    return 'PlayerData(playerId: $playerId, name: $name, gender: $gender, inhibitionPoints: $inhibitionPoints, tension: $tension, handCardIds: $handCardIds, deckCardIds: $deckCardIds, graveyardCardIds: $graveyardCardIds, playedCardIds: $playedCardIds, activeEnchantmentIds: $activeEnchantmentIds, isNaked: $isNaked, currentLevel: $currentLevel, isReady: $isReady, connectedAt: $connectedAt, lastActivityAt: $lastActivityAt)';
+    return 'PlayerData(playerId: $playerId, name: $name, gender: $gender, inhibitionPoints: $inhibitionPoints, tension: $tension, handCardIds: $handCardIds, deckCardIds: $deckCardIds, graveyardCardIds: $graveyardCardIds, playedCardIds: $playedCardIds, activeEnchantmentIds: $activeEnchantmentIds, isNaked: $isNaked, currentLevel: $currentLevel, isReady: $isReady, hasSacrificedThisTurn: $hasSacrificedThisTurn, connectedAt: $connectedAt, lastActivityAt: $lastActivityAt)';
   }
 
   @override
@@ -536,6 +559,8 @@ class _$PlayerDataImpl implements _PlayerData {
             (identical(other.currentLevel, currentLevel) ||
                 other.currentLevel == currentLevel) &&
             (identical(other.isReady, isReady) || other.isReady == isReady) &&
+            (identical(other.hasSacrificedThisTurn, hasSacrificedThisTurn) ||
+                other.hasSacrificedThisTurn == hasSacrificedThisTurn) &&
             (identical(other.connectedAt, connectedAt) ||
                 other.connectedAt == connectedAt) &&
             (identical(other.lastActivityAt, lastActivityAt) ||
@@ -559,6 +584,7 @@ class _$PlayerDataImpl implements _PlayerData {
     isNaked,
     currentLevel,
     isReady,
+    hasSacrificedThisTurn,
     connectedAt,
     lastActivityAt,
   );
@@ -592,6 +618,7 @@ abstract class _PlayerData implements PlayerData {
     final bool isNaked,
     final CardLevel currentLevel,
     final bool isReady,
+    final bool hasSacrificedThisTurn,
     @JsonKey(includeIfNull: false) final DateTime? connectedAt,
     @JsonKey(includeIfNull: false) final DateTime? lastActivityAt,
   }) = _$PlayerDataImpl;
@@ -650,6 +677,10 @@ abstract class _PlayerData implements PlayerData {
   /// Le joueur est-il prêt ?
   @override
   bool get isReady;
+
+  /// Le joueur a-t-il déjà sacrifié une carte ce tour ?
+  @override
+  bool get hasSacrificedThisTurn;
 
   /// Timestamp de connexion
   @override

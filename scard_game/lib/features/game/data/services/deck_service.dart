@@ -18,9 +18,8 @@ class DeckService {
   DeckService(this._cardService);
 
   /// Génère un deck complet selon les règles :
-  /// - 4 exemplaires par carte (défaut)
-  /// - 2 exemplaires si maxPerDeck = 2
-  /// - 1 exemplaire si maxPerDeck = 1 (Ultima)
+  /// - 2 exemplaires par carte (deck de base = 90 cartes)
+  /// - 1 exemplaire si maxPerDeck = 1 (Ultima uniquement)
   /// - Filtre par niveau : white, blue, yellow, red
   Future<List<String>> generateDeck({
     required List<CardColor> allowedColors,
@@ -37,7 +36,8 @@ class DeckService {
         continue;
       }
 
-      final int count = card.maxPerDeck ?? 4; // Par défaut 4 exemplaires
+      // Nouvelle règle : 2 exemplaires par défaut, sauf Ultima (1 seul)
+      final int count = (card.maxPerDeck == 1) ? 1 : 2;
       print('  ✅ ${card.id} (${card.color}) × $count');
 
       // Ajouter uniquement les cartes qui existent réellement dans cards.json

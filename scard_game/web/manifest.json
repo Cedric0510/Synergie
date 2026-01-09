@@ -1,11 +1,11 @@
 {
-    "name": "scard_game",
-    "short_name": "scard_game",
+    "name": "Synergie",
+    "short_name": "Synergie",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Synergie - Jeu de cartes",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

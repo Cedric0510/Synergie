@@ -50,6 +50,12 @@ _$GameSessionImpl _$$GameSessionImplFromJson(
       ) ??
       const {},
   winnerId: json['winnerId'] as String?,
+  ultimaOwnerId: json['ultimaOwnerId'] as String?,
+  ultimaTurnCount: (json['ultimaTurnCount'] as num?)?.toInt() ?? 0,
+  ultimaPlayedAt:
+      json['ultimaPlayedAt'] == null
+          ? null
+          : DateTime.parse(json['ultimaPlayedAt'] as String),
   createdAt: DateTime.parse(json['createdAt'] as String),
   startedAt:
       json['startedAt'] == null
@@ -79,6 +85,9 @@ Map<String, dynamic> _$$GameSessionImplToJson(_$GameSessionImpl instance) =>
       'awaitingValidationFrom': instance.awaitingValidationFrom,
       'validationResponses': instance.validationResponses,
       'winnerId': instance.winnerId,
+      'ultimaOwnerId': instance.ultimaOwnerId,
+      'ultimaTurnCount': instance.ultimaTurnCount,
+      'ultimaPlayedAt': instance.ultimaPlayedAt?.toIso8601String(),
       'createdAt': instance.createdAt.toIso8601String(),
       'startedAt': instance.startedAt?.toIso8601String(),
       'finishedAt': instance.finishedAt?.toIso8601String(),

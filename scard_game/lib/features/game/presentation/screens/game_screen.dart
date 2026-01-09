@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:video_player/video_player.dart';
+import 'dart:math';
 import '../../data/services/card_service.dart';
 import '../../data/services/firebase_service.dart';
 import '../../data/services/card_effect_service.dart';
@@ -8,6 +10,7 @@ import '../../data/services/tension_service.dart';
 import '../../domain/models/game_session.dart';
 import '../../domain/models/game_card.dart';
 import '../../domain/enums/game_phase.dart';
+import '../../domain/enums/game_status.dart';
 import '../../domain/enums/card_type.dart';
 import '../../domain/enums/card_level.dart';
 import '../../domain/enums/card_color.dart';
@@ -36,6 +39,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   bool _hasReceivedUltima = false;
   bool _isDiscardMode = false;
   bool _pendingCardValidation = false; // Carte jouée en attente de validation
+  VideoPlayerController? _videoController;
+  bool _isVideoPlaying = false;
 
   @override
   Widget build(BuildContext context) {
@@ -95,6 +100,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           // Réinitialiser le flag si la tension redescend sous 100%
           if (myData.tension < 100) {
             _hasReceivedUltima = false;
+          }
+
+          // === VÉRIFICATION VICTOIRE ULTIMA ===
+          if (session.status == GameStatus.finished &&
+              session.winnerId != null) {
+            return _buildVictoryScreen(session);
           }
 
           return Container(
@@ -187,49 +198,123 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                     const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                        horizontal: 10,
+                        vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.red, width: 1.5),
-                      ),
-                      child: Text(
-                        '${opponentData.inhibitionPoints} PI',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
+                        borderRadius: BorderRadius.circular(16),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withOpacity(0.35),
+                            Colors.white.withOpacity(0.20),
+                          ],
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.25),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Stack(
+                        children: [
+                          // Brillance en haut
+                          Positioned(
+                            top: -6,
+                            left: -10,
+                            right: -10,
+                            child: Container(
+                              height: 12,
+                              decoration: BoxDecoration(
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(16),
+                                  topRight: Radius.circular(16),
+                                ),
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.white.withOpacity(0.5),
+                                    Colors.white.withOpacity(0),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '${opponentData.inhibitionPoints} PI',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black38,
+                                  offset: Offset(0, 1),
+                                  blurRadius: 3,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 4,
+                        horizontal: 8,
+                        vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2d4263).withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: Colors.white30),
+                        borderRadius: BorderRadius.circular(12),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withOpacity(0.25),
+                            Colors.white.withOpacity(0.15),
+                          ],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.25),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const Icon(
                             Icons.style,
-                            color: Colors.white70,
+                            color: Colors.white,
                             size: 12,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black38,
+                                offset: Offset(0, 1),
+                                blurRadius: 3,
+                              ),
+                            ],
                           ),
                           const SizedBox(width: 4),
                           Text(
                             '${opponentData.handCardIds.length}',
                             style: const TextStyle(
-                              color: Colors.white70,
+                              color: Colors.white,
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black38,
+                                  offset: Offset(0, 1),
+                                  blurRadius: 3,
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -270,21 +355,68 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                       const SizedBox(width: 16),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
+                          horizontal: 14,
+                          vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.red, width: 2),
-                        ),
-                        child: Text(
-                          '${opponentData.inhibitionPoints} PI',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                          borderRadius: BorderRadius.circular(20),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.white.withOpacity(0.35),
+                              Colors.white.withOpacity(0.20),
+                            ],
                           ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.25),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Stack(
+                          children: [
+                            // Brillance en haut
+                            Positioned(
+                              top: -8,
+                              left: -14,
+                              right: -14,
+                              child: Container(
+                                height: 15,
+                                decoration: BoxDecoration(
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(20),
+                                    topRight: Radius.circular(20),
+                                  ),
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Colors.white.withOpacity(0.5),
+                                      Colors.white.withOpacity(0),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Text(
+                              '${opponentData.inhibitionPoints} PI',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black38,
+                                    offset: Offset(0, 1),
+                                    blurRadius: 3,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -295,29 +427,56 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                       const SizedBox(width: 16),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
+                          horizontal: 12,
+                          vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF2d4263).withOpacity(0.5),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.white30),
+                          borderRadius: BorderRadius.circular(16),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.white.withOpacity(0.25),
+                              Colors.white.withOpacity(0.15),
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.25),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(
                               Icons.style,
-                              color: Colors.white70,
+                              color: Colors.white,
                               size: 16,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black38,
+                                  offset: Offset(0, 1),
+                                  blurRadius: 3,
+                                ),
+                              ],
                             ),
                             const SizedBox(width: 6),
                             Text(
                               'Main: ${opponentData.handCardIds.length}',
                               style: const TextStyle(
-                                color: Colors.white70,
+                                color: Colors.white,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black38,
+                                    offset: Offset(0, 1),
+                                    blurRadius: 3,
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -345,24 +504,88 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final isMobile = MediaQuery.of(context).size.width < 600;
     final smallFontSize = isMobile ? 11.0 : 13.0;
 
+    // Récupérer les données du joueur actuel
+    final isPlayer1 = session.player1Id == widget.playerId;
+    final myData = isPlayer1 ? session.player1Data : session.player2Data!;
+
     return Column(
       children: [
-        // Info Phase en haut (compact)
+        // Info Phase en haut (compact) avec style crystal
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            session.currentPhase.displayName,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: smallFontSize,
-              fontWeight: FontWeight.bold,
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withOpacity(0.35),
+                Colors.white.withOpacity(0.20),
+              ],
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.25),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              // Brillance en haut
+              Positioned(
+                top: -8,
+                left: -16,
+                right: -16,
+                child: Container(
+                  height: 12,
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.white.withOpacity(0.5),
+                        Colors.white.withOpacity(0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Text(
+                session.currentPhase.displayName,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: smallFontSize,
+                  fontWeight: FontWeight.bold,
+                  shadows: const [
+                    Shadow(
+                      color: Colors.black38,
+                      offset: Offset(0, 1),
+                      blurRadius: 3,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
+
+        const SizedBox(height: 12),
+
+        // === COMPTEUR ULTIMA ===
+        if (session.ultimaOwnerId != null && session.ultimaTurnCount < 3)
+          _buildUltimaCounter(session),
+
+        if (session.ultimaOwnerId != null && session.ultimaTurnCount < 3)
+          const SizedBox(height: 12),
+
+        // === COMPTEUR DE DECK ===
+        _buildDeckCounter(myData.deckCardIds.length),
 
         const SizedBox(height: 12),
 
@@ -504,33 +727,29 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       children: [
         // Phase Suivante (en phase Draw)
         if (isMyTurn && session.currentPhase == GamePhase.draw) ...[
-          ElevatedButton.icon(
+          _buildCrystalButton(
+            label: 'Phase',
+            icon: Icons.arrow_forward,
             onPressed: _nextPhase,
-            icon: const Icon(Icons.arrow_forward, size: 16),
-            label: const Text('Phase', style: TextStyle(fontSize: 11)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              minimumSize: const Size(70, 32),
-            ),
+            gradientColors: [
+              Colors.blue.withOpacity(0.45),
+              Colors.blue.withOpacity(0.30),
+            ],
           ),
-          ElevatedButton.icon(
+          _buildCrystalButton(
+            label: _isDiscardMode ? 'Annuler' : 'Défausser',
+            icon: _isDiscardMode ? Icons.close : Icons.delete_sweep,
             onPressed: _toggleDiscardMode,
-            icon: Icon(
-              _isDiscardMode ? Icons.close : Icons.delete_sweep,
-              size: 16,
-            ),
-            label: Text(
-              _isDiscardMode ? 'Annuler' : 'Défausser',
-              style: const TextStyle(fontSize: 11),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _isDiscardMode ? Colors.grey : Colors.red,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              minimumSize: const Size(80, 32),
-            ),
+            gradientColors:
+                _isDiscardMode
+                    ? [
+                      Colors.grey.withOpacity(0.45),
+                      Colors.grey.withOpacity(0.30),
+                    ]
+                    : [
+                      Colors.red.withOpacity(0.45),
+                      Colors.red.withOpacity(0.30),
+                    ],
           ),
         ],
 
@@ -539,59 +758,50 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             _selectedCardIndex != null &&
             isMyTurn &&
             session.currentPhase == GamePhase.draw)
-          ElevatedButton.icon(
+          _buildCrystalButton(
+            label: 'Confirmer',
+            icon: Icons.check,
             onPressed: _discardSelectedCard,
-            icon: const Icon(Icons.check, size: 16),
-            label: const Text('Confirmer', style: TextStyle(fontSize: 11)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              minimumSize: const Size(80, 32),
-            ),
+            gradientColors: [
+              Colors.orange.withOpacity(0.45),
+              Colors.orange.withOpacity(0.30),
+            ],
           ),
 
         // Passer mon tour
         if (isMyTurn &&
             session.currentPhase == GamePhase.main &&
             _selectedCardIndex == null)
-          ElevatedButton.icon(
+          _buildCrystalButton(
+            label: 'Passer',
+            icon: Icons.skip_next,
             onPressed: _skipTurn,
-            icon: const Icon(Icons.skip_next, size: 16),
-            label: const Text('Passer', style: TextStyle(fontSize: 11)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              minimumSize: const Size(70, 32),
-            ),
+            gradientColors: [
+              Colors.grey.withOpacity(0.45),
+              Colors.grey.withOpacity(0.30),
+            ],
           ),
 
         // Valider/Retour si carte jouée en attente, sinon Jouer/Sacrifier
         if (_pendingCardValidation) ...[
           // Boutons de validation après avoir joué une carte
-          ElevatedButton.icon(
+          _buildCrystalButton(
+            label: 'Valider',
+            icon: Icons.check,
             onPressed: _validatePlayedCard,
-            icon: const Icon(Icons.check, size: 16),
-            label: const Text('Valider', style: TextStyle(fontSize: 11)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              minimumSize: const Size(80, 32),
-            ),
+            gradientColors: [
+              Colors.blue.withOpacity(0.45),
+              Colors.blue.withOpacity(0.30),
+            ],
           ),
-          const SizedBox(width: 4),
-          ElevatedButton.icon(
+          _buildCrystalButton(
+            label: 'Retour',
+            icon: Icons.undo,
             onPressed: _cancelPlayedCard,
-            icon: const Icon(Icons.undo, size: 16),
-            label: const Text('Retour', style: TextStyle(fontSize: 11)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              minimumSize: const Size(80, 32),
-            ),
+            gradientColors: [
+              Colors.orange.withOpacity(0.45),
+              Colors.orange.withOpacity(0.30),
+            ],
           ),
         ] else if (_selectedCardIndex != null) ...[
           Builder(
@@ -605,37 +815,24 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               return Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  ElevatedButton.icon(
+                  _buildCrystalButton(
+                    label: 'Jouer',
+                    icon: Icons.play_arrow,
                     onPressed: canPlay ? _playCard : null,
-                    icon: const Icon(Icons.play_arrow, size: 16),
-                    label: const Text('Jouer', style: TextStyle(fontSize: 11)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 6,
-                      ),
-                      minimumSize: const Size(70, 32),
-                    ),
+                    gradientColors: [
+                      Colors.green.withOpacity(0.45),
+                      Colors.green.withOpacity(0.30),
+                    ],
                   ),
                   const SizedBox(width: 4),
-                  ElevatedButton.icon(
+                  _buildCrystalButton(
+                    label: 'Sacrifier',
+                    icon: Icons.delete_outline,
                     onPressed: canSacrifice ? _sacrificeCard : null,
-                    icon: const Icon(Icons.delete_outline, size: 16),
-                    label: const Text(
-                      'Sacrifier',
-                      style: TextStyle(fontSize: 11),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 6,
-                      ),
-                      minimumSize: const Size(80, 32),
-                    ),
+                    gradientColors: [
+                      Colors.red.withOpacity(0.45),
+                      Colors.red.withOpacity(0.30),
+                    ],
                   ),
                 ],
               );
@@ -1306,42 +1503,103 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                         // PI compact avec boutons +/-
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 2,
+                            horizontal: 6,
+                            vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.green, width: 1.5),
+                            borderRadius: BorderRadius.circular(20),
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Colors.white.withOpacity(0.35),
+                                Colors.white.withOpacity(0.20),
+                              ],
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.25),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                          child: Stack(
                             children: [
-                              InkWell(
-                                onTap: _decrementPI,
-                                child: const Icon(
-                                  Icons.remove_circle,
-                                  color: Colors.redAccent,
-                                  size: 16,
+                              // Brillance en haut
+                              Positioned(
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                child: Container(
+                                  height: 10,
+                                  decoration: BoxDecoration(
+                                    borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(20),
+                                      topRight: Radius.circular(20),
+                                    ),
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Colors.white.withOpacity(0.5),
+                                        Colors.white.withOpacity(0),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${myData.inhibitionPoints}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              InkWell(
-                                onTap: _incrementPI,
-                                child: const Icon(
-                                  Icons.add_circle,
-                                  color: Colors.greenAccent,
-                                  size: 16,
-                                ),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  InkWell(
+                                    onTap: _decrementPI,
+                                    child: const Icon(
+                                      Icons.remove_circle,
+                                      color: Colors.white,
+                                      size: 16,
+                                      shadows: [
+                                        Shadow(
+                                          color: Colors.black38,
+                                          offset: Offset(0, 1),
+                                          blurRadius: 3,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${myData.inhibitionPoints}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      shadows: [
+                                        Shadow(
+                                          color: Colors.black38,
+                                          offset: Offset(0, 1),
+                                          blurRadius: 3,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  InkWell(
+                                    onTap: _incrementPI,
+                                    child: const Icon(
+                                      Icons.add_circle,
+                                      color: Colors.white,
+                                      size: 16,
+                                      shadows: [
+                                        Shadow(
+                                          color: Colors.black38,
+                                          offset: Offset(0, 1),
+                                          blurRadius: 3,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -1354,28 +1612,76 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                                   ? null
                                   : _manualDrawCard,
                           child: Container(
-                            padding: const EdgeInsets.all(6),
+                            padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color:
-                                  myData.handCardIds.length >= 7
-                                      ? Colors.grey.withOpacity(0.3)
-                                      : Colors.blue.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color:
+                              borderRadius: BorderRadius.circular(16),
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors:
                                     myData.handCardIds.length >= 7
-                                        ? Colors.grey
-                                        : Colors.blue,
-                                width: 1.5,
+                                        ? [
+                                          Colors.white.withOpacity(0.15),
+                                          Colors.white.withOpacity(0.10),
+                                        ]
+                                        : [
+                                          Colors.white.withOpacity(0.35),
+                                          Colors.white.withOpacity(0.20),
+                                        ],
                               ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.25),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
                             ),
-                            child: Icon(
-                              Icons.layers,
-                              color:
-                                  myData.handCardIds.length >= 7
-                                      ? Colors.white38
-                                      : Colors.white,
-                              size: 16,
+                            child: Stack(
+                              children: [
+                                // Brillance en haut
+                                Positioned(
+                                  top: -8,
+                                  left: -8,
+                                  right: -8,
+                                  child: Container(
+                                    height: 15,
+                                    decoration: BoxDecoration(
+                                      borderRadius: const BorderRadius.only(
+                                        topLeft: Radius.circular(16),
+                                        topRight: Radius.circular(16),
+                                      ),
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                        colors: [
+                                          Colors.white.withOpacity(
+                                            myData.handCardIds.length >= 7
+                                                ? 0.2
+                                                : 0.5,
+                                          ),
+                                          Colors.white.withOpacity(0),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.layers,
+                                  color:
+                                      myData.handCardIds.length >= 7
+                                          ? Colors.white38
+                                          : Colors.white,
+                                  size: 18,
+                                  shadows: const [
+                                    Shadow(
+                                      color: Colors.black38,
+                                      offset: Offset(0, 1),
+                                      blurRadius: 3,
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -1384,16 +1690,26 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                           Container(
                             margin: const EdgeInsets.only(left: 4),
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
+                              horizontal: 8,
+                              vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.orange.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color: Colors.orange,
-                                width: 1,
+                              borderRadius: BorderRadius.circular(12),
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.white.withOpacity(0.35),
+                                  Colors.white.withOpacity(0.20),
+                                ],
                               ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.25),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
                             ),
                             child: const Text(
                               '7/7',
@@ -1401,6 +1717,13 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                                 color: Colors.white,
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black38,
+                                    offset: Offset(0, 1),
+                                    blurRadius: 3,
+                                  ),
+                                ],
                               ),
                             ),
                           ),
@@ -1409,7 +1732,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                     // Ligne 2 : Enchantements si présents
                     if (myData.activeEnchantmentIds.isNotEmpty) ...[
                       const SizedBox(height: 6),
-                      _buildCompactEnchantments(myData.activeEnchantmentIds),
+                      _buildCompactEnchantments(
+                        myData.activeEnchantmentIds,
+                        isMyEnchantments: true,
+                      ),
                     ],
                   ],
                 );
@@ -1443,51 +1769,103 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                             // PI avec boutons +/-
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 4,
+                                horizontal: 8,
+                                vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.green.withOpacity(0.3),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: Colors.green,
-                                  width: 2,
+                                borderRadius: BorderRadius.circular(20),
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Colors.white.withOpacity(0.35),
+                                    Colors.white.withOpacity(0.20),
+                                  ],
                                 ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.25),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
+                              child: Stack(
                                 children: [
-                                  InkWell(
-                                    onTap: _decrementPI,
+                                  // Brillance en haut
+                                  Positioned(
+                                    top: -6,
+                                    left: -8,
+                                    right: -8,
                                     child: Container(
-                                      padding: const EdgeInsets.all(4),
-                                      child: const Icon(
-                                        Icons.remove_circle,
-                                        color: Colors.redAccent,
-                                        size: 18,
+                                      height: 15,
+                                      decoration: BoxDecoration(
+                                        borderRadius: const BorderRadius.only(
+                                          topLeft: Radius.circular(20),
+                                          topRight: Radius.circular(20),
+                                        ),
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            Colors.white.withOpacity(0.5),
+                                            Colors.white.withOpacity(0),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${myData.inhibitionPoints} PI',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  InkWell(
-                                    onTap: _incrementPI,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(4),
-                                      child: const Icon(
-                                        Icons.add_circle,
-                                        color: Colors.greenAccent,
-                                        size: 18,
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      InkWell(
+                                        onTap: _decrementPI,
+                                        child: const Icon(
+                                          Icons.remove_circle,
+                                          color: Colors.white,
+                                          size: 18,
+                                          shadows: [
+                                            Shadow(
+                                              color: Colors.black38,
+                                              offset: Offset(0, 1),
+                                              blurRadius: 3,
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        '${myData.inhibitionPoints} PI',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          shadows: [
+                                            Shadow(
+                                              color: Colors.black38,
+                                              offset: Offset(0, 1),
+                                              blurRadius: 3,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      InkWell(
+                                        onTap: _incrementPI,
+                                        child: const Icon(
+                                          Icons.add_circle,
+                                          color: Colors.white,
+                                          size: 18,
+                                          shadows: [
+                                            Shadow(
+                                              color: Colors.black38,
+                                              offset: Offset(0, 1),
+                                              blurRadius: 3,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
@@ -1501,56 +1879,118 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                                       : _manualDrawCard,
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
+                                  horizontal: 12,
+                                  vertical: 8,
                                 ),
                                 decoration: BoxDecoration(
-                                  color:
-                                      myData.handCardIds.length >= 7
-                                          ? Colors.grey.withOpacity(0.3)
-                                          : Colors.blue.withOpacity(0.3),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color:
+                                  borderRadius: BorderRadius.circular(20),
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors:
                                         myData.handCardIds.length >= 7
-                                            ? Colors.grey
-                                            : Colors.blue,
-                                    width: 2,
+                                            ? [
+                                              Colors.white.withOpacity(0.15),
+                                              Colors.white.withOpacity(0.10),
+                                            ]
+                                            : [
+                                              Colors.white.withOpacity(0.35),
+                                              Colors.white.withOpacity(0.20),
+                                            ],
                                   ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.25),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
                                 ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
+                                child: Stack(
                                   children: [
-                                    Icon(
-                                      Icons.layers,
-                                      color:
-                                          myData.handCardIds.length >= 7
-                                              ? Colors.white38
-                                              : Colors.white,
-                                      size: 16,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Icon(
-                                      Icons.touch_app,
-                                      color:
-                                          myData.handCardIds.length >= 7
-                                              ? Colors.white24
-                                              : Colors.white70,
-                                      size: 14,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      myData.handCardIds.length >= 7
-                                          ? 'Main pleine'
-                                          : 'Piocher',
-                                      style: TextStyle(
-                                        color:
-                                            myData.handCardIds.length >= 7
-                                                ? Colors.white38
-                                                : Colors.white,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
+                                    // Brillance en haut
+                                    Positioned(
+                                      top: -8,
+                                      left: -12,
+                                      right: -12,
+                                      child: Container(
+                                        height: 15,
+                                        decoration: BoxDecoration(
+                                          borderRadius: const BorderRadius.only(
+                                            topLeft: Radius.circular(20),
+                                            topRight: Radius.circular(20),
+                                          ),
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: [
+                                              Colors.white.withOpacity(
+                                                myData.handCardIds.length >= 7
+                                                    ? 0.2
+                                                    : 0.5,
+                                              ),
+                                              Colors.white.withOpacity(0),
+                                            ],
+                                          ),
+                                        ),
                                       ),
+                                    ),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.layers,
+                                          color:
+                                              myData.handCardIds.length >= 7
+                                                  ? Colors.white38
+                                                  : Colors.white,
+                                          size: 16,
+                                          shadows: const [
+                                            Shadow(
+                                              color: Colors.black38,
+                                              offset: Offset(0, 1),
+                                              blurRadius: 3,
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Icon(
+                                          Icons.touch_app,
+                                          color:
+                                              myData.handCardIds.length >= 7
+                                                  ? Colors.white24
+                                                  : Colors.white,
+                                          size: 14,
+                                          shadows: const [
+                                            Shadow(
+                                              color: Colors.black38,
+                                              offset: Offset(0, 1),
+                                              blurRadius: 3,
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          myData.handCardIds.length >= 7
+                                              ? 'Main pleine'
+                                              : 'Piocher',
+                                          style: TextStyle(
+                                            color:
+                                                myData.handCardIds.length >= 7
+                                                    ? Colors.white38
+                                                    : Colors.white,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            shadows: const [
+                                              Shadow(
+                                                color: Colors.black38,
+                                                offset: Offset(0, 1),
+                                                blurRadius: 3,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
@@ -3599,10 +4039,38 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: Colors.orange.withOpacity(0.5),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, color: Colors.orange, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Ne peut être détruit que si une carte vous le demande.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.orange[200],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
                 Text(
                   'Cette action est irréversible.',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11,
                     color: Colors.white54,
                     fontStyle: FontStyle.italic,
                   ),
@@ -3974,5 +4442,544 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         );
       }
     }
+  }
+
+  /// Helper pour créer un bouton avec style crystal
+  Widget _buildCrystalButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback? onPressed,
+    required List<Color> gradientColors,
+  }) {
+    final isDisabled = onPressed == null;
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        constraints: const BoxConstraints(minWidth: 70, minHeight: 32),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors:
+                isDisabled
+                    ? [
+                      Colors.white.withOpacity(0.15),
+                      Colors.white.withOpacity(0.10),
+                    ]
+                    : gradientColors,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.25),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            // Brillance en haut
+            Positioned(
+              top: -6,
+              left: -10,
+              right: -10,
+              child: Container(
+                height: 12,
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withOpacity(isDisabled ? 0.2 : 0.5),
+                      Colors.white.withOpacity(0),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 16,
+                  color: isDisabled ? Colors.white38 : Colors.white,
+                  shadows: const [
+                    Shadow(
+                      color: Colors.black38,
+                      offset: Offset(0, 1),
+                      blurRadius: 3,
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: isDisabled ? Colors.white38 : Colors.white,
+                    shadows: const [
+                      Shadow(
+                        color: Colors.black38,
+                        offset: Offset(0, 1),
+                        blurRadius: 3,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Widget pour afficher le compteur Ultima
+  Widget _buildUltimaCounter(GameSession session) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    final isMyUltima = session.ultimaOwnerId == widget.playerId;
+    final turnCount = session.ultimaTurnCount;
+
+    // Couleur selon le compteur
+    Color getCounterColor() {
+      if (turnCount == 0) return Colors.purple;
+      if (turnCount == 1) return Colors.orange;
+      if (turnCount == 2) return Colors.red;
+      return Colors.red;
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 12 : 16,
+        vertical: isMobile ? 8 : 10,
+      ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            getCounterColor().withOpacity(0.4),
+            getCounterColor().withOpacity(0.25),
+          ],
+        ),
+        border: Border.all(color: getCounterColor().withOpacity(0.8), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: getCounterColor().withOpacity(0.5),
+            blurRadius: 12,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Brillance en haut
+          Positioned(
+            top: -8,
+            left: -12,
+            right: -12,
+            child: Container(
+              height: 15,
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.white.withOpacity(0.6),
+                    Colors.white.withOpacity(0),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.auto_awesome,
+                color: Colors.white,
+                size: isMobile ? 20 : 24,
+                shadows: const [
+                  Shadow(
+                    color: Colors.black54,
+                    offset: Offset(0, 2),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+              SizedBox(width: isMobile ? 8 : 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'ULTIMA ${isMyUltima ? "(VOUS)" : "(ADVERSAIRE)"}',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: isMobile ? 11 : 13,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                      shadows: const [
+                        Shadow(
+                          color: Colors.black54,
+                          offset: Offset(0, 1),
+                          blurRadius: 3,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Tour $turnCount/3',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: isMobile ? 13 : 15,
+                      fontWeight: FontWeight.w900,
+                      shadows: const [
+                        Shadow(
+                          color: Colors.black54,
+                          offset: Offset(0, 1),
+                          blurRadius: 3,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Widget pour afficher le compteur de cartes restantes dans le deck
+  Widget _buildDeckCounter(int remainingCards) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
+    // Couleur selon le nombre de cartes restantes
+    Color getCounterColor() {
+      if (remainingCards > 30) return Colors.blue.shade700;
+      if (remainingCards > 15) return Colors.orange.shade700;
+      return Colors.red.shade700;
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 10 : 14,
+        vertical: isMobile ? 6 : 8,
+      ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            getCounterColor().withOpacity(0.3),
+            getCounterColor().withOpacity(0.2),
+          ],
+        ),
+        border: Border.all(
+          color: getCounterColor().withOpacity(0.6),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: getCounterColor().withOpacity(0.3),
+            blurRadius: 8,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Brillance en haut
+          Positioned(
+            top: -6,
+            left: -8,
+            right: -8,
+            child: Container(
+              height: 10,
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.white.withOpacity(0.4),
+                    Colors.white.withOpacity(0),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.style,
+                color: Colors.white,
+                size: isMobile ? 16 : 18,
+                shadows: const [
+                  Shadow(
+                    color: Colors.black54,
+                    offset: Offset(0, 1),
+                    blurRadius: 3,
+                  ),
+                ],
+              ),
+              SizedBox(width: isMobile ? 6 : 8),
+              Text(
+                '$remainingCards carte${remainingCards > 1 ? 's' : ''}',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: isMobile ? 12 : 14,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                  shadows: const [
+                    Shadow(
+                      color: Colors.black54,
+                      offset: Offset(0, 1),
+                      blurRadius: 3,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Écran de victoire Ultima avec vidéo
+  Widget _buildVictoryScreen(GameSession session) {
+    final isWinner = session.winnerId == widget.playerId;
+
+    // Initialiser et lire une vidéo aléatoire si pas encore fait
+    if (!_isVideoPlaying && _videoController == null) {
+      _isVideoPlaying = true;
+      final random = Random();
+      final videoNumber = random.nextInt(5) + 1; // 1 à 5
+      final videoPath = 'assets/videos/Victory$videoNumber.mp4';
+
+      _videoController = VideoPlayerController.asset(videoPath)
+        ..initialize().then((_) {
+          setState(() {});
+          _videoController!.play();
+        });
+
+      // Passer automatiquement à l'écran de victoire après la vidéo
+      _videoController!.addListener(() {
+        if (_videoController!.value.position ==
+            _videoController!.value.duration) {
+          setState(() {
+            _videoController?.dispose();
+            _videoController = null;
+          });
+        }
+      });
+    }
+
+    // Si la vidéo est en cours de lecture
+    if (_videoController != null && _videoController!.value.isInitialized) {
+      return Container(
+        color: Colors.black,
+        child: Stack(
+          children: [
+            // Vidéo en plein écran
+            Center(
+              child: AspectRatio(
+                aspectRatio: _videoController!.value.aspectRatio,
+                child: VideoPlayer(_videoController!),
+              ),
+            ),
+
+            // Bouton "Passer" en haut à droite
+            Positioned(
+              top: 40,
+              right: 20,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _videoController?.dispose();
+                    _videoController = null;
+                  });
+                },
+                icon: const Icon(Icons.skip_next),
+                label: const Text('Passer'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white.withOpacity(0.8),
+                  foregroundColor: Colors.black87,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Écran de victoire classique (après la vidéo ou si erreur)
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors:
+              isWinner
+                  ? [
+                    const Color(0xFFFFD700), // Or
+                    const Color(0xFFFF6B6B), // Rouge rosé
+                  ]
+                  : [
+                    const Color(0xFF2C3E50), // Gris foncé
+                    const Color(0xFF34495E), // Gris bleuté
+                  ],
+        ),
+      ),
+      child: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Icône
+                Icon(
+                  isWinner ? Icons.emoji_events : Icons.sentiment_dissatisfied,
+                  size: 120,
+                  color: Colors.white,
+                  shadows: const [
+                    Shadow(
+                      color: Colors.black54,
+                      blurRadius: 20,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+
+                // Titre
+                Text(
+                  isWinner ? '🎉 VICTOIRE ! 🎉' : '😔 DÉFAITE',
+                  style: const TextStyle(
+                    fontSize: 40,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 2,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black54,
+                        blurRadius: 10,
+                        offset: Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+
+                const SizedBox(height: 24),
+
+                // Message Ultima
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.3),
+                      width: 2,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      const Icon(
+                        Icons.auto_awesome,
+                        color: Colors.white,
+                        size: 40,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        isWinner
+                            ? 'Vous avez conservé Ultima pendant 3 tours !'
+                            : 'Votre adversaire a conservé Ultima pendant 3 tours',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        isWinner
+                            ? 'Votre adversaire vous doit un orgasme\n(vous d\'abord) 💕'
+                            : 'Vous devez un orgasme à votre adversaire\n(lui/elle d\'abord) 💕',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.white.withOpacity(0.9),
+                          fontStyle: FontStyle.italic,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 40),
+
+                // Bouton retour
+                ElevatedButton.icon(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.home, size: 24),
+                  label: const Text(
+                    'Retour à l\'accueil',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white.withOpacity(0.9),
+                    foregroundColor: Colors.black87,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _videoController?.dispose();
+    super.dispose();
   }
 }

@@ -59,6 +59,17 @@ class GameSession with _$GameSession {
     /// ID du gagnant (null si partie en cours)
     String? winnerId,
 
+    /// === COMPTEUR ULTIMA ===
+
+    /// ID du joueur qui a le compteur Ultima actif (premier à avoir posé Ultima)
+    String? ultimaOwnerId,
+
+    /// Nombre de tours écoulés depuis que Ultima est en jeu
+    @Default(0) int ultimaTurnCount,
+
+    /// Timestamp de pose d'Ultima pour déterminer qui l'a posé en premier
+    DateTime? ultimaPlayedAt,
+
     /// Timestamp de création
     required DateTime createdAt,
 
