@@ -24,22 +24,26 @@ class CardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final borderColor = _getBorderColor(card.color);
 
-    final cardWidget = Container(
+    final cardWidget = SizedBox(
       width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor, width: 4),
-        boxShadow: [
-          BoxShadow(
-            color: borderColor.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+      child: AspectRatio(
+        aspectRatio: 1 / 1.55,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: borderColor, width: 4),
+            boxShadow: [
+              BoxShadow(
+                color: borderColor.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ],
+          child: compact ? _buildCompactLayout() : _buildFullLayout(),
+        ),
       ),
-      child: compact ? _buildCompactLayout() : _buildFullLayout(),
     );
 
     if (showPreviewOnHover) {
@@ -92,78 +96,87 @@ class CardWidget extends StatelessWidget {
   Widget _buildCompactLayout() {
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Image principale
-          Expanded(
-            flex: 20,
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(8),
-                  topRight: Radius.circular(8),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Column(
+            children: [
+              // Image principale (70% de la hauteur)
+              SizedBox(
+                height: constraints.maxHeight * 0.70,
+                width: double.infinity,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(8),
+                      topRight: Radius.circular(8),
+                    ),
+                    color: Colors.grey[200],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(8),
+                      topRight: Radius.circular(8),
+                    ),
+                    child:
+                        card.imageUrl != null
+                            ? Image.asset(card.imageUrl!, fit: BoxFit.cover)
+                            : const Icon(
+                              Icons.image_not_supported,
+                              size: 30,
+                              color: Colors.grey,
+                            ),
+                  ),
                 ),
-                color: Colors.grey[200],
               ),
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(8),
-                  topRight: Radius.circular(8),
+              // Nom de la carte (20% de la hauteur)
+              Container(
+                height: constraints.maxHeight * 0.20,
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                decoration: BoxDecoration(color: _getBorderColor(card.color)),
+                child: Center(
+                  child: Text(
+                    card.name,
+                    style: TextStyle(
+                      fontSize: (constraints.maxHeight * 0.08).clamp(8.0, 12.0),
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                child:
-                    card.imageUrl != null
-                        ? Image.asset(card.imageUrl!, fit: BoxFit.cover)
-                        : const Icon(
-                          Icons.image_not_supported,
-                          size: 40,
-                          color: Colors.grey,
-                        ),
               ),
-            ),
-          ),
-          // Nom de la carte
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
-            decoration: BoxDecoration(color: _getBorderColor(card.color)),
-            child: Text(
-              card.name,
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+              // Badge type (10% de la hauteur)
+              Container(
+                height: constraints.maxHeight * 0.10,
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(8),
+                    bottomRight: Radius.circular(8),
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    _getCardTypeLabel(card.type),
+                    style: TextStyle(
+                      fontSize: (constraints.maxHeight * 0.06).clamp(6.0, 10.0),
+                      fontWeight: FontWeight.w600,
+                      color: _getBorderColor(card.color),
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.clip,
+                  ),
+                ),
               ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          // Badge type
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(8),
-                bottomRight: Radius.circular(8),
-              ),
-            ),
-            child: Text(
-              _getCardTypeLabel(card.type),
-              style: TextStyle(
-                fontSize: 8,
-                fontWeight: FontWeight.w600,
-                color: _getBorderColor(card.color),
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.clip,
-            ),
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }

@@ -9,15 +9,17 @@ class DeckCounterWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 600;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+    final isSmallMobile = screenWidth < 380;
 
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 10 : 14,
-        vertical: isMobile ? 6 : 8,
+        horizontal: isSmallMobile ? 6 : (isMobile ? 10 : 14),
+        vertical: isSmallMobile ? 4 : (isMobile ? 6 : 8),
       ),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isSmallMobile ? 12 : 16),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -28,74 +30,49 @@ class DeckCounterWidget extends StatelessWidget {
         ),
         border: Border.all(
           color: _getCounterColor().withOpacity(0.6),
-          width: 1.5,
+          width: isSmallMobile ? 1.0 : 1.5,
         ),
         boxShadow: [
           BoxShadow(
             color: _getCounterColor().withOpacity(0.3),
-            blurRadius: 8,
-            spreadRadius: 1,
+            blurRadius: isSmallMobile ? 4 : 8,
+            spreadRadius: isSmallMobile ? 0 : 1,
           ),
         ],
       ),
-      child: Stack(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Brillance en haut
-          Positioned(
-            top: -6,
-            left: -8,
-            right: -8,
-            child: Container(
-              height: 10,
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
-                ),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.white.withOpacity(0.4),
-                    Colors.white.withOpacity(0),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.style,
-                color: Colors.white,
-                size: isMobile ? 16 : 18,
-                shadows: const [
-                  Shadow(
-                    color: Colors.black54,
-                    offset: Offset(0, 1),
-                    blurRadius: 3,
-                  ),
-                ],
-              ),
-              SizedBox(width: isMobile ? 6 : 8),
-              Text(
-                '$remainingCards carte${remainingCards > 1 ? 's' : ''}',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: isMobile ? 12 : 14,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                  shadows: const [
-                    Shadow(
-                      color: Colors.black54,
-                      offset: Offset(0, 1),
-                      blurRadius: 3,
-                    ),
-                  ],
-                ),
+          Icon(
+            Icons.style,
+            color: Colors.white,
+            size: isSmallMobile ? 12 : (isMobile ? 16 : 18),
+            shadows: const [
+              Shadow(
+                color: Colors.black54,
+                offset: Offset(0, 1),
+                blurRadius: 3,
               ),
             ],
+          ),
+          SizedBox(width: isSmallMobile ? 3 : (isMobile ? 6 : 8)),
+          Text(
+            isSmallMobile
+                ? '$remainingCards'
+                : '$remainingCards carte${remainingCards > 1 ? 's' : ''}',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: isSmallMobile ? 9 : (isMobile ? 12 : 14),
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+              shadows: const [
+                Shadow(
+                  color: Colors.black54,
+                  offset: Offset(0, 1),
+                  blurRadius: 3,
+                ),
+              ],
+            ),
           ),
         ],
       ),

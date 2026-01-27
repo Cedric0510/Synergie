@@ -26,49 +26,70 @@ class PlayZoneWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isMobile = MediaQuery.of(context).size.width < 600;
-    final smallFontSize = isMobile ? 11.0 : 13.0;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+    final isSmallMobile = screenWidth < 380;
+    final smallFontSize = isSmallMobile ? 9.0 : (isMobile ? 11.0 : 13.0);
 
     // Récupérer les données du joueur actuel
     final isPlayer1 = session.player1Id == playerId;
     final myData = isPlayer1 ? session.player1Data : session.player2Data!;
 
-    return Column(
+    return Stack(
       children: [
-        // Info Phase en haut (compact) avec style crystal
-        _buildPhaseIndicator(isMobile, smallFontSize),
+        // Zone de jeu principale (cartes)
+        session.resolutionStack.isNotEmpty
+            ? _buildResolutionStack(
+              context,
+              ref,
+              isMobile,
+              isSmallMobile,
+              smallFontSize,
+            )
+            : _buildEmptyState(smallFontSize),
 
-        const SizedBox(height: 12),
+        // Indicateurs sur le côté droit
+        Positioned(
+          top: isSmallMobile ? 4 : 8,
+          right: isSmallMobile ? 4 : 8,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Info Phase en haut (compact) avec style crystal
+              _buildPhaseIndicator(isMobile, isSmallMobile, smallFontSize),
 
-        // === COMPTEUR ULTIMA ===
-        if (session.ultimaOwnerId != null && session.ultimaTurnCount < 3)
-          UltimaCounterWidget(session: session, playerId: playerId),
+              SizedBox(height: isSmallMobile ? 4 : 8),
 
-        if (session.ultimaOwnerId != null && session.ultimaTurnCount < 3)
-          const SizedBox(height: 12),
+              // === COMPTEUR ULTIMA ===
+              if (session.ultimaOwnerId != null && session.ultimaTurnCount < 3)
+                UltimaCounterWidget(session: session, playerId: playerId),
 
-        // === COMPTEUR DE DECK ===
-        DeckCounterWidget(remainingCards: myData.deckCardIds.length),
+              if (session.ultimaOwnerId != null && session.ultimaTurnCount < 3)
+                SizedBox(height: isSmallMobile ? 4 : 8),
 
-        const SizedBox(height: 12),
-
-        // Cartes jouées - affichées côté joueur (ma carte en bas, adversaire en haut)
-        Expanded(
-          child:
-              session.resolutionStack.isNotEmpty
-                  ? _buildResolutionStack(context, ref, isMobile, smallFontSize)
-                  : _buildEmptyState(smallFontSize),
+              // === COMPTEUR DE DECK ===
+              DeckCounterWidget(remainingCards: myData.deckCardIds.length),
+            ],
+          ),
         ),
       ],
     );
   }
 
   /// Indicateur de phase avec style crystal
-  Widget _buildPhaseIndicator(bool isMobile, double smallFontSize) {
+  Widget _buildPhaseIndicator(
+    bool isMobile,
+    bool isSmallMobile,
+    double smallFontSize,
+  ) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.symmetric(
+        horizontal: isSmallMobile ? 8 : 16,
+        vertical: isSmallMobile ? 4 : 8,
+      ),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(isSmallMobile ? 12 : 20),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -80,52 +101,21 @@ class PlayZoneWidget extends ConsumerWidget {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.25),
-            blurRadius: 8,
+            blurRadius: isSmallMobile ? 4 : 8,
             offset: const Offset(0, 3),
           ),
         ],
       ),
-      child: Stack(
-        children: [
-          // Brillance en haut
-          Positioned(
-            top: -8,
-            left: -16,
-            right: -16,
-            child: Container(
-              height: 12,
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
-                ),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.white.withOpacity(0.5),
-                    Colors.white.withOpacity(0),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Text(
-            session.currentPhase.displayName,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: smallFontSize,
-              fontWeight: FontWeight.bold,
-              shadows: const [
-                Shadow(
-                  color: Colors.black38,
-                  offset: Offset(0, 1),
-                  blurRadius: 3,
-                ),
-              ],
-            ),
-          ),
-        ],
+      child: Text(
+        session.currentPhase.displayName,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: smallFontSize,
+          fontWeight: FontWeight.bold,
+          shadows: const [
+            Shadow(color: Colors.black38, offset: Offset(0, 1), blurRadius: 3),
+          ],
+        ),
       ),
     );
   }
@@ -135,111 +125,163 @@ class PlayZoneWidget extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     bool isMobile,
+    bool isSmallMobile,
     double smallFontSize,
   ) {
-    return FutureBuilder(
-      future: ref.read(cardServiceProvider).loadAllCards(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const Center(
-            child: CircularProgressIndicator(color: Colors.white),
-          );
-        }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return FutureBuilder(
+          future: ref.read(cardServiceProvider).loadAllCards(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              );
+            }
 
-        final allCards = snapshot.data!;
-        // Cartes réduites pour voir les 2 si réponse
-        final cardWidth = isMobile ? 140.0 : 200.0;
-        final cardHeight = isMobile ? 196.0 : 280.0;
+            final allCards = snapshot.data!;
 
-        // Déterminer qui a joué quelle carte
-        final firstCardId = session.resolutionStack[0];
-        final firstCard = allCards.firstWhere(
-          (c) => c.id == firstCardId,
-          orElse: () => allCards.first,
-        );
+            // Calcul 100% responsive basé sur l'espace disponible
+            // La carte doit tenir dans la moitié de la hauteur disponible
+            const cardRatio = 1.55;
 
-        final firstCardIsMe = isMyTurn;
+            // Prendre en compte la divider (1px) + marges de sécurité
+            // Plus conservateur sur petits écrans
+            final dividerFactor = isSmallMobile ? 2.5 : 2.3;
+            final availableHeightPerZone =
+                (constraints.maxHeight - 10) / dividerFactor;
+            final availableWidth =
+                constraints.maxWidth *
+                (isSmallMobile ? 0.50 : 0.40); // Plus large sur petit écran
 
-        Widget? responseCard;
-        bool? responseCardIsMe;
-        if (session.resolutionStack.length > 1) {
-          final responseCardId = session.resolutionStack[1];
-          final responseCardData = allCards.firstWhere(
-            (c) => c.id == responseCardId,
-            orElse: () => allCards.first,
-          );
-          responseCardIsMe = !firstCardIsMe;
-          responseCard = CardWidget(
-            card: responseCardData,
-            width: cardWidth,
-            height: cardHeight,
-            showPreviewOnHover: false,
-          );
-        }
+            // Calculer la taille basée sur la hauteur disponible (priorité)
+            double cardWidth = availableHeightPerZone / cardRatio;
 
-        return Column(
-          children: [
-            // Zone adversaire (haut)
-            Expanded(
-              child: Center(
-                child:
-                    (!firstCardIsMe)
-                        ? CardWidget(
-                          card: firstCard,
-                          width: cardWidth,
-                          height: cardHeight,
-                          showPreviewOnHover: false,
-                        )
-                        : (responseCardIsMe != null && !responseCardIsMe!)
-                        ? responseCard!
-                        : const SizedBox.shrink(),
-              ),
-            ),
+            // Limiter par la largeur disponible si nécessaire
+            if (cardWidth > availableWidth) {
+              cardWidth = availableWidth;
+            }
 
-            const Divider(color: Colors.white24, thickness: 1),
+            // Limites min/max adaptées aux petits écrans
+            // Sur très petit écran, permettre des cartes encore plus petites
+            final minWidth = isSmallMobile ? 50.0 : (isMobile ? 60.0 : 80.0);
+            final maxWidth = isSmallMobile ? 100.0 : (isMobile ? 140.0 : 200.0);
+            cardWidth = cardWidth.clamp(minWidth, maxWidth);
 
-            // Zone moi (bas) avec carte + boutons à droite
-            Expanded(
-              child: Stack(
-                children: [
-                  // Carte centrée
-                  Center(
+            // Recalculer la hauteur après le clamp pour garder le ratio
+            final cardHeight = cardWidth * cardRatio;
+
+            // Déterminer qui a joué quelle carte
+            final firstCardId = session.resolutionStack[0];
+            final firstCard = allCards.firstWhere(
+              (c) => c.id == firstCardId,
+              orElse: () => allCards.first,
+            );
+
+            final firstCardIsMe = isMyTurn;
+
+            Widget? responseCard;
+            bool? responseCardIsMe;
+            if (session.resolutionStack.length > 1) {
+              final responseCardId = session.resolutionStack[1];
+              final responseCardData = allCards.firstWhere(
+                (c) => c.id == responseCardId,
+                orElse: () => allCards.first,
+              );
+              responseCardIsMe = !firstCardIsMe;
+              responseCard = ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: cardWidth,
+                  maxHeight: cardHeight,
+                ),
+                child: CardWidget(
+                  card: responseCardData,
+                  width: cardWidth,
+                  compact: true,
+                  showPreviewOnHover: false,
+                ),
+              );
+            }
+
+            return Column(
+              children: [
+                // Zone adversaire (haut)
+                Expanded(
+                  child: Center(
                     child:
-                        firstCardIsMe
-                            ? CardWidget(
-                              card: firstCard,
-                              width: cardWidth,
-                              height: cardHeight,
-                              showPreviewOnHover: false,
+                        (!firstCardIsMe)
+                            ? ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: cardWidth,
+                                maxHeight: cardHeight,
+                              ),
+                              child: CardWidget(
+                                card: firstCard,
+                                width: cardWidth,
+                                compact: true,
+                                showPreviewOnHover: false,
+                              ),
                             )
-                            : (responseCardIsMe != null && responseCardIsMe!)
+                            : (responseCardIsMe != null && !responseCardIsMe!)
                             ? responseCard!
                             : const SizedBox.shrink(),
                   ),
+                ),
 
-                  // Boutons et infos en bas à droite
-                  if (!isMyTurn && session.currentPhase == GamePhase.response)
-                    Positioned(
-                      right: 8,
-                      bottom: 8,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          GameButton(
-                            label: 'Passer',
-                            icon: Icons.arrow_forward,
-                            style: GameButtonStyle.secondary,
-                            height: isMobile ? 35 : 40,
-                            onPressed: onSkipResponse,
-                          ),
-                        ],
+                const Divider(color: Colors.white24, thickness: 1),
+
+                // Zone moi (bas) avec carte + boutons à droite
+                Expanded(
+                  child: Stack(
+                    children: [
+                      // Carte centrée
+                      Center(
+                        child:
+                            firstCardIsMe
+                                ? ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    maxWidth: cardWidth,
+                                    maxHeight: cardHeight,
+                                  ),
+                                  child: CardWidget(
+                                    card: firstCard,
+                                    width: cardWidth,
+                                    compact: true,
+                                    showPreviewOnHover: false,
+                                  ),
+                                )
+                                : (responseCardIsMe != null &&
+                                    responseCardIsMe!)
+                                ? responseCard!
+                                : const SizedBox.shrink(),
                       ),
-                    ),
-                ],
-              ),
-            ),
-          ],
+
+                      // Boutons et infos en bas à droite
+                      if (!isMyTurn &&
+                          session.currentPhase == GamePhase.response)
+                        Positioned(
+                          right: 8,
+                          bottom: 8,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              GameButton(
+                                label: 'Passer',
+                                icon: Icons.arrow_forward,
+                                style: GameButtonStyle.secondary,
+                                height: isMobile ? 35 : 40,
+                                onPressed: onSkipResponse,
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
         );
       },
     );

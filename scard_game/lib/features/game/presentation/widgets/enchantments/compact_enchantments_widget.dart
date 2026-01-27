@@ -22,11 +22,14 @@ class CompactEnchantementsWidget extends ConsumerWidget {
     if (enchantmentIds.isEmpty) return const SizedBox.shrink();
 
     final cardService = ref.watch(cardServiceProvider);
-    final isMobile = MediaQuery.of(context).size.width < 600;
-    final cardWidth = isMobile ? 40.0 : 50.0;
-    final cardHeight = isMobile ? 50.0 : 65.0;
-    final overlapOffset =
-        isMobile ? 12.0 : 15.0; // Décalage entre cartes chevauchées
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+    final isSmallMobile = screenWidth < 380; // Très petits écrans
+
+    // Tailles adaptatives selon l'écran
+    final cardWidth = isSmallMobile ? 32.0 : (isMobile ? 38.0 : 50.0);
+    final cardHeight = isSmallMobile ? 42.0 : (isMobile ? 48.0 : 65.0);
+    final overlapOffset = isSmallMobile ? 10.0 : (isMobile ? 12.0 : 15.0);
 
     return FutureBuilder(
       future: cardService.loadAllCards(),

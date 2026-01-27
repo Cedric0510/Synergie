@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 import '../../../gallery/presentation/screens/gallery_screen.dart';
 import '../../../matchmaking/presentation/screens/create_game_screen.dart';
 import '../../../matchmaking/presentation/screens/join_game_screen.dart';
@@ -14,6 +16,9 @@ class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _titleAnimation;
+  VideoPlayerController? _videoController;
+  bool _videoInitialized = false;
+  bool _videoError = false;
 
   @override
   void initState() {
@@ -28,7 +33,12 @@ class _HomeScreenState extends State<HomeScreen>
       curve: Curves.easeOutCubic,
     );
 
-    // Démarrer l'animation après un court délai
+    // Initialiser la vidéo uniquement sur mobile (pas sur web)
+    if (!kIsWeb) {
+      _initializeVideo();
+    }
+
+    // Démarrer l'animation du titre après un court délai
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _controller.forward();
@@ -36,9 +46,41 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
+  Future<void> _initializeVideo() async {
+    try {
+      _videoController = VideoPlayerController.asset('assets/videos/Intro.mp4');
+      await _videoController!.initialize();
+
+      if (mounted) {
+        setState(() {
+          _videoInitialized = true;
+        });
+
+        // Lancer la vidéo
+        await _videoController!.play();
+
+        // Écouter la fin de la vidéo pour la figer sur la dernière frame
+        _videoController!.addListener(() {
+          if (_videoController!.value.position >=
+              _videoController!.value.duration) {
+            _videoController!.pause();
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Erreur initialisation vidéo: $e');
+      if (mounted) {
+        setState(() {
+          _videoError = true;
+        });
+      }
+    }
+  }
+
   @override
   void dispose() {
     _controller.dispose();
+    _videoController?.dispose();
     super.dispose();
   }
 
@@ -51,13 +93,37 @@ class _HomeScreenState extends State<HomeScreen>
     return Scaffold(
       body: Stack(
         children: [
-          // Image de fond en plein écran
+          // Vidéo sur mobile, image sur web
           Positioned.fill(
-            child: Image.asset(
-              'assets/data/intro.png',
-              fit: BoxFit.cover,
-              alignment: Alignment.topCenter,
-            ),
+            child:
+                kIsWeb
+                    ? Image.asset(
+                      'assets/data/intro.png',
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
+                    )
+                    : _videoError
+                    ? Image.asset(
+                      'assets/data/intro.png',
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
+                    )
+                    : _videoInitialized && _videoController != null
+                    ? FittedBox(
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
+                      child: SizedBox(
+                        width: _videoController!.value.size.width,
+                        height: _videoController!.value.size.height,
+                        child: VideoPlayer(_videoController!),
+                      ),
+                    )
+                    : Container(
+                      color: Colors.black,
+                      child: const Center(
+                        child: CircularProgressIndicator(color: Colors.white),
+                      ),
+                    ),
           ),
 
           // Overlay gradient pour assurer la lisibilité

@@ -692,18 +692,36 @@ class FirebaseService {
       hand.add(drawnCard);
     }
 
-    // Mettre à jour les données joueur
+    // Mettre à jour les données joueur qui a sacrifié
+    // RESET le flag sacrifice car c'est la fin du tour
     final updatedPlayerData = playerData.copyWith(
       handCardIds: hand,
       deckCardIds: deck,
       tension: newTension,
-      hasSacrificedThisTurn: true,
+      hasSacrificedThisTurn: false, // Reset car fin de tour
     );
 
-    final updatedSession =
-        isPlayer1
-            ? session.copyWith(player1Data: updatedPlayerData)
-            : session.copyWith(player2Data: updatedPlayerData);
+    // L'adversaire aussi doit avoir son flag reset
+    final otherPlayerData =
+        isPlayer1 ? session.player2Data : session.player1Data;
+    final updatedOtherPlayerData = otherPlayerData?.copyWith(
+      hasSacrificedThisTurn: false,
+    );
+
+    // Déterminer le joueur suivant (adversaire)
+    final nextPlayerId = isPlayer1 ? session.player2Id : session.player1Id;
+
+    // Construire la session avec TOUTES les modifications en une seule fois
+    final updatedSession = session.copyWith(
+      player1Data:
+          isPlayer1
+              ? updatedPlayerData
+              : (updatedOtherPlayerData ?? session.player1Data),
+      player2Data: isPlayer1 ? updatedOtherPlayerData : updatedPlayerData,
+      currentPhase:
+          GamePhase.draw, // Directement en phase draw du prochain joueur
+      currentPlayerId: nextPlayerId,
+    );
 
     final sessionJson = updatedSession.toJson();
     sessionJson['player1Data'] = updatedSession.player1Data.toJson();
@@ -711,11 +729,8 @@ class FirebaseService {
       sessionJson['player2Data'] = updatedSession.player2Data!.toJson();
     }
 
+    // Une seule opération atomique - pas de nextPhase séparé
     await docRef.set(sessionJson, SetOptions(merge: true));
-
-    // FIN DE TOUR automatique après sacrifice
-    // On passe directement à la phase End puis au tour adverse
-    await nextPhase(sessionId); // Draw → Main → ... → End
   }
 
   /// Ajoute ou retire des PI d'un joueur

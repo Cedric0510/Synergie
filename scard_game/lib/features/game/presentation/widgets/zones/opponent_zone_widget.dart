@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../domain/models/player_data.dart';
 import '../counters/tension_bar_widget.dart';
 import '../enchantments/compact_enchantments_widget.dart';
 
@@ -6,16 +7,18 @@ import '../enchantments/compact_enchantments_widget.dart';
 /// Contient les informations du joueur adverse (nom, points d'inhibition, tension)
 /// et le nombre de cartes en main
 class OpponentZoneWidget extends StatelessWidget {
-  final dynamic opponentData;
+  final PlayerData opponentData;
 
   const OpponentZoneWidget({super.key, required this.opponentData});
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 600;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+    final isSmallMobile = screenWidth < 380;
 
     return Container(
-      padding: EdgeInsets.all(isMobile ? 8 : 16),
+      padding: EdgeInsets.all(isSmallMobile ? 6 : (isMobile ? 8 : 16)),
       decoration: BoxDecoration(
         color: Colors.black.withOpacity(0.3),
         border: Border(
@@ -23,25 +26,30 @@ class OpponentZoneWidget extends StatelessWidget {
         ),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           // Infos adversaire
-          if (isMobile) _buildMobileLayout() else _buildDesktopLayout(),
+          if (isMobile)
+            _buildMobileLayout(isSmallMobile)
+          else
+            _buildDesktopLayout(),
 
-          SizedBox(height: isMobile ? 6 : 8),
+          SizedBox(height: isSmallMobile ? 4 : (isMobile ? 6 : 8)),
 
           // Barre de tension
           TensionBarWidget(tension: opponentData.tension),
 
-          SizedBox(height: isMobile ? 4 : 8),
+          SizedBox(height: isSmallMobile ? 2 : (isMobile ? 4 : 8)),
         ],
       ),
     );
   }
 
   /// Layout mobile : version verticale compacte
-  Widget _buildMobileLayout() {
+  Widget _buildMobileLayout(bool isSmallMobile) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Row(
           children: [
@@ -50,28 +58,31 @@ class OpponentZoneWidget extends StatelessWidget {
                   ? Icons.male
                   : Icons.female,
               color: Colors.white70,
-              size: 18,
+              size: isSmallMobile ? 16 : 18,
             ),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
                 opponentData.name,
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white,
-                  fontSize: 14,
+                  fontSize: isSmallMobile ? 12 : 14,
                   fontWeight: FontWeight.bold,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
             const SizedBox(width: 8),
-            _buildInhibitionPointsBadge(isMobile: true),
+            _buildInhibitionPointsBadge(
+              isMobile: true,
+              isSmallMobile: isSmallMobile,
+            ),
             const SizedBox(width: 8),
-            _buildHandCountBadge(isMobile: true),
+            _buildHandCountBadge(isMobile: true, isSmallMobile: isSmallMobile),
           ],
         ),
         if (opponentData.activeEnchantmentIds.isNotEmpty) ...[
-          const SizedBox(height: 6),
+          SizedBox(height: isSmallMobile ? 4 : 6),
           CompactEnchantementsWidget(
             enchantmentIds: opponentData.activeEnchantmentIds,
           ),
@@ -121,14 +132,19 @@ class OpponentZoneWidget extends StatelessWidget {
   }
 
   /// Badge affichant les points d'inhibition
-  Widget _buildInhibitionPointsBadge({required bool isMobile}) {
+  Widget _buildInhibitionPointsBadge({
+    required bool isMobile,
+    bool isSmallMobile = false,
+  }) {
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 10 : 14,
-        vertical: isMobile ? 6 : 8,
+        horizontal: isSmallMobile ? 6 : (isMobile ? 10 : 14),
+        vertical: isSmallMobile ? 4 : (isMobile ? 6 : 8),
       ),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(isMobile ? 16 : 20),
+        borderRadius: BorderRadius.circular(
+          isSmallMobile ? 12 : (isMobile ? 16 : 20),
+        ),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -140,65 +156,39 @@ class OpponentZoneWidget extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.25),
-            blurRadius: 8,
+            blurRadius: isSmallMobile ? 4 : 8,
             offset: const Offset(0, 3),
           ),
         ],
       ),
-      child: Stack(
-        children: [
-          // Brillance en haut
-          Positioned(
-            top: isMobile ? -6 : -8,
-            left: isMobile ? -10 : -14,
-            right: isMobile ? -10 : -14,
-            child: Container(
-              height: isMobile ? 12 : 15,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(isMobile ? 16 : 20),
-                  topRight: Radius.circular(isMobile ? 16 : 20),
-                ),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.white.withOpacity(0.5),
-                    Colors.white.withOpacity(0),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Text(
-            '${opponentData.inhibitionPoints} PI',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: isMobile ? 12 : 16,
-              fontWeight: FontWeight.bold,
-              shadows: const [
-                Shadow(
-                  color: Colors.black38,
-                  offset: Offset(0, 1),
-                  blurRadius: 3,
-                ),
-              ],
-            ),
-          ),
-        ],
+      child: Text(
+        '${opponentData.inhibitionPoints} PI',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: isSmallMobile ? 10 : (isMobile ? 12 : 16),
+          fontWeight: FontWeight.bold,
+          shadows: const [
+            Shadow(color: Colors.black38, offset: Offset(0, 1), blurRadius: 3),
+          ],
+        ),
       ),
     );
   }
 
   /// Badge affichant le nombre de cartes en main
-  Widget _buildHandCountBadge({required bool isMobile}) {
+  Widget _buildHandCountBadge({
+    required bool isMobile,
+    bool isSmallMobile = false,
+  }) {
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 8 : 12,
-        vertical: isMobile ? 6 : 8,
+        horizontal: isSmallMobile ? 5 : (isMobile ? 8 : 12),
+        vertical: isSmallMobile ? 4 : (isMobile ? 6 : 8),
       ),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
+        borderRadius: BorderRadius.circular(
+          isSmallMobile ? 8 : (isMobile ? 12 : 16),
+        ),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -210,7 +200,7 @@ class OpponentZoneWidget extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.25),
-            blurRadius: 8,
+            blurRadius: isSmallMobile ? 4 : 8,
             offset: const Offset(0, 3),
           ),
         ],
@@ -221,7 +211,7 @@ class OpponentZoneWidget extends StatelessWidget {
           Icon(
             Icons.style,
             color: Colors.white,
-            size: isMobile ? 12 : 16,
+            size: isSmallMobile ? 10 : (isMobile ? 12 : 16),
             shadows: const [
               Shadow(
                 color: Colors.black38,
@@ -230,14 +220,12 @@ class OpponentZoneWidget extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(width: isMobile ? 4 : 6),
+          SizedBox(width: isSmallMobile ? 2 : (isMobile ? 4 : 6)),
           Text(
-            isMobile
-                ? '${opponentData.handCardIds.length}'
-                : 'Main: ${opponentData.handCardIds.length}',
+            '${opponentData.handCardIds.length}',
             style: TextStyle(
               color: Colors.white,
-              fontSize: isMobile ? 11 : 13,
+              fontSize: isSmallMobile ? 9 : (isMobile ? 11 : 13),
               fontWeight: FontWeight.w500,
               shadows: const [
                 Shadow(
