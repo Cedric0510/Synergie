@@ -51,6 +51,14 @@ mixin _$PlayerData {
   /// IDs des enchantements actifs
   List<String> get activeEnchantmentIds => throw _privateConstructorUsedError;
 
+  /// Palier actif pour chaque enchantement (white/blue/yellow/red)
+  Map<String, String> get activeEnchantmentTiers =>
+      throw _privateConstructorUsedError;
+
+  /// Modificateurs persistants actifs (type -> liste d'enchantements)
+  Map<String, List<String>> get activeStatusModifiers =>
+      throw _privateConstructorUsedError;
+
   /// Le joueur est-il nu ? (important pour Ultima)
   bool get isNaked => throw _privateConstructorUsedError;
 
@@ -99,6 +107,8 @@ abstract class $PlayerDataCopyWith<$Res> {
     List<String> graveyardCardIds,
     List<String> playedCardIds,
     List<String> activeEnchantmentIds,
+    Map<String, String> activeEnchantmentTiers,
+    Map<String, List<String>> activeStatusModifiers,
     bool isNaked,
     CardLevel currentLevel,
     bool isReady,
@@ -133,6 +143,8 @@ class _$PlayerDataCopyWithImpl<$Res, $Val extends PlayerData>
     Object? graveyardCardIds = null,
     Object? playedCardIds = null,
     Object? activeEnchantmentIds = null,
+    Object? activeEnchantmentTiers = null,
+    Object? activeStatusModifiers = null,
     Object? isNaked = null,
     Object? currentLevel = null,
     Object? isReady = null,
@@ -192,6 +204,16 @@ class _$PlayerDataCopyWithImpl<$Res, $Val extends PlayerData>
                     ? _value.activeEnchantmentIds
                     : activeEnchantmentIds // ignore: cast_nullable_to_non_nullable
                         as List<String>,
+            activeEnchantmentTiers:
+                null == activeEnchantmentTiers
+                    ? _value.activeEnchantmentTiers
+                    : activeEnchantmentTiers // ignore: cast_nullable_to_non_nullable
+                        as Map<String, String>,
+            activeStatusModifiers:
+                null == activeStatusModifiers
+                    ? _value.activeStatusModifiers
+                    : activeStatusModifiers // ignore: cast_nullable_to_non_nullable
+                        as Map<String, List<String>>,
             isNaked:
                 null == isNaked
                     ? _value.isNaked
@@ -248,6 +270,8 @@ abstract class _$$PlayerDataImplCopyWith<$Res>
     List<String> graveyardCardIds,
     List<String> playedCardIds,
     List<String> activeEnchantmentIds,
+    Map<String, String> activeEnchantmentTiers,
+    Map<String, List<String>> activeStatusModifiers,
     bool isNaked,
     CardLevel currentLevel,
     bool isReady,
@@ -281,6 +305,8 @@ class __$$PlayerDataImplCopyWithImpl<$Res>
     Object? graveyardCardIds = null,
     Object? playedCardIds = null,
     Object? activeEnchantmentIds = null,
+    Object? activeEnchantmentTiers = null,
+    Object? activeStatusModifiers = null,
     Object? isNaked = null,
     Object? currentLevel = null,
     Object? isReady = null,
@@ -340,6 +366,16 @@ class __$$PlayerDataImplCopyWithImpl<$Res>
                 ? _value._activeEnchantmentIds
                 : activeEnchantmentIds // ignore: cast_nullable_to_non_nullable
                     as List<String>,
+        activeEnchantmentTiers:
+            null == activeEnchantmentTiers
+                ? _value._activeEnchantmentTiers
+                : activeEnchantmentTiers // ignore: cast_nullable_to_non_nullable
+                    as Map<String, String>,
+        activeStatusModifiers:
+            null == activeStatusModifiers
+                ? _value._activeStatusModifiers
+                : activeStatusModifiers // ignore: cast_nullable_to_non_nullable
+                    as Map<String, List<String>>,
         isNaked:
             null == isNaked
                 ? _value.isNaked
@@ -389,6 +425,8 @@ class _$PlayerDataImpl implements _PlayerData {
     final List<String> graveyardCardIds = const [],
     final List<String> playedCardIds = const [],
     final List<String> activeEnchantmentIds = const [],
+    final Map<String, String> activeEnchantmentTiers = const {},
+    final Map<String, List<String>> activeStatusModifiers = const {},
     this.isNaked = false,
     this.currentLevel = CardLevel.white,
     this.isReady = false,
@@ -399,7 +437,9 @@ class _$PlayerDataImpl implements _PlayerData {
        _deckCardIds = deckCardIds,
        _graveyardCardIds = graveyardCardIds,
        _playedCardIds = playedCardIds,
-       _activeEnchantmentIds = activeEnchantmentIds;
+       _activeEnchantmentIds = activeEnchantmentIds,
+       _activeEnchantmentTiers = activeEnchantmentTiers,
+       _activeStatusModifiers = activeStatusModifiers;
 
   factory _$PlayerDataImpl.fromJson(Map<String, dynamic> json) =>
       _$$PlayerDataImplFromJson(json);
@@ -488,6 +528,32 @@ class _$PlayerDataImpl implements _PlayerData {
     return EqualUnmodifiableListView(_activeEnchantmentIds);
   }
 
+  /// Palier actif pour chaque enchantement (white/blue/yellow/red)
+  final Map<String, String> _activeEnchantmentTiers;
+
+  /// Palier actif pour chaque enchantement (white/blue/yellow/red)
+  @override
+  @JsonKey()
+  Map<String, String> get activeEnchantmentTiers {
+    if (_activeEnchantmentTiers is EqualUnmodifiableMapView)
+      return _activeEnchantmentTiers;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_activeEnchantmentTiers);
+  }
+
+  /// Modificateurs persistants actifs (type -> liste d'enchantements)
+  final Map<String, List<String>> _activeStatusModifiers;
+
+  /// Modificateurs persistants actifs (type -> liste d'enchantements)
+  @override
+  @JsonKey()
+  Map<String, List<String>> get activeStatusModifiers {
+    if (_activeStatusModifiers is EqualUnmodifiableMapView)
+      return _activeStatusModifiers;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_activeStatusModifiers);
+  }
+
   /// Le joueur est-il nu ? (important pour Ultima)
   @override
   @JsonKey()
@@ -520,7 +586,7 @@ class _$PlayerDataImpl implements _PlayerData {
 
   @override
   String toString() {
-    return 'PlayerData(playerId: $playerId, name: $name, gender: $gender, inhibitionPoints: $inhibitionPoints, tension: $tension, handCardIds: $handCardIds, deckCardIds: $deckCardIds, graveyardCardIds: $graveyardCardIds, playedCardIds: $playedCardIds, activeEnchantmentIds: $activeEnchantmentIds, isNaked: $isNaked, currentLevel: $currentLevel, isReady: $isReady, hasSacrificedThisTurn: $hasSacrificedThisTurn, connectedAt: $connectedAt, lastActivityAt: $lastActivityAt)';
+    return 'PlayerData(playerId: $playerId, name: $name, gender: $gender, inhibitionPoints: $inhibitionPoints, tension: $tension, handCardIds: $handCardIds, deckCardIds: $deckCardIds, graveyardCardIds: $graveyardCardIds, playedCardIds: $playedCardIds, activeEnchantmentIds: $activeEnchantmentIds, activeEnchantmentTiers: $activeEnchantmentTiers, activeStatusModifiers: $activeStatusModifiers, isNaked: $isNaked, currentLevel: $currentLevel, isReady: $isReady, hasSacrificedThisTurn: $hasSacrificedThisTurn, connectedAt: $connectedAt, lastActivityAt: $lastActivityAt)';
   }
 
   @override
@@ -555,6 +621,14 @@ class _$PlayerDataImpl implements _PlayerData {
               other._activeEnchantmentIds,
               _activeEnchantmentIds,
             ) &&
+            const DeepCollectionEquality().equals(
+              other._activeEnchantmentTiers,
+              _activeEnchantmentTiers,
+            ) &&
+            const DeepCollectionEquality().equals(
+              other._activeStatusModifiers,
+              _activeStatusModifiers,
+            ) &&
             (identical(other.isNaked, isNaked) || other.isNaked == isNaked) &&
             (identical(other.currentLevel, currentLevel) ||
                 other.currentLevel == currentLevel) &&
@@ -581,6 +655,8 @@ class _$PlayerDataImpl implements _PlayerData {
     const DeepCollectionEquality().hash(_graveyardCardIds),
     const DeepCollectionEquality().hash(_playedCardIds),
     const DeepCollectionEquality().hash(_activeEnchantmentIds),
+    const DeepCollectionEquality().hash(_activeEnchantmentTiers),
+    const DeepCollectionEquality().hash(_activeStatusModifiers),
     isNaked,
     currentLevel,
     isReady,
@@ -615,6 +691,8 @@ abstract class _PlayerData implements PlayerData {
     final List<String> graveyardCardIds,
     final List<String> playedCardIds,
     final List<String> activeEnchantmentIds,
+    final Map<String, String> activeEnchantmentTiers,
+    final Map<String, List<String>> activeStatusModifiers,
     final bool isNaked,
     final CardLevel currentLevel,
     final bool isReady,
@@ -665,6 +743,14 @@ abstract class _PlayerData implements PlayerData {
   /// IDs des enchantements actifs
   @override
   List<String> get activeEnchantmentIds;
+
+  /// Palier actif pour chaque enchantement (white/blue/yellow/red)
+  @override
+  Map<String, String> get activeEnchantmentTiers;
+
+  /// Modificateurs persistants actifs (type -> liste d'enchantements)
+  @override
+  Map<String, List<String>> get activeStatusModifiers;
 
   /// Le joueur est-il nu ? (important pour Ultima)
   @override

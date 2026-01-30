@@ -48,6 +48,12 @@ class GameCard with _$GameCard {
     /// Nombre de cartes à piocher immédiatement (0 = aucune)
     @Default(0) int drawCards,
 
+    /// Nombre de cartes a piocher par palier (cartes fusionnees)
+    @Default(0) int drawCardsWhite,
+    @Default(0) int drawCardsBlue,
+    @Default(0) int drawCardsYellow,
+    @Default(0) int drawCardsRed,
+
     /// Nombre de cartes à piocher par tour (enchantements uniquement)
     @Default(0) int drawCardsPerTurn,
 
@@ -97,6 +103,15 @@ class GameCard with _$GameCard {
     @Default(false) bool isEnchantment,
 
     // === SPÉCIFIQUE AUX ENCHANTEMENTS ===
+
+    /// Détermine qui doit voir/appliquer l'effet selon le palier (owner/opponent/both)
+    @Default({}) Map<String, String> enchantmentTargets,
+
+    /// Effets récurrents (ex: pioche +1 au début du tour)
+    @Default([]) List<Map<String, dynamic>> recurringEffects,
+
+    /// Modificateurs persistants (ex: PI bloqués)
+    @Default([]) List<Map<String, dynamic>> statusModifiers,
 
     /// Gain de tension par tour pour le lanceur (null si pas un enchantement)
     /// Ex: 1, 3, 5, 7 ou null

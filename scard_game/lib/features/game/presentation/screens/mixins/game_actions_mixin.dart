@@ -258,6 +258,15 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       }
 
       // Vérifier et déduire le coût PI
+      // Choisir le palier d'effet (cartes fusionn?es uniquement)
+      CardColor? selectedTier;
+      if (card.color != CardColor.green && _hasTierEffects(card)) {
+        selectedTier = await _selectTierForCard(effectiveLevel);
+        if (selectedTier == null) {
+          return;
+        }
+      }
+
       final cost = firebaseService.parseLauncherCost(card.launcherCost);
       if (cost > 0) {
         try {
@@ -272,13 +281,31 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
         }
       }
 
-      await firebaseService.playCard(sessionId, playerId, selectedCardIndex!);
+      final tierKey =
+          selectedTier != null
+              ? _tierKeyFromColor(selectedTier)
+              : (card.isEnchantment ? _tierKeyFromColor(card.color) : null);
+      await firebaseService.playCard(
+        sessionId,
+        playerId,
+        selectedCardIndex!,
+        enchantmentTierKey: card.isEnchantment ? tierKey : null,
+      );
       setState(() {
         selectedCardIndex = null;
       });
 
       // Traiter les mécaniques spéciales de la carte
-      await _handleCardMechanics(card, session, isPlayer1, myData);
+      await _handleCardMechanics(
+        card,
+        session,
+        isPlayer1,
+        myData,
+        selectedTierKey: tierKey,
+      );
+      if (selectedTier != null) {
+        await _queuePendingDrawForTier(card, selectedTier);
+      }
 
       // Augmenter la tension
       await _handleTensionIncrease(card);
@@ -317,43 +344,26 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
     String cardId,
   ) async {
     final firebaseService = ref.read(firebaseServiceProvider);
-    final agreement = await GameDialogs.showNegotiationDialog(context);
 
-    if (agreement == true) {
-      // Entente trouvée → le sort est contré
+    try {
       final updatedHand = List<String>.from(myData.handCardIds);
       updatedHand.removeAt(selectedCardIndex!);
 
-      final opponentData =
-          isPlayer1 ? session.player2Data! : session.player1Data;
-      final updatedOpponentHand = List<String>.from(opponentData.handCardIds);
-
-      // Logique spéciale pour Ultima
-      if (session.resolutionStack.isNotEmpty) {
-        final contredCardId = session.resolutionStack.last;
-        if (contredCardId.contains('red_016')) {
-          updatedOpponentHand.add(contredCardId);
-        }
-      }
+      final updatedResolutionStack = [
+        ...session.resolutionStack,
+        cardId,
+      ];
 
       final updatedPlayerData = myData.copyWith(handCardIds: updatedHand);
-      final updatedOpponentPlayerData = opponentData.copyWith(
-        handCardIds: updatedOpponentHand,
-      );
-
       final updatedSession =
           isPlayer1
               ? session.copyWith(
                 player1Data: updatedPlayerData,
-                player2Data: updatedOpponentPlayerData,
-                resolutionStack: [],
-                pendingSpellActions: [],
+                resolutionStack: updatedResolutionStack,
               )
               : session.copyWith(
-                player1Data: updatedOpponentPlayerData,
                 player2Data: updatedPlayerData,
-                resolutionStack: [],
-                pendingSpellActions: [],
+                resolutionStack: updatedResolutionStack,
               );
 
       final docRef = firebaseService.firestore
@@ -375,43 +385,187 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              '🤝 Entente trouvée ! Les deux cartes sont retirées du jeu.',
+              "🤝 Négociation proposée - En attente de l'adversaire",
             ),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 3),
           ),
         );
       }
-
-      await firebaseService.nextPhase(sessionId);
-    } else {
-      setState(() {
-        selectedCardIndex = null;
-      });
-
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              '❌ Pas d\'entente. Le sort n\'est pas contré. Carte Négociations conservée en main.',
-            ),
-            backgroundColor: Colors.orange,
-            duration: Duration(seconds: 3),
+          SnackBar(
+            content: Text("❌ Erreur négociation: $e"),
+            backgroundColor: Colors.red,
           ),
         );
       }
-
-      await firebaseService.nextPhase(sessionId);
     }
   }
+
+  Future<CardColor?> _selectTierForCard(CardLevel effectiveLevel) async {
+    final available = _tiersForLevel(effectiveLevel);
+    if (available.isEmpty) return null;
+
+    return showDialog<CardColor>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF2d4263),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: Color(0xFF6DD5FA), width: 2),
+          ),
+          title: const Text(
+            'Choisir le palier',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final tier in available)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(_tierColorValue(tier)),
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: () => Navigator.pop(context, tier),
+                    child: Text(_tierLabel(tier)),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  List<CardColor> _tiersForLevel(CardLevel level) {
+    switch (level) {
+      case CardLevel.white:
+        return [CardColor.white];
+      case CardLevel.blue:
+        return [CardColor.white, CardColor.blue];
+      case CardLevel.yellow:
+        return [CardColor.white, CardColor.blue, CardColor.yellow];
+      case CardLevel.red:
+        return [CardColor.white, CardColor.blue, CardColor.yellow, CardColor.red];
+    }
+  }
+
+  String _tierLabel(CardColor tier) {
+    switch (tier) {
+      case CardColor.white:
+        return 'Blanc';
+      case CardColor.blue:
+        return 'Bleu';
+      case CardColor.yellow:
+        return 'Jaune';
+      case CardColor.red:
+        return 'Rouge';
+      case CardColor.green:
+        return 'Vert';
+    }
+  }
+
+  int _tierColorValue(CardColor tier) {
+    switch (tier) {
+      case CardColor.white:
+        return 0xFF9E9E9E;
+      case CardColor.blue:
+        return 0xFF2196F3;
+      case CardColor.yellow:
+        return 0xFFFFC107;
+      case CardColor.red:
+        return 0xFFF44336;
+      case CardColor.green:
+        return 0xFF4CAF50;
+    }
+  }
+
+  bool _hasTierEffects(GameCard card) {
+    return card.gameEffect.contains('Blanc:') &&
+        card.gameEffect.contains('Bleu:') &&
+        card.gameEffect.contains('Jaune:') &&
+        card.gameEffect.contains('Rouge:');
+  }
+
+
+  Future<void> _queuePendingDrawForTier(
+    GameCard card,
+    CardColor tier,
+  ) async {
+    final count = _getDrawCountForTier(card, tier);
+    if (count <= 0) return;
+
+    final firebaseService = ref.read(firebaseServiceProvider);
+    final session = await firebaseService.getGameSession(sessionId);
+
+    final pendingActions =
+        session.pendingSpellActions
+            .map<PendingAction>(
+              (json) => PendingAction.fromJson(Map<String, dynamic>.from(json)),
+            )
+            .toList();
+
+    pendingActions.add(
+      PendingAction(
+        type: PendingActionType.drawCards,
+        targetPlayerId: playerId,
+        data: {'count': count},
+      ),
+    );
+
+    await firebaseService.storePendingActions(sessionId, pendingActions);
+  }
+
+  String _tierKeyFromColor(CardColor tier) {
+    switch (tier) {
+      case CardColor.white:
+        return 'white';
+      case CardColor.blue:
+        return 'blue';
+      case CardColor.yellow:
+        return 'yellow';
+      case CardColor.red:
+        return 'red';
+      case CardColor.green:
+        return 'green';
+    }
+  }
+
+  int _getDrawCountForTier(GameCard card, CardColor tier) {
+    switch (tier) {
+      case CardColor.white:
+        return card.drawCardsWhite;
+      case CardColor.blue:
+        return card.drawCardsBlue;
+      case CardColor.yellow:
+        return card.drawCardsYellow;
+      case CardColor.red:
+        return card.drawCardsRed;
+      case CardColor.green:
+        return 0;
+    }
+  }
+
 
   /// Traite les mécaniques spéciales de la carte
   Future<void> _handleCardMechanics(
     GameCard card,
     GameSession session,
     bool isPlayer1,
-    PlayerData myData,
-  ) async {
+    PlayerData myData, {
+    String? selectedTierKey,
+  }) async {
     if (card.mechanics.isEmpty) return;
 
     final mechanicService = ref.read(mechanicServiceProvider);
@@ -431,6 +585,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       handCardIds: updatedMyData.handCardIds,
       activeEnchantmentIds: updatedMyData.activeEnchantmentIds,
       opponentEnchantmentIds: opponentData.activeEnchantmentIds,
+      selectedTierKey: selectedTierKey,
     );
 
     if (!mechanicResult.success) {
@@ -626,6 +781,10 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
 
       if (updatedResolutionStack.isNotEmpty) {
         final lastCardId = updatedResolutionStack.removeLast();
+        final updatedPlayedTiers = Map<String, String>.from(
+          currentSession.playedCardTiers,
+        );
+        updatedPlayedTiers.remove(lastCardId);
         final updatedHand = List<String>.from(currentMyData.handCardIds);
         updatedHand.add(lastCardId);
 
@@ -635,7 +794,10 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
         final updatedSession = (currentIsPlayer1
                 ? currentSession.copyWith(player1Data: updatedPlayerData)
                 : currentSession.copyWith(player2Data: updatedPlayerData))
-            .copyWith(resolutionStack: updatedResolutionStack);
+            .copyWith(
+              resolutionStack: updatedResolutionStack,
+              playedCardTiers: updatedPlayedTiers,
+            );
 
         final docRef = firebaseService.firestore
             .collection('game_sessions')
@@ -648,6 +810,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
         }
 
         await docRef.update(sessionJson);
+        await firebaseService.clearPendingActions(sessionId);
 
         setState(() {
           pendingCardValidation = false;
@@ -725,6 +888,10 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
         myData.activeEnchantmentIds,
       );
       updatedEnchantments.remove(enchantmentId);
+      final updatedEnchantmentTiers = Map<String, String>.from(
+        myData.activeEnchantmentTiers,
+      );
+      updatedEnchantmentTiers.remove(enchantmentId);
 
       // Logique spéciale pour Ultima
       final updatedHand = List<String>.from(myData.handCardIds);
@@ -734,6 +901,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
 
       final updatedMyData = myData.copyWith(
         activeEnchantmentIds: updatedEnchantments,
+        activeEnchantmentTiers: updatedEnchantmentTiers,
         handCardIds: updatedHand,
       );
 
@@ -806,6 +974,108 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('❌ Erreur: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+
+  /// R?sout la n?gociation (d?cision prise par le joueur cibl?)
+  Future<void> resolveNegotiation(bool agreement) async {
+    final firebaseService = ref.read(firebaseServiceProvider);
+
+    try {
+      final session = await firebaseService.getGameSession(sessionId);
+
+      if (session.resolutionStack.length < 2) return;
+
+      final originalCardId = session.resolutionStack.first;
+      final negotiationCardId = session.resolutionStack.last;
+
+      final currentIsPlayer1 = session.currentPlayerId == session.player1Id;
+      final currentData =
+          currentIsPlayer1 ? session.player1Data : session.player2Data!;
+      final responderData =
+          currentIsPlayer1 ? session.player2Data! : session.player1Data;
+
+      GameSession updatedSession;
+
+      if (agreement) {
+        // Entente trouv?e ? sort contr?, vider la pile
+        final updatedCurrentHand = List<String>.from(currentData.handCardIds);
+        if (originalCardId.contains('red_016')) {
+          updatedCurrentHand.add(originalCardId);
+        }
+
+        final updatedCurrentData = currentData.copyWith(
+          handCardIds: updatedCurrentHand,
+        );
+
+        updatedSession =
+            currentIsPlayer1
+                ? session.copyWith(
+                  player1Data: updatedCurrentData,
+                  player2Data: responderData,
+                  resolutionStack: [],
+                  playedCardTiers: {},
+                  pendingSpellActions: [],
+                )
+                : session.copyWith(
+                  player1Data: responderData,
+                  player2Data: updatedCurrentData,
+                  resolutionStack: [],
+                  playedCardTiers: {},
+                  pendingSpellActions: [],
+                );
+      } else {
+        // Pas d'entente ? retirer la n?gociation, rendre la carte au r?pondant
+        final updatedStack = List<String>.from(session.resolutionStack)
+          ..removeLast();
+
+        final updatedResponderHand = List<String>.from(responderData.handCardIds)
+          ..add(negotiationCardId);
+
+        final updatedResponderData = responderData.copyWith(
+          handCardIds: updatedResponderHand,
+        );
+
+        updatedSession =
+            currentIsPlayer1
+                ? session.copyWith(
+                  player1Data: currentData,
+                  player2Data: updatedResponderData,
+                  resolutionStack: updatedStack,
+                )
+                : session.copyWith(
+                  player1Data: updatedResponderData,
+                  player2Data: currentData,
+                  resolutionStack: updatedStack,
+                );
+      }
+
+      await firebaseService.updateSession(sessionId, updatedSession);
+      await firebaseService.nextPhase(sessionId);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              agreement
+                  ? "🤝 Entente trouvée - Sort contré"
+                  : "❌ Pas d'entente - Le sort se résout",
+            ),
+            backgroundColor: agreement ? Colors.green : Colors.orange,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("❌ Erreur résolution négociation: $e"),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }

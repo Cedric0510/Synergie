@@ -39,6 +39,12 @@ class PlayerData with _$PlayerData {
     /// IDs des enchantements actifs
     @Default([]) List<String> activeEnchantmentIds,
 
+    /// Palier actif pour chaque enchantement (white/blue/yellow/red)
+    @Default({}) Map<String, String> activeEnchantmentTiers,
+
+    /// Modificateurs persistants actifs (type -> liste d'enchantements)
+    @Default({}) Map<String, List<String>> activeStatusModifiers,
+
     /// Le joueur est-il nu ? (important pour Ultima)
     @Default(false) bool isNaked,
 

@@ -18,6 +18,10 @@ _$GameCardImpl _$$GameCardImplFromJson(Map<String, dynamic> json) =>
       damageIfRefused: (json['damageIfRefused'] as num?)?.toInt() ?? 0,
       gameEffect: json['gameEffect'] as String,
       drawCards: (json['drawCards'] as num?)?.toInt() ?? 0,
+      drawCardsWhite: (json['drawCardsWhite'] as num?)?.toInt() ?? 0,
+      drawCardsBlue: (json['drawCardsBlue'] as num?)?.toInt() ?? 0,
+      drawCardsYellow: (json['drawCardsYellow'] as num?)?.toInt() ?? 0,
+      drawCardsRed: (json['drawCardsRed'] as num?)?.toInt() ?? 0,
       drawCardsPerTurn: (json['drawCardsPerTurn'] as num?)?.toInt() ?? 0,
       removeClothing: (json['removeClothing'] as num?)?.toInt() ?? 0,
       addClothing: (json['addClothing'] as num?)?.toInt() ?? 0,
@@ -35,6 +39,21 @@ _$GameCardImpl _$$GameCardImplFromJson(Map<String, dynamic> json) =>
       tensionIncrease: (json['tensionIncrease'] as num?)?.toInt() ?? 0,
       piCost: (json['piCost'] as num?)?.toInt() ?? 0,
       isEnchantment: json['isEnchantment'] as bool? ?? false,
+      enchantmentTargets:
+          (json['enchantmentTargets'] as Map<String, dynamic>?)?.map(
+            (k, e) => MapEntry(k, e as String),
+          ) ??
+          const {},
+      recurringEffects:
+          (json['recurringEffects'] as List<dynamic>?)
+              ?.map((e) => e as Map<String, dynamic>)
+              .toList() ??
+          const [],
+      statusModifiers:
+          (json['statusModifiers'] as List<dynamic>?)
+              ?.map((e) => e as Map<String, dynamic>)
+              .toList() ??
+          const [],
       tensionPerTurn: (json['tensionPerTurn'] as num?)?.toInt(),
       maxPerDeck: (json['maxPerDeck'] as num?)?.toInt(),
       mechanics:
@@ -58,6 +77,10 @@ Map<String, dynamic> _$$GameCardImplToJson(_$GameCardImpl instance) =>
       'damageIfRefused': instance.damageIfRefused,
       'gameEffect': instance.gameEffect,
       'drawCards': instance.drawCards,
+      'drawCardsWhite': instance.drawCardsWhite,
+      'drawCardsBlue': instance.drawCardsBlue,
+      'drawCardsYellow': instance.drawCardsYellow,
+      'drawCardsRed': instance.drawCardsRed,
       'drawCardsPerTurn': instance.drawCardsPerTurn,
       'removeClothing': instance.removeClothing,
       'addClothing': instance.addClothing,
@@ -74,6 +97,9 @@ Map<String, dynamic> _$$GameCardImplToJson(_$GameCardImpl instance) =>
       'tensionIncrease': instance.tensionIncrease,
       'piCost': instance.piCost,
       'isEnchantment': instance.isEnchantment,
+      'enchantmentTargets': instance.enchantmentTargets,
+      'recurringEffects': instance.recurringEffects,
+      'statusModifiers': instance.statusModifiers,
       'tensionPerTurn': instance.tensionPerTurn,
       'maxPerDeck': instance.maxPerDeck,
       'mechanics': instance.mechanics,

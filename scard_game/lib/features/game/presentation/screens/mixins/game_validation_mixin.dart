@@ -522,8 +522,15 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
       final isPlayer1 = session.player1Id == playerId;
       final opponentId = isPlayer1 ? session.player2Id! : session.player1Id;
 
-      // GESTION MANUELLE : Si action refusée, c'est au joueur de retirer ses PI
-      // Plus de déduction automatique
+      // Exécuter les actions pendantes (sort non contré)
+      if (session.pendingSpellActions.isNotEmpty) {
+        await executePendingActions(session);
+      }
+
+      // Déduction automatique des PI si l'action est refusée
+      if (!actionCompleted) {
+        await firebaseService.updatePlayerPI(sessionId, playerId, -3);
+      }
 
       // Résoudre les autres effets
       for (int i = session.resolutionStack.length - 1; i >= 0; i--) {
@@ -552,7 +559,7 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
             content: Text(
               actionCompleted
                   ? '✅ Action validée - Effets résolus'
-                  : '❌ Action refusée - N\'oubliez pas de retirer $damageIfRefused PI manuellement !',
+                  : '❌ Action refusée - 3 PI retirés',
             ),
             backgroundColor: actionCompleted ? Colors.green : Colors.orange,
             duration: const Duration(seconds: 4),
@@ -588,8 +595,13 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
       final isPlayer1 = session.player1Id == playerId;
       final opponentId = isPlayer1 ? session.player2Id! : session.player1Id;
 
-      // GESTION MANUELLE : Si actions refusées, c'est aux joueurs de retirer leurs PI
-      // Plus de déduction automatique
+      // Déduction automatique des PI si actions refusées
+      if (!player1Completed) {
+        await firebaseService.updatePlayerPI(sessionId, playerId, -3);
+      }
+      if (!player2Completed) {
+        await firebaseService.updatePlayerPI(sessionId, opponentId, -3);
+      }
 
       // Résoudre les effets pour les 2 joueurs
       for (int i = session.resolutionStack.length - 1; i >= 0; i--) {

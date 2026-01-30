@@ -29,11 +29,19 @@ _$GameSessionImpl _$$GameSessionImplFromJson(
           ?.map((e) => e as String)
           .toList() ??
       const [],
+  playedCardTiers:
+      (json['playedCardTiers'] as Map<String, dynamic>?)?.map(
+        (k, e) => MapEntry(k, e as String),
+      ) ??
+      const {},
   pendingSpellActions:
       (json['pendingSpellActions'] as List<dynamic>?)
           ?.map((e) => e as Map<String, dynamic>)
           .toList() ??
       const [],
+  drawDoneThisTurn: json['drawDoneThisTurn'] as bool? ?? false,
+  enchantmentEffectsDoneThisTurn:
+      json['enchantmentEffectsDoneThisTurn'] as bool? ?? false,
   responseEffect: $enumDecodeNullable(
     _$ResponseEffectEnumMap,
     json['responseEffect'],
@@ -79,7 +87,10 @@ Map<String, dynamic> _$$GameSessionImplToJson(_$GameSessionImpl instance) =>
       'currentPhase': _$GamePhaseEnumMap[instance.currentPhase]!,
       'status': _$GameStatusEnumMap[instance.status]!,
       'resolutionStack': instance.resolutionStack,
+      'playedCardTiers': instance.playedCardTiers,
       'pendingSpellActions': instance.pendingSpellActions,
+      'drawDoneThisTurn': instance.drawDoneThisTurn,
+      'enchantmentEffectsDoneThisTurn': instance.enchantmentEffectsDoneThisTurn,
       'responseEffect': _$ResponseEffectEnumMap[instance.responseEffect],
       'cardAwaitingValidation': instance.cardAwaitingValidation,
       'awaitingValidationFrom': instance.awaitingValidationFrom,

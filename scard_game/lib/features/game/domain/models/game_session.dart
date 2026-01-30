@@ -38,8 +38,17 @@ class GameSession with _$GameSession {
     /// Pile de résolution (IDs des cartes jouées ce tour)
     @Default([]) List<String> resolutionStack,
 
+    /// Palier choisi pour chaque carte jouée ce tour (white/blue/yellow/red)
+    @Default({}) Map<String, String> playedCardTiers,
+
     /// Actions pendantes du sort actif (à exécuter en Resolution si non contré)
     @Default([]) List<Map<String, dynamic>> pendingSpellActions,
+
+    /// Pioche auto deja faite pour ce tour
+    @Default(false) bool drawDoneThisTurn,
+
+    /// Effets d'enchantements déjà appliqués pour ce tour
+    @Default(false) bool enchantmentEffectsDoneThisTurn,
 
     /// === VALIDATION D'ACTIONS ===
 

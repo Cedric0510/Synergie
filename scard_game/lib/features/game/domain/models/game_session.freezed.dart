@@ -48,9 +48,18 @@ mixin _$GameSession {
   /// Pile de résolution (IDs des cartes jouées ce tour)
   List<String> get resolutionStack => throw _privateConstructorUsedError;
 
+  /// Palier choisi pour chaque carte jouée ce tour (white/blue/yellow/red)
+  Map<String, String> get playedCardTiers => throw _privateConstructorUsedError;
+
   /// Actions pendantes du sort actif (à exécuter en Resolution si non contré)
   List<Map<String, dynamic>> get pendingSpellActions =>
       throw _privateConstructorUsedError;
+
+  /// Pioche auto deja faite pour ce tour
+  bool get drawDoneThisTurn => throw _privateConstructorUsedError;
+
+  /// Effets d'enchantements déjà appliqués pour ce tour
+  bool get enchantmentEffectsDoneThisTurn => throw _privateConstructorUsedError;
 
   /// === VALIDATION D'ACTIONS ===
   /// Effet de la carte de réponse jouée (null si pas de réponse)
@@ -119,7 +128,10 @@ abstract class $GameSessionCopyWith<$Res> {
     GamePhase currentPhase,
     GameStatus status,
     List<String> resolutionStack,
+    Map<String, String> playedCardTiers,
     List<Map<String, dynamic>> pendingSpellActions,
+    bool drawDoneThisTurn,
+    bool enchantmentEffectsDoneThisTurn,
     ResponseEffect? responseEffect,
     String? cardAwaitingValidation,
     List<String> awaitingValidationFrom,
@@ -162,7 +174,10 @@ class _$GameSessionCopyWithImpl<$Res, $Val extends GameSession>
     Object? currentPhase = null,
     Object? status = null,
     Object? resolutionStack = null,
+    Object? playedCardTiers = null,
     Object? pendingSpellActions = null,
+    Object? drawDoneThisTurn = null,
+    Object? enchantmentEffectsDoneThisTurn = null,
     Object? responseEffect = freezed,
     Object? cardAwaitingValidation = freezed,
     Object? awaitingValidationFrom = null,
@@ -223,11 +238,26 @@ class _$GameSessionCopyWithImpl<$Res, $Val extends GameSession>
                     ? _value.resolutionStack
                     : resolutionStack // ignore: cast_nullable_to_non_nullable
                         as List<String>,
+            playedCardTiers:
+                null == playedCardTiers
+                    ? _value.playedCardTiers
+                    : playedCardTiers // ignore: cast_nullable_to_non_nullable
+                        as Map<String, String>,
             pendingSpellActions:
                 null == pendingSpellActions
                     ? _value.pendingSpellActions
                     : pendingSpellActions // ignore: cast_nullable_to_non_nullable
                         as List<Map<String, dynamic>>,
+            drawDoneThisTurn:
+                null == drawDoneThisTurn
+                    ? _value.drawDoneThisTurn
+                    : drawDoneThisTurn // ignore: cast_nullable_to_non_nullable
+                        as bool,
+            enchantmentEffectsDoneThisTurn:
+                null == enchantmentEffectsDoneThisTurn
+                    ? _value.enchantmentEffectsDoneThisTurn
+                    : enchantmentEffectsDoneThisTurn // ignore: cast_nullable_to_non_nullable
+                        as bool,
             responseEffect:
                 freezed == responseEffect
                     ? _value.responseEffect
@@ -337,7 +367,10 @@ abstract class _$$GameSessionImplCopyWith<$Res>
     GamePhase currentPhase,
     GameStatus status,
     List<String> resolutionStack,
+    Map<String, String> playedCardTiers,
     List<Map<String, dynamic>> pendingSpellActions,
+    bool drawDoneThisTurn,
+    bool enchantmentEffectsDoneThisTurn,
     ResponseEffect? responseEffect,
     String? cardAwaitingValidation,
     List<String> awaitingValidationFrom,
@@ -381,7 +414,10 @@ class __$$GameSessionImplCopyWithImpl<$Res>
     Object? currentPhase = null,
     Object? status = null,
     Object? resolutionStack = null,
+    Object? playedCardTiers = null,
     Object? pendingSpellActions = null,
+    Object? drawDoneThisTurn = null,
+    Object? enchantmentEffectsDoneThisTurn = null,
     Object? responseEffect = freezed,
     Object? cardAwaitingValidation = freezed,
     Object? awaitingValidationFrom = null,
@@ -442,11 +478,26 @@ class __$$GameSessionImplCopyWithImpl<$Res>
                 ? _value._resolutionStack
                 : resolutionStack // ignore: cast_nullable_to_non_nullable
                     as List<String>,
+        playedCardTiers:
+            null == playedCardTiers
+                ? _value._playedCardTiers
+                : playedCardTiers // ignore: cast_nullable_to_non_nullable
+                    as Map<String, String>,
         pendingSpellActions:
             null == pendingSpellActions
                 ? _value._pendingSpellActions
                 : pendingSpellActions // ignore: cast_nullable_to_non_nullable
                     as List<Map<String, dynamic>>,
+        drawDoneThisTurn:
+            null == drawDoneThisTurn
+                ? _value.drawDoneThisTurn
+                : drawDoneThisTurn // ignore: cast_nullable_to_non_nullable
+                    as bool,
+        enchantmentEffectsDoneThisTurn:
+            null == enchantmentEffectsDoneThisTurn
+                ? _value.enchantmentEffectsDoneThisTurn
+                : enchantmentEffectsDoneThisTurn // ignore: cast_nullable_to_non_nullable
+                    as bool,
         responseEffect:
             freezed == responseEffect
                 ? _value.responseEffect
@@ -525,7 +576,10 @@ class _$GameSessionImpl implements _GameSession {
     this.currentPhase = GamePhase.draw,
     this.status = GameStatus.waiting,
     final List<String> resolutionStack = const [],
+    final Map<String, String> playedCardTiers = const {},
     final List<Map<String, dynamic>> pendingSpellActions = const [],
+    this.drawDoneThisTurn = false,
+    this.enchantmentEffectsDoneThisTurn = false,
     this.responseEffect,
     this.cardAwaitingValidation,
     final List<String> awaitingValidationFrom = const [],
@@ -539,6 +593,7 @@ class _$GameSessionImpl implements _GameSession {
     this.finishedAt,
     required this.updatedAt,
   }) : _resolutionStack = resolutionStack,
+       _playedCardTiers = playedCardTiers,
        _pendingSpellActions = pendingSpellActions,
        _awaitingValidationFrom = awaitingValidationFrom,
        _validationResponses = validationResponses;
@@ -592,6 +647,18 @@ class _$GameSessionImpl implements _GameSession {
     return EqualUnmodifiableListView(_resolutionStack);
   }
 
+  /// Palier choisi pour chaque carte jouée ce tour (white/blue/yellow/red)
+  final Map<String, String> _playedCardTiers;
+
+  /// Palier choisi pour chaque carte jouée ce tour (white/blue/yellow/red)
+  @override
+  @JsonKey()
+  Map<String, String> get playedCardTiers {
+    if (_playedCardTiers is EqualUnmodifiableMapView) return _playedCardTiers;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_playedCardTiers);
+  }
+
   /// Actions pendantes du sort actif (à exécuter en Resolution si non contré)
   final List<Map<String, dynamic>> _pendingSpellActions;
 
@@ -604,6 +671,16 @@ class _$GameSessionImpl implements _GameSession {
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_pendingSpellActions);
   }
+
+  /// Pioche auto deja faite pour ce tour
+  @override
+  @JsonKey()
+  final bool drawDoneThisTurn;
+
+  /// Effets d'enchantements déjà appliqués pour ce tour
+  @override
+  @JsonKey()
+  final bool enchantmentEffectsDoneThisTurn;
 
   /// === VALIDATION D'ACTIONS ===
   /// Effet de la carte de réponse jouée (null si pas de réponse)
@@ -678,7 +755,7 @@ class _$GameSessionImpl implements _GameSession {
 
   @override
   String toString() {
-    return 'GameSession(sessionId: $sessionId, player1Id: $player1Id, player2Id: $player2Id, player1Data: $player1Data, player2Data: $player2Data, currentPlayerId: $currentPlayerId, currentPhase: $currentPhase, status: $status, resolutionStack: $resolutionStack, pendingSpellActions: $pendingSpellActions, responseEffect: $responseEffect, cardAwaitingValidation: $cardAwaitingValidation, awaitingValidationFrom: $awaitingValidationFrom, validationResponses: $validationResponses, winnerId: $winnerId, ultimaOwnerId: $ultimaOwnerId, ultimaTurnCount: $ultimaTurnCount, ultimaPlayedAt: $ultimaPlayedAt, createdAt: $createdAt, startedAt: $startedAt, finishedAt: $finishedAt, updatedAt: $updatedAt)';
+    return 'GameSession(sessionId: $sessionId, player1Id: $player1Id, player2Id: $player2Id, player1Data: $player1Data, player2Data: $player2Data, currentPlayerId: $currentPlayerId, currentPhase: $currentPhase, status: $status, resolutionStack: $resolutionStack, playedCardTiers: $playedCardTiers, pendingSpellActions: $pendingSpellActions, drawDoneThisTurn: $drawDoneThisTurn, enchantmentEffectsDoneThisTurn: $enchantmentEffectsDoneThisTurn, responseEffect: $responseEffect, cardAwaitingValidation: $cardAwaitingValidation, awaitingValidationFrom: $awaitingValidationFrom, validationResponses: $validationResponses, winnerId: $winnerId, ultimaOwnerId: $ultimaOwnerId, ultimaTurnCount: $ultimaTurnCount, ultimaPlayedAt: $ultimaPlayedAt, createdAt: $createdAt, startedAt: $startedAt, finishedAt: $finishedAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -706,9 +783,21 @@ class _$GameSessionImpl implements _GameSession {
               _resolutionStack,
             ) &&
             const DeepCollectionEquality().equals(
+              other._playedCardTiers,
+              _playedCardTiers,
+            ) &&
+            const DeepCollectionEquality().equals(
               other._pendingSpellActions,
               _pendingSpellActions,
             ) &&
+            (identical(other.drawDoneThisTurn, drawDoneThisTurn) ||
+                other.drawDoneThisTurn == drawDoneThisTurn) &&
+            (identical(
+                  other.enchantmentEffectsDoneThisTurn,
+                  enchantmentEffectsDoneThisTurn,
+                ) ||
+                other.enchantmentEffectsDoneThisTurn ==
+                    enchantmentEffectsDoneThisTurn) &&
             (identical(other.responseEffect, responseEffect) ||
                 other.responseEffect == responseEffect) &&
             (identical(other.cardAwaitingValidation, cardAwaitingValidation) ||
@@ -752,7 +841,10 @@ class _$GameSessionImpl implements _GameSession {
     currentPhase,
     status,
     const DeepCollectionEquality().hash(_resolutionStack),
+    const DeepCollectionEquality().hash(_playedCardTiers),
     const DeepCollectionEquality().hash(_pendingSpellActions),
+    drawDoneThisTurn,
+    enchantmentEffectsDoneThisTurn,
     responseEffect,
     cardAwaitingValidation,
     const DeepCollectionEquality().hash(_awaitingValidationFrom),
@@ -792,7 +884,10 @@ abstract class _GameSession implements GameSession {
     final GamePhase currentPhase,
     final GameStatus status,
     final List<String> resolutionStack,
+    final Map<String, String> playedCardTiers,
     final List<Map<String, dynamic>> pendingSpellActions,
+    final bool drawDoneThisTurn,
+    final bool enchantmentEffectsDoneThisTurn,
     final ResponseEffect? responseEffect,
     final String? cardAwaitingValidation,
     final List<String> awaitingValidationFrom,
@@ -846,9 +941,21 @@ abstract class _GameSession implements GameSession {
   @override
   List<String> get resolutionStack;
 
+  /// Palier choisi pour chaque carte jouée ce tour (white/blue/yellow/red)
+  @override
+  Map<String, String> get playedCardTiers;
+
   /// Actions pendantes du sort actif (à exécuter en Resolution si non contré)
   @override
   List<Map<String, dynamic>> get pendingSpellActions;
+
+  /// Pioche auto deja faite pour ce tour
+  @override
+  bool get drawDoneThisTurn;
+
+  /// Effets d'enchantements déjà appliqués pour ce tour
+  @override
+  bool get enchantmentEffectsDoneThisTurn;
 
   /// === VALIDATION D'ACTIONS ===
   /// Effet de la carte de réponse jouée (null si pas de réponse)

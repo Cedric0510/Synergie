@@ -257,6 +257,7 @@ class PlayerZoneWidget extends ConsumerWidget {
                       height: cardHeight,
                       compact: true,
                       showPreviewOnHover: true,
+                      currentLevel: effectiveLevel,
                     ),
                     // Overlay rouge pour les cartes non jouables en response
                     if (isPlayableInResponse)
@@ -351,8 +352,6 @@ class PlayerZoneWidget extends ConsumerWidget {
             ),
             SizedBox(width: isSmallMobile ? 4 : 8),
             _buildPIControl(isMobile: true, isSmallMobile: isSmallMobile),
-            SizedBox(width: isSmallMobile ? 4 : 8),
-            _buildDrawButton(isMobile: true, isSmallMobile: isSmallMobile),
             if (myData.handCardIds.length >= 7)
               _buildFullHandIndicator(isSmallMobile: isSmallMobile),
           ],
@@ -398,8 +397,6 @@ class PlayerZoneWidget extends ConsumerWidget {
                 ),
                 const SizedBox(width: 16),
                 _buildPIControl(isMobile: false),
-                const SizedBox(width: 16),
-                _buildDrawButton(isMobile: false),
                 const SizedBox(width: 16),
                 if (myData.activeEnchantmentIds.isNotEmpty)
                   CompactEnchantementsWidget(

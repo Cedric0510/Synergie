@@ -1,32 +1,28 @@
 {
   "rules": [
     {
-      "title": "Objectif du jeu",
-      "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris."
+      "title": "Mise en place",
+      "content": "Chaque joueur commence la partie avec 6 cartes en main.\nChaque joueur dispose de 20 PI (Points d'Intimité) au début de la partie.\nLa barre de % de tension de chaque joueur commence à 0 %."
     },
     {
-      "title": "Déroulement du tour",
-      "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus lacinia odio vitae vestibulum vestibulum. Cras porttitor purus ac elit volutpat, non molestie magna pharetra."
+      "title": "Déroulement d'Sun tour",
+      "content": "Au début de son tour, un joueur pioche 1 carte.\nException : le joueur qui commence la partie ne pioche pas au premier tour.\nPendant son tour, un joueur peut jouer des cartes selon les règles de type et de tension."
     },
     {
-      "title": "Types de cartes",
-      "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec sollicitudin molestie malesuada. Nulla quis lorem ut libero malesuada feugiat. Vestibulum ante ipsum primis in faucibus."
+      "title": "Les types de cartes",
+      "content": "Il existe trois types de cartes :\n\n?? Rituels\nJouables pendant votre tour.\nLeur effet est immédiat.\nL'action du rituel doit être entièrement résolue avant la fin du tour.\nUne fois l'effet appliqué, la carte est défaussée.\n\n? Enchantements\nJouables pendant votre tour.\nL'enchantement reste sur le plateau tant qu'il n'est pas détruit.\nSon effet se répète automatiquement chaque fois que ses conditions sont remplies.\n\n?? Négociations\nJouables uniquement pendant le tour de l'adversaire.\nLeur seul effet est de contrer un sort qui vient d'être lancé.\nLorsque son sort est contré, le joueur attaqué peut demander une compensation (ce qu'il souhaite) en échange.\nSi la négociation échoue, le sort initial est finalement lancé."
     },
     {
-      "title": "Les Rituels",
-      "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent sapien massa, convallis a pellentesque nec, egestas non nisi. Curabitur aliquet quam id dui posuere blandit."
+      "title": "Les ressources du jeu",
+      "content": "?? Points d'Intimité (PI)\nChaque joueur commence avec 20 PI.\nLorsqu'un joueur refuse une action, il perd un nombre de PI indiqué sur la carte refusée.\nAtteindre 0 PI ne fait pas perdre la partie.\nEn revanche, cela permet à l'adversaire de tenter une victoire via la carte Ultima.\n\n?? Pourcentage de tension (%)\nLe % de tension détermine quels sorts vous avez le droit de jouer.\nLa barre de tension change de couleur au fur et à mesure de sa progression.\nLa couleur actuelle de la barre indique les sorts jouables.\n\nExemple :\nBarre bleue ? vous pouvez jouer les sorts blancs (de base) et bleus (avancés)."
     },
     {
-      "title": "Les Enchantements",
-      "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris blandit aliquet elit, eget tincidunt nibh pulvinar a. Pellentesque in ipsum id orci porta dapibus."
+      "title": "Effets des cartes selon la tension",
+      "content": "Chaque carte (sauf les Négociations) possède 4 effets différents, un par couleur.\nUne même carte peut donc être jouée à n'importe quel moment de la partie.\nL'effet appliqué dépend de la couleur de tension active au moment où la carte est jouée.\nPlus la tension est élevée, plus l'effet est puissant ou risqué."
     },
     {
-      "title": "Les Points d'Intention",
-      "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras ultricies ligula sed magna dictum porta. Vivamus suscipit tortor eget felis porttitor volutpat."
-    },
-    {
-      "title": "Phases de réponse",
-      "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque velit nisi, pretium ut lacinia in, elementum id enim. Donec rutrum congue leo eget malesuada."
+      "title": "La carte Ultima",
+      "content": "Ultima est la seule carte permettant de gagner la partie.\nElle est automatiquement piochée lorsque votre barre de tension atteint 100 %.\n\nPour pouvoir jouer Ultima :\nVotre adversaire doit être dévêtu.\nVotre adversaire doit avoir moins de PI que vous.\n\nUne fois jouée, Ultima reste en jeu.\nSi Ultima reste en jeu pendant 3 tours complets, vous gagnez la partie."
     }
   ]
 }

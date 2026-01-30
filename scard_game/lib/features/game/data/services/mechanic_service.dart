@@ -31,6 +31,15 @@ class MechanicService {
             );
           }
           break;
+        case PendingActionType.drawCards:
+          final count = action.data?['count'];
+          final playerId = action.targetPlayerId;
+          if (playerId != null && count is int && count > 0) {
+            for (int i = 0; i < count; i++) {
+              await _firebaseService.drawCard(sessionId, playerId);
+            }
+          }
+          break;
         case PendingActionType.replaceEnchantment:
           // TODO: Implémenter le remplacement
           break;
@@ -50,6 +59,7 @@ class MechanicService {
     required List<String> handCardIds,
     required List<String> activeEnchantmentIds,
     required List<String> opponentEnchantmentIds,
+    String? selectedTierKey,
   }) async {
     if (card.mechanics.isEmpty) {
       return MechanicResult(success: true);
@@ -67,6 +77,7 @@ class MechanicService {
         handCardIds: handCardIds,
         activeEnchantmentIds: activeEnchantmentIds,
         opponentEnchantmentIds: opponentEnchantmentIds,
+        selectedTierKey: selectedTierKey,
       );
 
       if (!mechanicResult.success) {
@@ -90,7 +101,11 @@ class MechanicService {
     required List<String> handCardIds,
     required List<String> activeEnchantmentIds,
     required List<String> opponentEnchantmentIds,
+    String? selectedTierKey,
   }) async {
+    if (!_mechanicConditionMet(mechanic.conditions, selectedTierKey)) {
+      return MechanicResult(success: true);
+    }
     switch (mechanic.type) {
       case MechanicType.sacrificeCard:
         return await _handleSacrificeCard(
@@ -187,6 +202,21 @@ class MechanicService {
               'Mécanique ${mechanic.type.displayName} pas encore implémentée',
         );
     }
+  }
+
+  bool _mechanicConditionMet(
+    Map<String, dynamic>? conditions,
+    String? selectedTierKey,
+  ) {
+    if (conditions == null || conditions.isEmpty) return true;
+    final tier = conditions['tier'];
+    if (tier == null) return true;
+    if (selectedTierKey == null) return false;
+    if (tier is String) return tier == selectedTierKey;
+    if (tier is List) {
+      return tier.contains(selectedTierKey);
+    }
+    return false;
   }
 
   // === HANDLERS POUR CHAQUE MÉCANIQUE ===
@@ -785,6 +815,7 @@ class PendingAction {
 
 enum PendingActionType {
   destroyEnchantment,
+  drawCards,
   replaceEnchantment,
   destroyAllEnchantments,
 }

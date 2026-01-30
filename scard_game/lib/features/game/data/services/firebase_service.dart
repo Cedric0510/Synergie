@@ -145,12 +145,12 @@ class FirebaseService {
         updatedAt: DateTime.now(),
       );
 
-      // Conversion manuelle des PlayerData
-      final sessionJson = updatedSession.toJson();
-      sessionJson['player1Data'] = updatedSession.player1Data.toJson();
-      sessionJson['player2Data'] = playerData.toJson();
-
-      await docRef.set(sessionJson, SetOptions(merge: true));
+      await docRef.update({
+        'player2Id': updatedSession.player2Id,
+        'player2Data': playerData.toJson(),
+        'status': updatedSession.status.name,
+        'updatedAt': updatedSession.updatedAt?.toIso8601String(),
+      });
 
       return updatedSession;
     } catch (e) {
@@ -217,30 +217,36 @@ class FirebaseService {
     if (!doc.exists) return;
 
     final session = GameSession.fromJson(doc.data()!);
+    final isPlayer1 = session.player1Id == playerId;
+    final now = DateTime.now();
     GameSession updatedSession;
 
     if (session.player1Id == playerId) {
       updatedSession = session.copyWith(
         player1Data: session.player1Data.copyWith(isReady: ready),
-        updatedAt: DateTime.now(),
+        updatedAt: now,
       );
     } else if (session.player2Id == playerId) {
       updatedSession = session.copyWith(
         player2Data: session.player2Data?.copyWith(isReady: ready),
-        updatedAt: DateTime.now(),
+        updatedAt: now,
       );
     } else {
       return; // Joueur inconnu
     }
 
     // Conversion manuelle
-    final sessionJson = updatedSession.toJson();
-    sessionJson['player1Data'] = updatedSession.player1Data.toJson();
-    if (updatedSession.player2Data != null) {
-      sessionJson['player2Data'] = updatedSession.player2Data!.toJson();
+    if (isPlayer1) {
+      await docRef.update({
+        'player1Data': updatedSession.player1Data.toJson(),
+        'updatedAt': now.toIso8601String(),
+      });
+    } else {
+      await docRef.update({
+        'player2Data': updatedSession.player2Data!.toJson(),
+        'updatedAt': now.toIso8601String(),
+      });
     }
-
-    await docRef.set(sessionJson, SetOptions(merge: true));
   }
 
   /// Détermine quel joueur commence
@@ -298,6 +304,8 @@ class FirebaseService {
     if (!doc.exists) return;
 
     final session = GameSession.fromJson(doc.data()!);
+    final isPlayer1 = session.player1Id == playerId;
+    final now = DateTime.now();
     GameSession updatedSession;
 
     if (session.player1Id == playerId) {
@@ -306,7 +314,7 @@ class FirebaseService {
           handCardIds: handCardIds,
           deckCardIds: deckCardIds,
         ),
-        updatedAt: DateTime.now(),
+        updatedAt: now,
       );
     } else if (session.player2Id == playerId) {
       updatedSession = session.copyWith(
@@ -314,20 +322,24 @@ class FirebaseService {
           handCardIds: handCardIds,
           deckCardIds: deckCardIds,
         ),
-        updatedAt: DateTime.now(),
+        updatedAt: now,
       );
     } else {
       return; // Joueur inconnu
     }
 
     // Conversion manuelle
-    final sessionJson = updatedSession.toJson();
-    sessionJson['player1Data'] = updatedSession.player1Data.toJson();
-    if (updatedSession.player2Data != null) {
-      sessionJson['player2Data'] = updatedSession.player2Data!.toJson();
+    if (isPlayer1) {
+      await docRef.update({
+        'player1Data': updatedSession.player1Data.toJson(),
+        'updatedAt': now.toIso8601String(),
+      });
+    } else {
+      await docRef.update({
+        'player2Data': updatedSession.player2Data!.toJson(),
+        'updatedAt': now.toIso8601String(),
+      });
     }
-
-    await docRef.set(sessionJson, SetOptions(merge: true));
   }
 
   /// Marque le joueur comme ayant vu ses cartes de départ et prêt à jouer
@@ -423,6 +435,8 @@ class FirebaseService {
       'ultimaTurnCount': newUltimaTurnCount,
       'winnerId': newWinnerId,
       'status': newStatus.name,
+      if (nextPhase == GamePhase.draw) 'drawDoneThisTurn': false,
+      if (nextPhase == GamePhase.draw) 'enchantmentEffectsDoneThisTurn': false,
       if (updatedPlayer1Data != null)
         'player1Data': updatedPlayer1Data.toJson(),
       if (updatedPlayer2Data != null)
@@ -439,6 +453,10 @@ class FirebaseService {
 
     final session = GameSession.fromJson(snapshot.data()!);
     final isPlayer1 = session.player1Id == playerId;
+    final playerData = isPlayer1 ? session.player1Data : session.player2Data!;
+    if (_isTensionLocked(playerData)) {
+      return;
+    }
 
     GameSession updatedSession;
     if (isPlayer1) {
@@ -477,14 +495,45 @@ class FirebaseService {
       );
     }
 
-    final sessionJson = updatedSession.toJson();
-    sessionJson['player1Data'] = updatedSession.player1Data.toJson();
-    if (updatedSession.player2Data != null) {
-      sessionJson['player2Data'] = updatedSession.player2Data!.toJson();
+    if (isPlayer1) {
+      await docRef.update({
+        'player1Data': updatedSession.player1Data.toJson(),
+      });
+    } else {
+      await docRef.update({
+        'player2Data': updatedSession.player2Data!.toJson(),
+      });
     }
-
-    await docRef.set(sessionJson, SetOptions(merge: true));
   }
+
+  /// Marque la pioche automatique comme effectu?e pour ce tour
+  Future<void> setDrawDoneThisTurn(
+    String sessionId,
+    bool value,
+  ) async {
+    final docRef = _firestore.collection('game_sessions').doc(sessionId);
+    await docRef.update({'drawDoneThisTurn': value});
+  }
+
+  /// Marque les effets d'enchantements comme appliqués pour ce tour
+  Future<void> setEnchantmentEffectsDoneThisTurn(
+    String sessionId,
+    bool value,
+  ) async {
+    final docRef = _firestore.collection('game_sessions').doc(sessionId);
+    await docRef.update({'enchantmentEffectsDoneThisTurn': value});
+  }
+
+  Future<void> forceTurnToPlayer(String sessionId, String playerId) async {
+    final docRef = _firestore.collection('game_sessions').doc(sessionId);
+    await docRef.update({
+      'currentPlayerId': playerId,
+      'currentPhase': GamePhase.draw.name,
+      'drawDoneThisTurn': false,
+      'enchantmentEffectsDoneThisTurn': false,
+    });
+  }
+
 
   /// Piocher une carte d'une couleur spécifique (pour déblocage de niveau)
   Future<bool> drawCardOfColor(
@@ -565,13 +614,15 @@ class FirebaseService {
       );
     }
 
-    final sessionJson = updatedSession.toJson();
-    sessionJson['player1Data'] = updatedSession.player1Data.toJson();
-    if (updatedSession.player2Data != null) {
-      sessionJson['player2Data'] = updatedSession.player2Data!.toJson();
+    if (isPlayer1) {
+      await docRef.update({
+        'player1Data': updatedSession.player1Data.toJson(),
+      });
+    } else {
+      await docRef.update({
+        'player2Data': updatedSession.player2Data!.toJson(),
+      });
     }
-
-    await docRef.set(sessionJson, SetOptions(merge: true));
     return true;
   }
 
@@ -579,8 +630,9 @@ class FirebaseService {
   Future<void> playCard(
     String sessionId,
     String playerId,
-    int cardIndex,
-  ) async {
+    int cardIndex, {
+    String? enchantmentTierKey,
+  }) async {
     final docRef = _firestore.collection('game_sessions').doc(sessionId);
     final snapshot = await docRef.get();
 
@@ -589,6 +641,9 @@ class FirebaseService {
     final session = GameSession.fromJson(snapshot.data()!);
     final isPlayer1 = session.player1Id == playerId;
 
+    final updatedPlayedCardTiers = Map<String, String>.from(
+      session.playedCardTiers,
+    );
     GameSession updatedSession;
     if (isPlayer1) {
       final hand = List<String>.from(session.player1Data.handCardIds);
@@ -601,12 +656,16 @@ class FirebaseService {
       final playedCards = List<String>.from(session.player1Data.playedCardIds);
       playedCards.add(playedCard);
 
+      if (enchantmentTierKey != null) {
+        updatedPlayedCardTiers[playedCard] = enchantmentTierKey;
+      }
       updatedSession = session.copyWith(
         player1Data: session.player1Data.copyWith(
           handCardIds: hand,
           playedCardIds: playedCards,
         ),
         resolutionStack: [...session.resolutionStack, playedCard],
+        playedCardTiers: updatedPlayedCardTiers,
       );
     } else {
       final hand = List<String>.from(session.player2Data!.handCardIds);
@@ -619,22 +678,25 @@ class FirebaseService {
       final playedCards = List<String>.from(session.player2Data!.playedCardIds);
       playedCards.add(playedCard);
 
+      if (enchantmentTierKey != null) {
+        updatedPlayedCardTiers[playedCard] = enchantmentTierKey;
+      }
       updatedSession = session.copyWith(
         player2Data: session.player2Data!.copyWith(
           handCardIds: hand,
           playedCardIds: playedCards,
         ),
         resolutionStack: [...session.resolutionStack, playedCard],
+        playedCardTiers: updatedPlayedCardTiers,
       );
     }
 
-    final sessionJson = updatedSession.toJson();
-    sessionJson['player1Data'] = updatedSession.player1Data.toJson();
-    if (updatedSession.player2Data != null) {
-      sessionJson['player2Data'] = updatedSession.player2Data!.toJson();
-    }
-
-    await docRef.set(sessionJson, SetOptions(merge: true));
+    await docRef.update({
+      if (isPlayer1) 'player1Data': updatedSession.player1Data.toJson(),
+      if (!isPlayer1) 'player2Data': updatedSession.player2Data!.toJson(),
+      'resolutionStack': updatedSession.resolutionStack,
+      'playedCardTiers': updatedSession.playedCardTiers,
+    });
   }
 
   /// Sacrifier une carte (sans bonus de tension, géré séparément)
@@ -721,16 +783,20 @@ class FirebaseService {
       currentPhase:
           GamePhase.draw, // Directement en phase draw du prochain joueur
       currentPlayerId: nextPlayerId,
+      drawDoneThisTurn: false,
+      enchantmentEffectsDoneThisTurn: false,
     );
 
-    final sessionJson = updatedSession.toJson();
-    sessionJson['player1Data'] = updatedSession.player1Data.toJson();
-    if (updatedSession.player2Data != null) {
-      sessionJson['player2Data'] = updatedSession.player2Data!.toJson();
-    }
-
-    // Une seule opération atomique - pas de nextPhase séparé
-    await docRef.set(sessionJson, SetOptions(merge: true));
+    await docRef.update({
+      'player1Data': updatedSession.player1Data.toJson(),
+      if (updatedSession.player2Data != null)
+        'player2Data': updatedSession.player2Data!.toJson(),
+      'currentPhase': updatedSession.currentPhase.name,
+      'currentPlayerId': updatedSession.currentPlayerId,
+      'drawDoneThisTurn': updatedSession.drawDoneThisTurn,
+      'enchantmentEffectsDoneThisTurn':
+          updatedSession.enchantmentEffectsDoneThisTurn,
+    });
   }
 
   /// Ajoute ou retire des PI d'un joueur
@@ -746,6 +812,10 @@ class FirebaseService {
 
     final session = GameSession.fromJson(snapshot.data()!);
     final isPlayer1 = session.player1Id == playerId;
+    final playerData = isPlayer1 ? session.player1Data : session.player2Data!;
+    if (_isPiLocked(playerData)) {
+      return;
+    }
 
     GameSession updatedSession;
     if (isPlayer1) {
@@ -766,13 +836,15 @@ class FirebaseService {
       );
     }
 
-    final sessionJson = updatedSession.toJson();
-    sessionJson['player1Data'] = updatedSession.player1Data.toJson();
-    if (updatedSession.player2Data != null) {
-      sessionJson['player2Data'] = updatedSession.player2Data!.toJson();
+    if (isPlayer1) {
+      await docRef.update({
+        'player1Data': updatedSession.player1Data.toJson(),
+      });
+    } else {
+      await docRef.update({
+        'player2Data': updatedSession.player2Data!.toJson(),
+      });
     }
-
-    await docRef.set(sessionJson, SetOptions(merge: true));
   }
 
   /// Met à jour la tension d'un joueur
@@ -808,13 +880,15 @@ class FirebaseService {
       );
     }
 
-    final sessionJson = updatedSession.toJson();
-    sessionJson['player1Data'] = updatedSession.player1Data.toJson();
-    if (updatedSession.player2Data != null) {
-      sessionJson['player2Data'] = updatedSession.player2Data!.toJson();
+    if (isPlayer1) {
+      await docRef.update({
+        'player1Data': updatedSession.player1Data.toJson(),
+      });
+    } else {
+      await docRef.update({
+        'player2Data': updatedSession.player2Data!.toJson(),
+      });
     }
-
-    await docRef.set(sessionJson, SetOptions(merge: true));
   }
 
   /// Termine le tour du joueur actuel et passe au joueur suivant
@@ -836,15 +910,17 @@ class FirebaseService {
     final updatedSession = session.copyWith(
       currentPlayerId: nextPlayerId,
       currentPhase: GamePhase.draw,
+      drawDoneThisTurn: false,
+      enchantmentEffectsDoneThisTurn: false,
     );
 
-    final sessionJson = updatedSession.toJson();
-    sessionJson['player1Data'] = updatedSession.player1Data.toJson();
-    if (updatedSession.player2Data != null) {
-      sessionJson['player2Data'] = updatedSession.player2Data!.toJson();
-    }
-
-    await docRef.set(sessionJson, SetOptions(merge: true));
+    await docRef.update({
+      'currentPlayerId': updatedSession.currentPlayerId,
+      'currentPhase': updatedSession.currentPhase.name,
+      'drawDoneThisTurn': updatedSession.drawDoneThisTurn,
+      'enchantmentEffectsDoneThisTurn':
+          updatedSession.enchantmentEffectsDoneThisTurn,
+    });
   }
 
   /// Parse le coût de lancement et retourne le coût en PI
@@ -866,6 +942,10 @@ class FirebaseService {
 
     final session = await getGameSession(sessionId);
     final isPlayer1 = session.player1Id == playerId;
+    final playerData = isPlayer1 ? session.player1Data : session.player2Data!;
+    if (_isPiLocked(playerData)) {
+      throw Exception('PI verrouillés');
+    }
     final currentPI =
         isPlayer1
             ? session.player1Data.inhibitionPoints
@@ -892,19 +972,25 @@ class FirebaseService {
             );
 
     final docRef = _firestore.collection('game_sessions').doc(sessionId);
-    final sessionJson = updatedSession.toJson();
-    sessionJson['player1Data'] = updatedSession.player1Data.toJson();
-    if (updatedSession.player2Data != null) {
-      sessionJson['player2Data'] = updatedSession.player2Data!.toJson();
+    if (isPlayer1) {
+      await docRef.update({
+        'player1Data': updatedSession.player1Data.toJson(),
+      });
+    } else {
+      await docRef.update({
+        'player2Data': updatedSession.player2Data!.toJson(),
+      });
     }
-
-    await docRef.set(sessionJson, SetOptions(merge: true));
   }
 
   /// Modifie les PI d'un joueur (pour pénalités de validation)
   Future<void> modifyPI(String sessionId, String playerId, int delta) async {
     final session = await getGameSession(sessionId);
     final isPlayer1 = session.player1Id == playerId;
+    final playerData = isPlayer1 ? session.player1Data : session.player2Data!;
+    if (_isPiLocked(playerData)) {
+      return;
+    }
 
     final currentPI =
         isPlayer1
@@ -927,13 +1013,15 @@ class FirebaseService {
             );
 
     final docRef = _firestore.collection('game_sessions').doc(sessionId);
-    final sessionJson = updatedSession.toJson();
-    sessionJson['player1Data'] = updatedSession.player1Data.toJson();
-    if (updatedSession.player2Data != null) {
-      sessionJson['player2Data'] = updatedSession.player2Data!.toJson();
+    if (isPlayer1) {
+      await docRef.update({
+        'player1Data': updatedSession.player1Data.toJson(),
+      });
+    } else {
+      await docRef.update({
+        'player2Data': updatedSession.player2Data!.toJson(),
+      });
     }
-
-    await docRef.set(sessionJson, SetOptions(merge: true));
   }
 
   /// Définit l'effet de la carte de réponse
@@ -948,7 +1036,7 @@ class FirebaseService {
   /// Vide la pile de résolution
   Future<void> clearResolutionStack(String sessionId) async {
     final docRef = _firestore.collection('game_sessions').doc(sessionId);
-    await docRef.update({'resolutionStack': []});
+    await docRef.update({'resolutionStack': [], 'playedCardTiers': {}});
   }
 
   /// Nettoie les cartes jouées sauf les enchantements
@@ -981,9 +1069,80 @@ class FirebaseService {
         isPlayer1
             ? List<String>.from(session.player1Data.activeEnchantmentIds)
             : List<String>.from(session.player2Data!.activeEnchantmentIds);
+    final currentEnchantmentTiers =
+        isPlayer1
+            ? Map<String, String>.from(
+              session.player1Data.activeEnchantmentTiers,
+            )
+            : Map<String, String>.from(
+              session.player2Data!.activeEnchantmentTiers,
+            );
+    final currentStatusModifiers =
+        isPlayer1
+            ? Map<String, List<String>>.from(
+              session.player1Data.activeStatusModifiers,
+            )
+            : Map<String, List<String>>.from(
+              session.player2Data!.activeStatusModifiers,
+            );
+    final otherStatusModifiers =
+        isPlayer1
+            ? Map<String, List<String>>.from(
+              session.player2Data?.activeStatusModifiers ?? {},
+            )
+            : Map<String, List<String>>.from(
+              session.player1Data.activeStatusModifiers,
+            );
 
     // Ajouter les nouveaux enchantements
     currentEnchantments.addAll(enchantments);
+    for (final enchantmentId in enchantments) {
+      final tierKey =
+          session.playedCardTiers[enchantmentId] ??
+          (() {
+            final cardData = allCards.firstWhere(
+              (card) => card['id'] == enchantmentId,
+              orElse: () => {},
+            );
+            final color = cardData['color'];
+            if (color is String && color.isNotEmpty) return color;
+            return 'white';
+          })();
+      currentEnchantmentTiers[enchantmentId] = tierKey;
+
+      final cardData = allCards.firstWhere(
+        (card) => card['id'] == enchantmentId,
+        orElse: () => {},
+      );
+      final statusMods = cardData['statusModifiers'];
+      if (statusMods is List) {
+        for (final mod in statusMods) {
+          if (mod is! Map) continue;
+          final type = mod['type'];
+          final target = mod['target'];
+          final tier = mod['tier'];
+          if (type is! String || type.isEmpty) continue;
+          if (tier is String && tier.isNotEmpty && tier != tierKey) continue;
+
+          void addTo(Map<String, List<String>> map) {
+            final list = List<String>.from(map[type] ?? []);
+            if (!list.contains(enchantmentId)) {
+              list.add(enchantmentId);
+            }
+            map[type] = list;
+          }
+
+          if (target == 'both') {
+            addTo(currentStatusModifiers);
+            addTo(otherStatusModifiers);
+          } else if (target == 'opponent') {
+            addTo(otherStatusModifiers);
+          } else {
+            addTo(currentStatusModifiers);
+          }
+        }
+      }
+    }
 
     // === GESTION COMPTEUR ULTIMA ===
     String? newUltimaOwnerId = session.ultimaOwnerId;
@@ -1011,8 +1170,14 @@ class FirebaseService {
             ? session.copyWith(
               player1Data: session.player1Data.copyWith(
                 activeEnchantmentIds: currentEnchantments,
+                activeEnchantmentTiers: currentEnchantmentTiers,
+                activeStatusModifiers: currentStatusModifiers,
+              ),
+              player2Data: session.player2Data?.copyWith(
+                activeStatusModifiers: otherStatusModifiers,
               ),
               resolutionStack: [], // Vider la pile
+              playedCardTiers: {},
               ultimaOwnerId: newUltimaOwnerId,
               ultimaTurnCount: newUltimaTurnCount,
               ultimaPlayedAt: newUltimaPlayedAt,
@@ -1020,21 +1185,29 @@ class FirebaseService {
             : session.copyWith(
               player2Data: session.player2Data!.copyWith(
                 activeEnchantmentIds: currentEnchantments,
+                activeEnchantmentTiers: currentEnchantmentTiers,
+                activeStatusModifiers: currentStatusModifiers,
+              ),
+              player1Data: session.player1Data.copyWith(
+                activeStatusModifiers: otherStatusModifiers,
               ),
               resolutionStack: [], // Vider la pile
+              playedCardTiers: {},
               ultimaOwnerId: newUltimaOwnerId,
               ultimaTurnCount: newUltimaTurnCount,
               ultimaPlayedAt: newUltimaPlayedAt,
             );
 
     final docRef = _firestore.collection('game_sessions').doc(sessionId);
-    final sessionJson = updatedSession.toJson();
-    sessionJson['player1Data'] = updatedSession.player1Data.toJson();
-    if (updatedSession.player2Data != null) {
-      sessionJson['player2Data'] = updatedSession.player2Data!.toJson();
-    }
-
-    await docRef.set(sessionJson, SetOptions(merge: true));
+    await docRef.update({
+      if (isPlayer1) 'player1Data': updatedSession.player1Data.toJson(),
+      if (!isPlayer1) 'player2Data': updatedSession.player2Data!.toJson(),
+      'resolutionStack': updatedSession.resolutionStack,
+      'playedCardTiers': updatedSession.playedCardTiers,
+      'ultimaOwnerId': updatedSession.ultimaOwnerId,
+      'ultimaTurnCount': updatedSession.ultimaTurnCount,
+      'ultimaPlayedAt': updatedSession.ultimaPlayedAt?.toIso8601String(),
+    });
   }
 
   /// Retire une carte spécifique de la main du joueur
@@ -1060,13 +1233,15 @@ class FirebaseService {
             );
 
     final docRef = _firestore.collection('game_sessions').doc(sessionId);
-    final sessionJson = updatedSession.toJson();
-    sessionJson['player1Data'] = updatedSession.player1Data.toJson();
-    if (updatedSession.player2Data != null) {
-      sessionJson['player2Data'] = updatedSession.player2Data!.toJson();
+    if (isPlayer1) {
+      await docRef.update({
+        'player1Data': updatedSession.player1Data.toJson(),
+      });
+    } else {
+      await docRef.update({
+        'player2Data': updatedSession.player2Data!.toJson(),
+      });
     }
-
-    await docRef.set(sessionJson, SetOptions(merge: true));
   }
 
   /// Retire un enchantement actif du joueur
@@ -1083,6 +1258,56 @@ class FirebaseService {
       playerData.activeEnchantmentIds,
     );
     updatedEnchantments.remove(enchantmentId);
+    final updatedEnchantmentTiers = Map<String, String>.from(
+      playerData.activeEnchantmentTiers,
+    );
+    updatedEnchantmentTiers.remove(enchantmentId);
+
+    final updatedStatusModifiers = Map<String, List<String>>.from(
+      playerData.activeStatusModifiers,
+    );
+    final updatedOpponentStatusModifiers = Map<String, List<String>>.from(
+      (isPlayer1 ? session.player2Data : session.player1Data)
+              ?.activeStatusModifiers ??
+          {},
+    );
+
+    try {
+      final cardsSnapshot = await _firestore.collection('cards').get();
+      final cardsMap = {for (var doc in cardsSnapshot.docs) doc.id: doc.data()};
+      final cardData = cardsMap[enchantmentId];
+      final statusMods = cardData?['statusModifiers'];
+      final tierKey = playerData.activeEnchantmentTiers[enchantmentId];
+      if (statusMods is List) {
+        for (final mod in statusMods) {
+          if (mod is! Map) continue;
+          final type = mod['type'];
+          final target = mod['target'];
+          final tier = mod['tier'];
+          if (type is! String || type.isEmpty) continue;
+          if (tier is String && tierKey != null && tier != tierKey) continue;
+
+          void removeFrom(Map<String, List<String>> map) {
+            final list = List<String>.from(map[type] ?? []);
+            list.remove(enchantmentId);
+            if (list.isEmpty) {
+              map.remove(type);
+            } else {
+              map[type] = list;
+            }
+          }
+
+          if (target == 'both') {
+            removeFrom(updatedStatusModifiers);
+            removeFrom(updatedOpponentStatusModifiers);
+          } else if (target == 'opponent') {
+            removeFrom(updatedOpponentStatusModifiers);
+          } else {
+            removeFrom(updatedStatusModifiers);
+          }
+        }
+      }
+    } catch (_) {}
 
     // LOGIQUE SPÉCIALE POUR ULTIMA : La remettre en main au lieu de la retirer
     final updatedHand = List<String>.from(playerData.handCardIds);
@@ -1124,7 +1349,12 @@ class FirebaseService {
             ? session.copyWith(
               player1Data: playerData.copyWith(
                 activeEnchantmentIds: updatedEnchantments,
+                activeEnchantmentTiers: updatedEnchantmentTiers,
+                activeStatusModifiers: updatedStatusModifiers,
                 handCardIds: updatedHand,
+              ),
+              player2Data: session.player2Data?.copyWith(
+                activeStatusModifiers: updatedOpponentStatusModifiers,
               ),
               ultimaOwnerId: newUltimaOwnerId,
               ultimaTurnCount: newUltimaTurnCount,
@@ -1133,7 +1363,12 @@ class FirebaseService {
             : session.copyWith(
               player2Data: playerData.copyWith(
                 activeEnchantmentIds: updatedEnchantments,
+                activeEnchantmentTiers: updatedEnchantmentTiers,
+                activeStatusModifiers: updatedStatusModifiers,
                 handCardIds: updatedHand,
+              ),
+              player1Data: session.player1Data.copyWith(
+                activeStatusModifiers: updatedOpponentStatusModifiers,
               ),
               ultimaOwnerId: newUltimaOwnerId,
               ultimaTurnCount: newUltimaTurnCount,
@@ -1141,13 +1376,13 @@ class FirebaseService {
             );
 
     final docRef = _firestore.collection('game_sessions').doc(sessionId);
-    final sessionJson = updatedSession.toJson();
-    sessionJson['player1Data'] = updatedSession.player1Data.toJson();
-    if (updatedSession.player2Data != null) {
-      sessionJson['player2Data'] = updatedSession.player2Data!.toJson();
-    }
-
-    await docRef.set(sessionJson, SetOptions(merge: true));
+    await docRef.update({
+      if (isPlayer1) 'player1Data': updatedSession.player1Data.toJson(),
+      if (!isPlayer1) 'player2Data': updatedSession.player2Data!.toJson(),
+      'ultimaOwnerId': updatedSession.ultimaOwnerId,
+      'ultimaTurnCount': updatedSession.ultimaTurnCount,
+      'ultimaPlayedAt': updatedSession.ultimaPlayedAt?.toIso8601String(),
+    });
   }
 
   /// Pioche une carte spécifique depuis le deck
@@ -1182,13 +1417,15 @@ class FirebaseService {
               );
 
       final docRef = _firestore.collection('game_sessions').doc(sessionId);
-      final sessionJson = updatedSession.toJson();
-      sessionJson['player1Data'] = updatedSession.player1Data.toJson();
-      if (updatedSession.player2Data != null) {
-        sessionJson['player2Data'] = updatedSession.player2Data!.toJson();
+      if (isPlayer1) {
+        await docRef.update({
+          'player1Data': updatedSession.player1Data.toJson(),
+        });
+      } else {
+        await docRef.update({
+          'player2Data': updatedSession.player2Data!.toJson(),
+        });
       }
-
-      await docRef.set(sessionJson, SetOptions(merge: true));
     }
   }
 
@@ -1218,13 +1455,15 @@ class FirebaseService {
             );
 
     final docRef = _firestore.collection('game_sessions').doc(sessionId);
-    final sessionJson = updatedSession.toJson();
-    sessionJson['player1Data'] = updatedSession.player1Data.toJson();
-    if (updatedSession.player2Data != null) {
-      sessionJson['player2Data'] = updatedSession.player2Data!.toJson();
+    if (isPlayer1) {
+      await docRef.update({
+        'player1Data': updatedSession.player1Data.toJson(),
+      });
+    } else {
+      await docRef.update({
+        'player2Data': updatedSession.player2Data!.toJson(),
+      });
     }
-
-    await docRef.set(sessionJson, SetOptions(merge: true));
   }
 
   /// Stocke les actions pendantes d'un sort dans la session
@@ -1256,5 +1495,15 @@ class FirebaseService {
       sessionJson['player2Data'] = session.player2Data!.toJson();
     }
     await docRef.set(sessionJson, SetOptions(merge: true));
+  }
+
+  bool _isPiLocked(PlayerData playerData) {
+    final list = playerData.activeStatusModifiers['pi_locked'];
+    return list != null && list.isNotEmpty;
+  }
+
+  bool _isTensionLocked(PlayerData playerData) {
+    final list = playerData.activeStatusModifiers['tension_locked'];
+    return list != null && list.isNotEmpty;
   }
 }

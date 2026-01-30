@@ -38,6 +38,19 @@ _$PlayerDataImpl _$$PlayerDataImplFromJson(Map<String, dynamic> json) =>
               ?.map((e) => e as String)
               .toList() ??
           const [],
+      activeEnchantmentTiers:
+          (json['activeEnchantmentTiers'] as Map<String, dynamic>?)?.map(
+            (k, e) => MapEntry(k, e as String),
+          ) ??
+          const {},
+      activeStatusModifiers:
+          (json['activeStatusModifiers'] as Map<String, dynamic>?)?.map(
+            (k, e) => MapEntry(
+              k,
+              (e as List<dynamic>).map((e) => e as String).toList(),
+            ),
+          ) ??
+          const {},
       isNaked: json['isNaked'] as bool? ?? false,
       currentLevel:
           $enumDecodeNullable(_$CardLevelEnumMap, json['currentLevel']) ??
@@ -66,6 +79,8 @@ Map<String, dynamic> _$$PlayerDataImplToJson(_$PlayerDataImpl instance) =>
       'graveyardCardIds': instance.graveyardCardIds,
       'playedCardIds': instance.playedCardIds,
       'activeEnchantmentIds': instance.activeEnchantmentIds,
+      'activeEnchantmentTiers': instance.activeEnchantmentTiers,
+      'activeStatusModifiers': instance.activeStatusModifiers,
       'isNaked': instance.isNaked,
       'currentLevel': _$CardLevelEnumMap[instance.currentLevel]!,
       'isReady': instance.isReady,
