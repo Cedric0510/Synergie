@@ -12,6 +12,13 @@ class CardWidget extends StatelessWidget {
   final bool compact;
   final bool showPreviewOnHover;
   final CardLevel? currentLevel;
+  final String? displayTierKey;
+
+  /// Si true et displayTierKey fourni, n'affiche que l'effet du tier sélectionné dans la preview
+  final bool showOnlySelectedTier;
+
+  /// Si true, un tap sur la carte ouvre le dialog de preview (pour mobile sur les cartes jouées)
+  final bool enableTapPreview;
 
   const CardWidget({
     super.key,
@@ -21,6 +28,9 @@ class CardWidget extends StatelessWidget {
     this.compact = false,
     this.showPreviewOnHover = false,
     this.currentLevel,
+    this.displayTierKey,
+    this.showOnlySelectedTier = false,
+    this.enableTapPreview = false,
   });
 
   @override
@@ -50,6 +60,18 @@ class CardWidget extends StatelessWidget {
     );
 
     if (showPreviewOnHover) {
+      // Pour les cartes jouées sur le plateau, on ajoute le tap/longPress pour ouvrir le dialog de preview
+      if (enableTapPreview) {
+        return GestureDetector(
+          onTap: () => _showCardPreviewDialog(context),
+          onLongPress: () => _showCardPreviewDialog(context),
+          behavior: HitTestBehavior.opaque,
+          child: cardWidget,
+        );
+      }
+
+      // Pour les cartes en main: hover uniquement (desktop), pas de tap pour permettre la sélection
+      // On utilise TooltipTriggerMode.manual pour éviter que le tap soit intercepté sur mobile
       return MouseRegion(
         cursor: SystemMouseCursors.click,
         child: Tooltip(
@@ -62,6 +84,8 @@ class CardWidget extends StatelessWidget {
                 height: 440,
                 compact: false,
                 currentLevel: currentLevel,
+                displayTierKey: displayTierKey,
+                showOnlySelectedTier: showOnlySelectedTier,
               ),
             ),
           ),
@@ -69,12 +93,38 @@ class CardWidget extends StatelessWidget {
           padding: EdgeInsets.zero,
           preferBelow: false,
           verticalOffset: 20,
+          // Mode manuel pour ne pas intercepter les taps - le hover fonctionne toujours sur desktop
+          triggerMode: TooltipTriggerMode.longPress,
           child: cardWidget,
         ),
       );
     }
 
     return cardWidget;
+  }
+
+  /// Affiche un dialog avec la preview de la carte (pour mobile)
+  void _showCardPreviewDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black54,
+      builder:
+          (context) => GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            behavior: HitTestBehavior.opaque,
+            child: Center(
+              child: CardWidget(
+                card: card,
+                width: 280,
+                height: 440,
+                compact: false,
+                currentLevel: currentLevel,
+                displayTierKey: displayTierKey,
+                showOnlySelectedTier: showOnlySelectedTier,
+              ),
+            ),
+          ),
+    );
   }
 
   /// Layout complet avec nom + image + effets par palier
@@ -202,6 +252,7 @@ class CardWidget extends StatelessWidget {
 
   /// Tiers supérieur : Image de la carte
   Widget _buildImageSection() {
+    final imageUrl = _resolveImageUrl();
     return Expanded(
       flex: 11,
       child: Container(
@@ -215,8 +266,8 @@ class CardWidget extends StatelessWidget {
         ),
         child: ClipRRect(
           child:
-              card.imageUrl != null
-                  ? Image.asset(card.imageUrl!, fit: BoxFit.cover)
+              imageUrl != null
+                  ? Image.asset(imageUrl, fit: BoxFit.cover)
                   : const Icon(
                     Icons.image_not_supported,
                     size: 40,
@@ -229,7 +280,16 @@ class CardWidget extends StatelessWidget {
 
   /// Tiers inférieur : Effets par palier (blanc/bleu/jaune/rouge)
   Widget _buildTierEffectsSection() {
-    final effects = _parseTierEffects();
+    var effects = _parseTierEffects();
+
+    // Si showOnlySelectedTier et displayTierKey, filtrer pour n'afficher que l'effet sélectionné
+    if (showOnlySelectedTier && displayTierKey != null) {
+      final tierLabel = _tierKeyToLabel(displayTierKey!);
+      effects =
+          effects
+              .where((e) => e.label.toLowerCase() == tierLabel.toLowerCase())
+              .toList();
+    }
 
     return Expanded(
       flex: 10,
@@ -252,11 +312,26 @@ class CardWidget extends StatelessWidget {
     );
   }
 
+  /// Convertit un tierKey (white/blue/yellow/red) en label français
+  String _tierKeyToLabel(String tierKey) {
+    switch (tierKey.toLowerCase()) {
+      case 'white':
+        return 'Blanc';
+      case 'blue':
+        return 'Bleu';
+      case 'yellow':
+        return 'Jaune';
+      case 'red':
+        return 'Rouge';
+      default:
+        return tierKey;
+    }
+  }
+
   Widget _buildTierBubble(_TierEffect effect) {
     final isEnabled = _isTierEnabled(effect.label);
     final isWhiteTier = effect.label.trim().toLowerCase() == 'blanc';
-    final border =
-        isEnabled ? effect.color : Colors.grey.withOpacity(0.85);
+    final border = isEnabled ? effect.color : Colors.grey.withOpacity(0.85);
     final background =
         isEnabled
             ? (isWhiteTier
@@ -293,7 +368,10 @@ class CardWidget extends StatelessWidget {
                 children: [
                   if (effect.label.isNotEmpty)
                     TextSpan(
-                      text: '${effect.label}: ',
+                      text:
+                          effect.title != null && effect.title!.isNotEmpty
+                              ? '${effect.label}: ${effect.title}\n'
+                              : '${effect.label}:\n',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
@@ -347,7 +425,11 @@ class CardWidget extends StatelessWidget {
         final text = line.substring(line.indexOf(':') + 1).trim();
         final key = label.toLowerCase();
         final color = colorByLabel[key] ?? Colors.black87;
-        effects.add(_TierEffect(label: label, text: text, color: color));
+        final tierKey = _labelToTierKey(label);
+        final title = tierKey != null ? card.tierTitles[tierKey] : null;
+        effects.add(
+          _TierEffect(label: label, text: text, color: color, title: title),
+        );
       } else {
         effects.add(
           _TierEffect(label: '', text: line.trim(), color: Colors.black87),
@@ -384,6 +466,39 @@ class CardWidget extends StatelessWidget {
         return CardLevel.red;
     }
     return null;
+  }
+
+  String? _labelToTierKey(String label) {
+    switch (label.trim().toLowerCase()) {
+      case 'blanc':
+        return 'white';
+      case 'bleu':
+        return 'blue';
+      case 'jaune':
+        return 'yellow';
+      case 'rouge':
+        return 'red';
+    }
+    return null;
+  }
+
+  String? _resolveImageUrl() {
+    // Temporairement simplifié : toujours utiliser l'image de base (blanc)
+    // TODO: Réactiver les images par tier quand les nouvelles images seront prêtes
+    return card.imageUrl;
+  }
+
+  List<String> _availableTierKeysForLevel(CardLevel level) {
+    switch (level) {
+      case CardLevel.white:
+        return ['white'];
+      case CardLevel.blue:
+        return ['white', 'blue'];
+      case CardLevel.yellow:
+        return ['white', 'blue', 'yellow'];
+      case CardLevel.red:
+        return ['white', 'blue', 'yellow', 'red'];
+    }
   }
 
   int _levelRank(CardLevel level) {
@@ -586,10 +701,12 @@ class _TierEffect {
   final String label;
   final String text;
   final Color color;
+  final String? title;
 
   const _TierEffect({
     required this.label,
     required this.text,
     required this.color,
+    this.title,
   });
 }

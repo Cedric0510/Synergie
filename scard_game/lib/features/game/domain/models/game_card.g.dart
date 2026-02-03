@@ -54,6 +54,16 @@ _$GameCardImpl _$$GameCardImplFromJson(Map<String, dynamic> json) =>
               ?.map((e) => e as Map<String, dynamic>)
               .toList() ??
           const [],
+      tierTitles:
+          (json['tierTitles'] as Map<String, dynamic>?)?.map(
+            (k, e) => MapEntry(k, e as String),
+          ) ??
+          const {},
+      tierImageUrls:
+          (json['tierImageUrls'] as Map<String, dynamic>?)?.map(
+            (k, e) => MapEntry(k, e as String),
+          ) ??
+          const {},
       tensionPerTurn: (json['tensionPerTurn'] as num?)?.toInt(),
       maxPerDeck: (json['maxPerDeck'] as num?)?.toInt(),
       mechanics:
@@ -100,6 +110,8 @@ Map<String, dynamic> _$$GameCardImplToJson(_$GameCardImpl instance) =>
       'enchantmentTargets': instance.enchantmentTargets,
       'recurringEffects': instance.recurringEffects,
       'statusModifiers': instance.statusModifiers,
+      'tierTitles': instance.tierTitles,
+      'tierImageUrls': instance.tierImageUrls,
       'tensionPerTurn': instance.tensionPerTurn,
       'maxPerDeck': instance.maxPerDeck,
       'mechanics': instance.mechanics,

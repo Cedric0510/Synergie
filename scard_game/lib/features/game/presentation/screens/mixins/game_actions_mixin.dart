@@ -289,7 +289,8 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
         sessionId,
         playerId,
         selectedCardIndex!,
-        enchantmentTierKey: card.isEnchantment ? tierKey : null,
+        // Toujours passer le tierKey pour afficher le bon énoncé sur la carte jouée
+        enchantmentTierKey: tierKey,
       );
       setState(() {
         selectedCardIndex = null;
@@ -349,10 +350,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       final updatedHand = List<String>.from(myData.handCardIds);
       updatedHand.removeAt(selectedCardIndex!);
 
-      final updatedResolutionStack = [
-        ...session.resolutionStack,
-        cardId,
-      ];
+      final updatedResolutionStack = [...session.resolutionStack, cardId];
 
       final updatedPlayerData = myData.copyWith(handCardIds: updatedHand);
       final updatedSession =
@@ -457,7 +455,12 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       case CardLevel.yellow:
         return [CardColor.white, CardColor.blue, CardColor.yellow];
       case CardLevel.red:
-        return [CardColor.white, CardColor.blue, CardColor.yellow, CardColor.red];
+        return [
+          CardColor.white,
+          CardColor.blue,
+          CardColor.yellow,
+          CardColor.red,
+        ];
     }
   }
 
@@ -498,11 +501,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
         card.gameEffect.contains('Rouge:');
   }
 
-
-  Future<void> _queuePendingDrawForTier(
-    GameCard card,
-    CardColor tier,
-  ) async {
+  Future<void> _queuePendingDrawForTier(GameCard card, CardColor tier) async {
     final count = _getDrawCountForTier(card, tier);
     if (count <= 0) return;
 
@@ -556,7 +555,6 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
         return 0;
     }
   }
-
 
   /// Traite les mécaniques spéciales de la carte
   Future<void> _handleCardMechanics(
@@ -979,8 +977,9 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
     }
   }
 
-
-  /// R?sout la n?gociation (d?cision prise par le joueur cibl?)
+  /// Résout la négociation (décision prise par le joueur ciblé)
+  /// - Accord trouvé : sort contré, carte négociation défaussée (perdue)
+  /// - Pas d'accord : sort joué normalement, carte négociation remélangée dans le deck
   Future<void> resolveNegotiation(bool agreement) async {
     final firebaseService = ref.read(firebaseServiceProvider);
 
@@ -1001,42 +1000,54 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       GameSession updatedSession;
 
       if (agreement) {
-        // Entente trouv?e ? sort contr?, vider la pile
+        // Entente trouvée → sort contré, carte négociation DÉFAUSSÉE (perdue)
         final updatedCurrentHand = List<String>.from(currentData.handCardIds);
         if (originalCardId.contains('red_016')) {
           updatedCurrentHand.add(originalCardId);
         }
 
+        // Ajouter la carte négociation au cimetière du répondeur
+        final updatedResponderGraveyard = List<String>.from(
+          responderData.graveyardCardIds,
+        )..add(negotiationCardId);
+
         final updatedCurrentData = currentData.copyWith(
           handCardIds: updatedCurrentHand,
+        );
+
+        final updatedResponderData = responderData.copyWith(
+          graveyardCardIds: updatedResponderGraveyard,
         );
 
         updatedSession =
             currentIsPlayer1
                 ? session.copyWith(
                   player1Data: updatedCurrentData,
-                  player2Data: responderData,
+                  player2Data: updatedResponderData,
                   resolutionStack: [],
                   playedCardTiers: {},
                   pendingSpellActions: [],
                 )
                 : session.copyWith(
-                  player1Data: responderData,
+                  player1Data: updatedResponderData,
                   player2Data: updatedCurrentData,
                   resolutionStack: [],
                   playedCardTiers: {},
                   pendingSpellActions: [],
                 );
       } else {
-        // Pas d'entente ? retirer la n?gociation, rendre la carte au r?pondant
+        // Pas d'entente → retirer la négociation de la pile, la REMÉLANGER dans le deck
         final updatedStack = List<String>.from(session.resolutionStack)
           ..removeLast();
 
-        final updatedResponderHand = List<String>.from(responderData.handCardIds)
-          ..add(negotiationCardId);
+        // Remettre la carte négociation dans le deck et mélanger
+        final updatedResponderDeck =
+            List<String>.from(responderData.deckCardIds)
+              ..add(negotiationCardId)
+              ..shuffle();
 
         final updatedResponderData = responderData.copyWith(
-          handCardIds: updatedResponderHand,
+          deckCardIds: updatedResponderDeck,
         );
 
         updatedSession =
@@ -1061,8 +1072,8 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
           SnackBar(
             content: Text(
               agreement
-                  ? "🤝 Entente trouvée - Sort contré"
-                  : "❌ Pas d'entente - Le sort se résout",
+                  ? "🤝 Entente trouvée - Sort contré (négociation perdue)"
+                  : "❌ Pas d'entente - Le sort se résout (négociation remélangée)",
             ),
             backgroundColor: agreement ? Colors.green : Colors.orange,
             duration: const Duration(seconds: 2),

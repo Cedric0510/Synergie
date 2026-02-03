@@ -32,7 +32,19 @@
       "drawCardsWhite": 0,
       "drawCardsBlue": 0,
       "drawCardsYellow": 0,
-      "drawCardsRed": 0
+      "drawCardsRed": 0,
+      "tierTitles": {
+        "white": "D\u00e9shabillage",
+        "blue": "D\u00e9shabillage X2",
+        "yellow": "Pincement",
+        "red": "Frotter"
+      },
+      "tierImageUrls": {
+        "white": "assets/images/cards/white/001.png",
+        "blue": "assets/images/cards/blue/001.png",
+        "yellow": "assets/images/cards/yellow/001.png",
+        "red": "assets/images/cards/red/006.png"
+      }
     },
     {
       "id": "white_004",
@@ -66,7 +78,19 @@
       "drawCardsWhite": 0,
       "drawCardsBlue": 0,
       "drawCardsYellow": 0,
-      "drawCardsRed": 0
+      "drawCardsRed": 0,
+      "tierTitles": {
+        "white": "Compliment",
+        "blue": "Chuchoter",
+        "yellow": "Fantasme",
+        "red": "Plaisir (bouche)"
+      },
+      "tierImageUrls": {
+        "white": "assets/images/cards/white/004.png",
+        "blue": "assets/images/cards/blue/003.png",
+        "yellow": "assets/images/cards/yellow/004.png",
+        "red": "assets/images/cards/red/001.png"
+      }
     },
     {
       "id": "white_005",
@@ -100,7 +124,19 @@
       "drawCardsWhite": 0,
       "drawCardsBlue": 0,
       "drawCardsYellow": 0,
-      "drawCardsRed": 0
+      "drawCardsRed": 0,
+      "tierTitles": {
+        "white": "Pose Sexy",
+        "blue": "Massage",
+        "yellow": "Exitation",
+        "red": "Caresse intime"
+      },
+      "tierImageUrls": {
+        "white": "assets/images/cards/white/005.png",
+        "blue": "assets/images/cards/blue/006.png",
+        "yellow": "assets/images/cards/yellow/006.png",
+        "red": "assets/images/cards/red/005.png"
+      }
     },
     {
       "id": "white_003",
@@ -143,7 +179,19 @@
       "drawCardsWhite": 0,
       "drawCardsBlue": 1,
       "drawCardsYellow": 3,
-      "drawCardsRed": 0
+      "drawCardsRed": 0,
+      "tierTitles": {
+        "white": "D\u00e9senchanter",
+        "blue": "R\u00e9v\u00e9lation",
+        "yellow": "Tentation",
+        "red": "Point G"
+      },
+      "tierImageUrls": {
+        "white": "assets/images/cards/white/003.png",
+        "blue": "assets/images/cards/blue/004.png",
+        "yellow": "assets/images/cards/yellow/002.png",
+        "red": "assets/images/cards/red/007.png"
+      }
     },
     {
       "id": "white_002",
@@ -177,7 +225,19 @@
       "drawCardsWhite": 2,
       "drawCardsBlue": 0,
       "drawCardsYellow": 0,
-      "drawCardsRed": 0
+      "drawCardsRed": 0,
+      "tierTitles": {
+        "white": "Pioche",
+        "blue": "Rhabillage",
+        "yellow": "Caresse intime (cach\u00e9e)",
+        "red": "Plaisir (main)"
+      },
+      "tierImageUrls": {
+        "white": "assets/images/cards/white/002.png",
+        "blue": "assets/images/cards/blue/002.png",
+        "yellow": "assets/images/cards/yellow/003.png",
+        "red": "assets/images/cards/red/002.png"
+      }
     },
     {
       "id": "blue_005",
@@ -211,7 +271,19 @@
       "drawCardsWhite": 2,
       "drawCardsBlue": 0,
       "drawCardsYellow": 0,
-      "drawCardsRed": 0
+      "drawCardsRed": 0,
+      "tierTitles": {
+        "white": "Pioche",
+        "blue": "Caresse",
+        "yellow": "SexToys (cach\u00e9)",
+        "red": "Plaisir (sextoys)"
+      },
+      "tierImageUrls": {
+        "white": "assets/images/cards/white/002.png",
+        "blue": "assets/images/cards/blue/005.png",
+        "yellow": "assets/images/cards/yellow/005.png",
+        "red": "assets/images/cards/red/003.png"
+      }
     },
     {
       "id": "blue_006",
@@ -245,7 +317,19 @@
       "drawCardsWhite": 0,
       "drawCardsBlue": 0,
       "drawCardsYellow": 0,
-      "drawCardsRed": 0
+      "drawCardsRed": 0,
+      "tierTitles": {
+        "white": "Pose Sexy",
+        "blue": "Caresse",
+        "yellow": "SexToys (cach\u00e9)",
+        "red": "Sextoys"
+      },
+      "tierImageUrls": {
+        "white": "assets/images/cards/white/005.png",
+        "blue": "assets/images/cards/blue/005.png",
+        "yellow": "assets/images/cards/yellow/005.png",
+        "red": "assets/images/cards/red/004.png"
+      }
     },
     {
       "id": "white_010",
@@ -295,7 +379,19 @@
           "tier": "red",
           "blockOnRefusal": true
         }
-      ]
+      ],
+      "tierTitles": {
+        "white": "Striptease",
+        "blue": "Scroutch-Scroutch",
+        "yellow": "Bisous coquin",
+        "red": "Caresse ou rien"
+      },
+      "tierImageUrls": {
+        "white": "assets/images/cards/white/010.png",
+        "blue": "assets/images/cards/blue/011.png",
+        "yellow": "assets/images/cards/yellow/012.png",
+        "red": "assets/images/cards/red/013.png"
+      }
     },
     {
       "id": "white_009",
@@ -335,6 +431,18 @@
         "blue": "opponent",
         "yellow": "opponent",
         "red": "opponent"
+      },
+      "tierTitles": {
+        "white": "Chastet\u00e9",
+        "blue": "Pied",
+        "yellow": "Pi\u00e8ge",
+        "red": "Extase"
+      },
+      "tierImageUrls": {
+        "white": "assets/images/cards/white/009.png",
+        "blue": "assets/images/cards/blue/012.png",
+        "yellow": "assets/images/cards/yellow/011.png",
+        "red": "assets/images/cards/red/015.png"
       }
     },
     {
@@ -391,7 +499,19 @@
           "target": "both",
           "tier": "red"
         }
-      ]
+      ],
+      "tierTitles": {
+        "white": "50/50",
+        "blue": "Bisous",
+        "yellow": "Rhabillage DX",
+        "red": "Gagn\u00e9?"
+      },
+      "tierImageUrls": {
+        "white": "assets/images/cards/white/011.png",
+        "blue": "assets/images/cards/blue/013.png",
+        "yellow": "assets/images/cards/yellow/013.png",
+        "red": "assets/images/cards/red/014.png"
+      }
     },
     {
       "id": "red_016",

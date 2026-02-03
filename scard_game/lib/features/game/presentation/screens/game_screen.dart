@@ -135,8 +135,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
             Future.microtask(() => _applyRecurringEnchantmentEffects());
           }
 
-          // PHASE ENCHANTEMENT & PIOCHE : Plus de passage automatique
-          // Le joueur doit cliquer sur "Phase Suivante" quand il a fini
+          // PHASE ENCHANTEMENT & PIOCHE : Passage automatique
+          // Le joueur passe directement en phase Main après la pioche et la popup enchantements
 
           // Afficher la modal de validation quand on entre en phase Resolution
           if (session.currentPhase == GamePhase.resolution &&
@@ -388,10 +388,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
         final effectText = _effectTextForTier(card.gameEffect, tierKey);
         notices.add(
-          _EnchantmentEffectNotice(
-            cardName: card.name,
-            effectText: effectText,
-          ),
+          _EnchantmentEffectNotice(cardName: card.name, effectText: effectText),
         );
 
         for (final effect in card.recurringEffects) {
@@ -413,7 +410,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
           }
 
           final actionText =
-              (effect['value'] is String && (effect['value'] as String).isNotEmpty)
+              (effect['value'] is String &&
+                      (effect['value'] as String).isNotEmpty)
                   ? effect['value'] as String
                   : effectText;
           final blockOnRefusal = effect['blockOnRefusal'] == true;
@@ -429,12 +427,23 @@ class _GameScreenState extends ConsumerState<GameScreen>
       }
     }
 
-    addNoticesForOwner(session.player1Id, session.player1Data.activeEnchantmentIds);
+    addNoticesForOwner(
+      session.player1Id,
+      session.player1Data.activeEnchantmentIds,
+    );
     if (session.player2Id != null && session.player2Data != null) {
-      addNoticesForOwner(session.player2Id!, session.player2Data!.activeEnchantmentIds);
+      addNoticesForOwner(
+        session.player2Id!,
+        session.player2Data!.activeEnchantmentIds,
+      );
     }
 
-    if (notices.isEmpty) return;
+    // Si pas d'enchantements à afficher, passer directement en phase Main
+    if (notices.isEmpty) {
+      final firebaseService = ref.read(firebaseServiceProvider);
+      await firebaseService.nextPhase(sessionId);
+      return;
+    }
 
     if (!mounted) return;
     await showDialog<void>(
@@ -639,6 +648,12 @@ class _GameScreenState extends ConsumerState<GameScreen>
         await firebaseService.forceTurnToPlayer(sessionId, action.ownerId);
         return;
       }
+    }
+
+    // Après la popup des enchantements, passer automatiquement en phase Main
+    if (mounted) {
+      final firebaseService = ref.read(firebaseServiceProvider);
+      await firebaseService.nextPhase(sessionId);
     }
   }
 
@@ -872,7 +887,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
     return null;
   }
 
-    Future<void> _autoDrawAtTurnStart() async {
+  Future<void> _autoDrawAtTurnStart() async {
     final firebaseService = ref.read(firebaseServiceProvider);
 
     try {
@@ -899,7 +914,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
     }
   }
 
-@override
+  @override
   void dispose() {
     super.dispose();
   }

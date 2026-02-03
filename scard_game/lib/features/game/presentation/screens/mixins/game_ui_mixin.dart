@@ -32,48 +32,8 @@ mixin GameUIMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       runSpacing: 4,
       alignment: WrapAlignment.center,
       children: [
-        // Phase Suivante (en phase Draw)
-        if (isMyTurn && session.currentPhase == GamePhase.draw) ...[
-          buildCrystalButton(
-            label: 'Phase',
-            icon: Icons.arrow_forward,
-            onPressed: nextPhase,
-            gradientColors: [
-              Colors.blue.withOpacity(0.45),
-              Colors.blue.withOpacity(0.30),
-            ],
-          ),
-          buildCrystalButton(
-            label: isDiscardMode ? 'Annuler' : 'Défausser',
-            icon: isDiscardMode ? Icons.close : Icons.delete_sweep,
-            onPressed: toggleDiscardMode,
-            gradientColors:
-                isDiscardMode
-                    ? [
-                      Colors.grey.withOpacity(0.45),
-                      Colors.grey.withOpacity(0.30),
-                    ]
-                    : [
-                      Colors.red.withOpacity(0.45),
-                      Colors.red.withOpacity(0.30),
-                    ],
-          ),
-        ],
-
-        // Confirmer défausse
-        if (isDiscardMode &&
-            selectedCardIndex != null &&
-            isMyTurn &&
-            session.currentPhase == GamePhase.draw)
-          buildCrystalButton(
-            label: 'Confirmer',
-            icon: Icons.check,
-            onPressed: discardSelectedCard,
-            gradientColors: [
-              Colors.orange.withOpacity(0.45),
-              Colors.orange.withOpacity(0.30),
-            ],
-          ),
+        // Phase Draw est maintenant automatisée - pas de boutons
+        // Le joueur passe directement en phase Main après la pioche et les enchantements
 
         // Passer mon tour
         if (isMyTurn &&

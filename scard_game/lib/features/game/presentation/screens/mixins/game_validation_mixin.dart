@@ -54,6 +54,12 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
 
       final card = allCards.firstWhere((c) => c.id == cardToValidate);
 
+      // Récupérer le tier sélectionné et extraire l'énoncé correspondant
+      final selectedTierKey = session.playedCardTiers[cardToValidate];
+      final effectText = _getEffectTextForTier(card, selectedTierKey);
+      final tierTitle =
+          selectedTierKey != null ? card.tierTitles[selectedTierKey] : null;
+
       if (!mounted) return;
 
       // Validation simple
@@ -154,6 +160,19 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 12),
+                            // Afficher le titre du tier si disponible
+                            if (tierTitle != null) ...[
+                              Text(
+                                tierTitle,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: _getTierColor(selectedTierKey),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 8),
+                            ],
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
@@ -163,7 +182,7 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                '"${card.targetEffect ?? card.gameEffect}"',
+                                '"$effectText"',
                                 style: const TextStyle(
                                   fontSize: 15,
                                   color: Colors.white,
@@ -254,6 +273,12 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
       }
 
       final card = allCards.firstWhere((c) => c.id == cardToValidate);
+
+      // Récupérer le tier sélectionné et extraire l'énoncé correspondant
+      final selectedTierKey = session.playedCardTiers[cardToValidate];
+      final effectText = _getEffectTextForTier(card, selectedTierKey);
+      final tierTitle =
+          selectedTierKey != null ? card.tierTitles[selectedTierKey] : null;
 
       // Déterminer qui doit valider
       final isMyTurn = session.currentPlayerId == playerId;
@@ -366,6 +391,19 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 12),
+                              // Afficher le titre du tier si disponible
+                              if (tierTitle != null) ...[
+                                Text(
+                                  tierTitle,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: _getTierColor(selectedTierKey),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 8),
+                              ],
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
@@ -375,7 +413,7 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
-                                  '"${card.targetEffect ?? card.gameEffect}"',
+                                  '"$effectText"',
                                   style: const TextStyle(
                                     fontSize: 15,
                                     color: Colors.white,
@@ -738,5 +776,56 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
         ],
       ),
     );
+  }
+
+  /// Extrait l'énoncé correspondant au tier sélectionné
+  String _getEffectTextForTier(GameCard card, String? tierKey) {
+    if (tierKey == null) {
+      return card.targetEffect ?? card.gameEffect;
+    }
+
+    // Mapper tierKey (white/blue/yellow/red) vers le label français
+    final labelMap = {
+      'white': 'blanc',
+      'blue': 'bleu',
+      'yellow': 'jaune',
+      'red': 'rouge',
+    };
+    final targetLabel = labelMap[tierKey.toLowerCase()];
+    if (targetLabel == null) {
+      return card.targetEffect ?? card.gameEffect;
+    }
+
+    // Parser le gameEffect pour trouver l'énoncé correspondant
+    final lines = card.gameEffect.split('\n');
+    for (final line in lines) {
+      final trimmedLine = line.trim();
+      if (trimmedLine.toLowerCase().startsWith('$targetLabel:')) {
+        // Retourner le texte après le ":"
+        final colonIndex = trimmedLine.indexOf(':');
+        if (colonIndex != -1) {
+          return trimmedLine.substring(colonIndex + 1).trim();
+        }
+      }
+    }
+
+    // Fallback si le tier n'est pas trouvé
+    return card.targetEffect ?? card.gameEffect;
+  }
+
+  /// Retourne la couleur correspondant au tier
+  Color _getTierColor(String? tierKey) {
+    switch (tierKey?.toLowerCase()) {
+      case 'white':
+        return Colors.grey[300]!;
+      case 'blue':
+        return const Color(0xFF1E88E5);
+      case 'yellow':
+        return const Color(0xFFF9A825);
+      case 'red':
+        return const Color(0xFFE53935);
+      default:
+        return Colors.white;
+    }
   }
 }

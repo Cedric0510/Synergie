@@ -20,10 +20,7 @@ class OpponentZoneWidget extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(isSmallMobile ? 6 : (isMobile ? 8 : 16)),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.3),
-        border: Border(
-          bottom: BorderSide(color: Colors.red.withOpacity(0.5), width: 2),
-        ),
+        color: Colors.transparent,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -85,6 +82,7 @@ class OpponentZoneWidget extends StatelessWidget {
           SizedBox(height: isSmallMobile ? 4 : 6),
           CompactEnchantementsWidget(
             enchantmentIds: opponentData.activeEnchantmentIds,
+            enchantmentTiers: opponentData.activeEnchantmentTiers,
           ),
         ],
       ],
@@ -121,6 +119,7 @@ class OpponentZoneWidget extends StatelessWidget {
               if (opponentData.activeEnchantmentIds.isNotEmpty)
                 CompactEnchantementsWidget(
                   enchantmentIds: opponentData.activeEnchantmentIds,
+                  enchantmentTiers: opponentData.activeEnchantmentTiers,
                 ),
               const SizedBox(width: 16),
               _buildHandCountBadge(isMobile: false),

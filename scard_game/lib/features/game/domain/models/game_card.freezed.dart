@@ -121,6 +121,12 @@ mixin _$GameCard {
   List<Map<String, dynamic>> get statusModifiers =>
       throw _privateConstructorUsedError;
 
+  /// Titres des paliers (white/blue/yellow/red)
+  Map<String, String> get tierTitles => throw _privateConstructorUsedError;
+
+  /// Images par palier (white/blue/yellow/red)
+  Map<String, String> get tierImageUrls => throw _privateConstructorUsedError;
+
   /// Gain de tension par tour pour le lanceur (null si pas un enchantement)
   /// Ex: 1, 3, 5, 7 ou null
   int? get tensionPerTurn => throw _privateConstructorUsedError; // === DECK ===
@@ -187,6 +193,8 @@ abstract class $GameCardCopyWith<$Res> {
     Map<String, String> enchantmentTargets,
     List<Map<String, dynamic>> recurringEffects,
     List<Map<String, dynamic>> statusModifiers,
+    Map<String, String> tierTitles,
+    Map<String, String> tierImageUrls,
     int? tensionPerTurn,
     int? maxPerDeck,
     List<CardMechanic> mechanics,
@@ -243,6 +251,8 @@ class _$GameCardCopyWithImpl<$Res, $Val extends GameCard>
     Object? enchantmentTargets = null,
     Object? recurringEffects = null,
     Object? statusModifiers = null,
+    Object? tierTitles = null,
+    Object? tierImageUrls = null,
     Object? tensionPerTurn = freezed,
     Object? maxPerDeck = freezed,
     Object? mechanics = null,
@@ -416,6 +426,16 @@ class _$GameCardCopyWithImpl<$Res, $Val extends GameCard>
                     ? _value.statusModifiers
                     : statusModifiers // ignore: cast_nullable_to_non_nullable
                         as List<Map<String, dynamic>>,
+            tierTitles:
+                null == tierTitles
+                    ? _value.tierTitles
+                    : tierTitles // ignore: cast_nullable_to_non_nullable
+                        as Map<String, String>,
+            tierImageUrls:
+                null == tierImageUrls
+                    ? _value.tierImageUrls
+                    : tierImageUrls // ignore: cast_nullable_to_non_nullable
+                        as Map<String, String>,
             tensionPerTurn:
                 freezed == tensionPerTurn
                     ? _value.tensionPerTurn
@@ -490,6 +510,8 @@ abstract class _$$GameCardImplCopyWith<$Res>
     Map<String, String> enchantmentTargets,
     List<Map<String, dynamic>> recurringEffects,
     List<Map<String, dynamic>> statusModifiers,
+    Map<String, String> tierTitles,
+    Map<String, String> tierImageUrls,
     int? tensionPerTurn,
     int? maxPerDeck,
     List<CardMechanic> mechanics,
@@ -545,6 +567,8 @@ class __$$GameCardImplCopyWithImpl<$Res>
     Object? enchantmentTargets = null,
     Object? recurringEffects = null,
     Object? statusModifiers = null,
+    Object? tierTitles = null,
+    Object? tierImageUrls = null,
     Object? tensionPerTurn = freezed,
     Object? maxPerDeck = freezed,
     Object? mechanics = null,
@@ -718,6 +742,16 @@ class __$$GameCardImplCopyWithImpl<$Res>
                 ? _value._statusModifiers
                 : statusModifiers // ignore: cast_nullable_to_non_nullable
                     as List<Map<String, dynamic>>,
+        tierTitles:
+            null == tierTitles
+                ? _value._tierTitles
+                : tierTitles // ignore: cast_nullable_to_non_nullable
+                    as Map<String, String>,
+        tierImageUrls:
+            null == tierImageUrls
+                ? _value._tierImageUrls
+                : tierImageUrls // ignore: cast_nullable_to_non_nullable
+                    as Map<String, String>,
         tensionPerTurn:
             freezed == tensionPerTurn
                 ? _value.tensionPerTurn
@@ -785,6 +819,8 @@ class _$GameCardImpl implements _GameCard {
     final Map<String, String> enchantmentTargets = const {},
     final List<Map<String, dynamic>> recurringEffects = const [],
     final List<Map<String, dynamic>> statusModifiers = const [],
+    final Map<String, String> tierTitles = const {},
+    final Map<String, String> tierImageUrls = const {},
     this.tensionPerTurn,
     this.maxPerDeck,
     final List<CardMechanic> mechanics = const [],
@@ -793,6 +829,8 @@ class _$GameCardImpl implements _GameCard {
   }) : _enchantmentTargets = enchantmentTargets,
        _recurringEffects = recurringEffects,
        _statusModifiers = statusModifiers,
+       _tierTitles = tierTitles,
+       _tierImageUrls = tierImageUrls,
        _mechanics = mechanics;
 
   factory _$GameCardImpl.fromJson(Map<String, dynamic> json) =>
@@ -976,6 +1014,30 @@ class _$GameCardImpl implements _GameCard {
     return EqualUnmodifiableListView(_statusModifiers);
   }
 
+  /// Titres des paliers (white/blue/yellow/red)
+  final Map<String, String> _tierTitles;
+
+  /// Titres des paliers (white/blue/yellow/red)
+  @override
+  @JsonKey()
+  Map<String, String> get tierTitles {
+    if (_tierTitles is EqualUnmodifiableMapView) return _tierTitles;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_tierTitles);
+  }
+
+  /// Images par palier (white/blue/yellow/red)
+  final Map<String, String> _tierImageUrls;
+
+  /// Images par palier (white/blue/yellow/red)
+  @override
+  @JsonKey()
+  Map<String, String> get tierImageUrls {
+    if (_tierImageUrls is EqualUnmodifiableMapView) return _tierImageUrls;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_tierImageUrls);
+  }
+
   /// Gain de tension par tour pour le lanceur (null si pas un enchantement)
   /// Ex: 1, 3, 5, 7 ou null
   @override
@@ -1011,7 +1073,7 @@ class _$GameCardImpl implements _GameCard {
 
   @override
   String toString() {
-    return 'GameCard(id: $id, name: $name, type: $type, color: $color, description: $description, launcherCost: $launcherCost, targetEffect: $targetEffect, damageIfRefused: $damageIfRefused, gameEffect: $gameEffect, drawCards: $drawCards, drawCardsWhite: $drawCardsWhite, drawCardsBlue: $drawCardsBlue, drawCardsYellow: $drawCardsYellow, drawCardsRed: $drawCardsRed, drawCardsPerTurn: $drawCardsPerTurn, removeClothing: $removeClothing, addClothing: $addClothing, destroyEnchantment: $destroyEnchantment, destroyAllEnchantments: $destroyAllEnchantments, replaceEnchantment: $replaceEnchantment, sacrificeCard: $sacrificeCard, discardCard: $discardCard, opponentDraw: $opponentDraw, opponentRemoveClothing: $opponentRemoveClothing, shuffleHandIntoDeck: $shuffleHandIntoDeck, piDamageOpponent: $piDamageOpponent, piGainSelf: $piGainSelf, tensionIncrease: $tensionIncrease, piCost: $piCost, isEnchantment: $isEnchantment, enchantmentTargets: $enchantmentTargets, recurringEffects: $recurringEffects, statusModifiers: $statusModifiers, tensionPerTurn: $tensionPerTurn, maxPerDeck: $maxPerDeck, mechanics: $mechanics, imageUrl: $imageUrl, flavorText: $flavorText)';
+    return 'GameCard(id: $id, name: $name, type: $type, color: $color, description: $description, launcherCost: $launcherCost, targetEffect: $targetEffect, damageIfRefused: $damageIfRefused, gameEffect: $gameEffect, drawCards: $drawCards, drawCardsWhite: $drawCardsWhite, drawCardsBlue: $drawCardsBlue, drawCardsYellow: $drawCardsYellow, drawCardsRed: $drawCardsRed, drawCardsPerTurn: $drawCardsPerTurn, removeClothing: $removeClothing, addClothing: $addClothing, destroyEnchantment: $destroyEnchantment, destroyAllEnchantments: $destroyAllEnchantments, replaceEnchantment: $replaceEnchantment, sacrificeCard: $sacrificeCard, discardCard: $discardCard, opponentDraw: $opponentDraw, opponentRemoveClothing: $opponentRemoveClothing, shuffleHandIntoDeck: $shuffleHandIntoDeck, piDamageOpponent: $piDamageOpponent, piGainSelf: $piGainSelf, tensionIncrease: $tensionIncrease, piCost: $piCost, isEnchantment: $isEnchantment, enchantmentTargets: $enchantmentTargets, recurringEffects: $recurringEffects, statusModifiers: $statusModifiers, tierTitles: $tierTitles, tierImageUrls: $tierImageUrls, tensionPerTurn: $tensionPerTurn, maxPerDeck: $maxPerDeck, mechanics: $mechanics, imageUrl: $imageUrl, flavorText: $flavorText)';
   }
 
   @override
@@ -1086,6 +1148,14 @@ class _$GameCardImpl implements _GameCard {
               other._statusModifiers,
               _statusModifiers,
             ) &&
+            const DeepCollectionEquality().equals(
+              other._tierTitles,
+              _tierTitles,
+            ) &&
+            const DeepCollectionEquality().equals(
+              other._tierImageUrls,
+              _tierImageUrls,
+            ) &&
             (identical(other.tensionPerTurn, tensionPerTurn) ||
                 other.tensionPerTurn == tensionPerTurn) &&
             (identical(other.maxPerDeck, maxPerDeck) ||
@@ -1137,6 +1207,8 @@ class _$GameCardImpl implements _GameCard {
     const DeepCollectionEquality().hash(_enchantmentTargets),
     const DeepCollectionEquality().hash(_recurringEffects),
     const DeepCollectionEquality().hash(_statusModifiers),
+    const DeepCollectionEquality().hash(_tierTitles),
+    const DeepCollectionEquality().hash(_tierImageUrls),
     tensionPerTurn,
     maxPerDeck,
     const DeepCollectionEquality().hash(_mechanics),
@@ -1193,6 +1265,8 @@ abstract class _GameCard implements GameCard {
     final Map<String, String> enchantmentTargets,
     final List<Map<String, dynamic>> recurringEffects,
     final List<Map<String, dynamic>> statusModifiers,
+    final Map<String, String> tierTitles,
+    final Map<String, String> tierImageUrls,
     final int? tensionPerTurn,
     final int? maxPerDeck,
     final List<CardMechanic> mechanics,
@@ -1329,6 +1403,14 @@ abstract class _GameCard implements GameCard {
   /// Modificateurs persistants (ex: PI bloqués)
   @override
   List<Map<String, dynamic>> get statusModifiers;
+
+  /// Titres des paliers (white/blue/yellow/red)
+  @override
+  Map<String, String> get tierTitles;
+
+  /// Images par palier (white/blue/yellow/red)
+  @override
+  Map<String, String> get tierImageUrls;
 
   /// Gain de tension par tour pour le lanceur (null si pas un enchantement)
   /// Ex: 1, 3, 5, 7 ou null

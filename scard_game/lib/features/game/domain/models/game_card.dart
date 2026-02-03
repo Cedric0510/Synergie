@@ -113,6 +113,12 @@ class GameCard with _$GameCard {
     /// Modificateurs persistants (ex: PI bloqués)
     @Default([]) List<Map<String, dynamic>> statusModifiers,
 
+    /// Titres des paliers (white/blue/yellow/red)
+    @Default({}) Map<String, String> tierTitles,
+
+    /// Images par palier (white/blue/yellow/red)
+    @Default({}) Map<String, String> tierImageUrls,
+
     /// Gain de tension par tour pour le lanceur (null si pas un enchantement)
     /// Ex: 1, 3, 5, 7 ou null
     int? tensionPerTurn,

@@ -9,12 +9,16 @@ class CompactEnchantementsWidget extends ConsumerWidget {
   final List<String> enchantmentIds;
   final bool isMyEnchantments;
   final Function(String enchantmentId, GameCard card)? onEnchantmentTap;
+  final double scale;
+  final Map<String, String> enchantmentTiers;
 
   const CompactEnchantementsWidget({
     super.key,
     required this.enchantmentIds,
     this.isMyEnchantments = false,
     this.onEnchantmentTap,
+    this.scale = 1.0,
+    this.enchantmentTiers = const {},
   });
 
   @override
@@ -27,9 +31,13 @@ class CompactEnchantementsWidget extends ConsumerWidget {
     final isSmallMobile = screenWidth < 380; // Très petits écrans
 
     // Tailles adaptatives selon l'écran
-    final cardWidth = isSmallMobile ? 32.0 : (isMobile ? 38.0 : 50.0);
-    final cardHeight = isSmallMobile ? 42.0 : (isMobile ? 48.0 : 65.0);
-    final overlapOffset = isSmallMobile ? 10.0 : (isMobile ? 12.0 : 15.0);
+    final baseCardWidth = isSmallMobile ? 32.0 : (isMobile ? 38.0 : 50.0);
+    final baseCardHeight = isSmallMobile ? 42.0 : (isMobile ? 48.0 : 65.0);
+    final baseOverlapOffset = isSmallMobile ? 10.0 : (isMobile ? 12.0 : 15.0);
+    final cardWidth = (baseCardWidth * scale).clamp(18.0, baseCardWidth);
+    final cardHeight = (baseCardHeight * scale).clamp(24.0, baseCardHeight);
+    final overlapOffset =
+        (baseOverlapOffset * scale).clamp(6.0, baseOverlapOffset);
 
     return FutureBuilder(
       future: cardService.loadAllCards(),
@@ -91,6 +99,7 @@ class CompactEnchantementsWidget extends ConsumerWidget {
                         height: cardHeight,
                         compact: true,
                         showPreviewOnHover: true,
+                        displayTierKey: enchantmentTiers[enchantmentIds[i]],
                       ),
                     ),
                   ),

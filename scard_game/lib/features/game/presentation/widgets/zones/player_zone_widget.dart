@@ -49,12 +49,14 @@ class PlayerZoneWidget extends ConsumerWidget {
     final isSmallMobile = screenWidth < 380;
 
     return Container(
-      padding: EdgeInsets.all(isSmallMobile ? 8 : (isMobile ? 12 : 16)),
+      padding: EdgeInsets.fromLTRB(
+        isSmallMobile ? 6 : (isMobile ? 8 : 10),
+        isSmallMobile ? 6 : (isMobile ? 8 : 10),
+        isSmallMobile ? 6 : (isMobile ? 8 : 10),
+        isSmallMobile ? 4 : (isMobile ? 6 : 8),
+      ),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.3),
-        border: Border(
-          top: BorderSide(color: Colors.green.withOpacity(0.5), width: 2),
-        ),
+        color: Colors.transparent,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -62,14 +64,23 @@ class PlayerZoneWidget extends ConsumerWidget {
           // Ma main de cartes
           _buildHandCards(context, ref, cardService),
 
-          SizedBox(height: isSmallMobile ? 4 : (isMobile ? 8 : 12)),
+          SizedBox(height: isSmallMobile ? 2 : (isMobile ? 4 : 6)),
 
-          // Mes infos + actions
-          _buildPlayerInfo(context),
+          // Enchantements si présents
+          if (myData.activeEnchantmentIds.isNotEmpty) ...[
+            CompactEnchantementsWidget(
+              enchantmentIds: myData.activeEnchantmentIds,
+              isMyEnchantments: true,
+              onEnchantmentTap: onShowDeleteEnchantmentDialog,
+              scale: 0.7,
+              enchantmentTiers: myData.activeEnchantmentTiers,
+            ),
+            SizedBox(height: isSmallMobile ? 2 : 4),
+          ],
 
-          SizedBox(height: isSmallMobile ? 4 : 8),
-
-          // Ma barre de tension
+          // Infos compactes + barre de tension (collées en bas)
+          _buildCompactStatus(context),
+          SizedBox(height: isSmallMobile ? 2 : 4),
           TensionBarWidget(tension: myData.tension),
         ],
       ),
@@ -306,121 +317,50 @@ class PlayerZoneWidget extends ConsumerWidget {
     );
   }
 
-  /// Affichage des infos joueur (PI, pioche, enchantements)
-  Widget _buildPlayerInfo(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final screenWidth = MediaQuery.of(context).size.width;
-        final isMobile = screenWidth < 600;
-        final isSmallMobile = screenWidth < 380;
+  /// Ligne compacte (sexe + nom + PI)
+  Widget _buildCompactStatus(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+    final isSmallMobile = screenWidth < 380;
 
-        if (isMobile) {
-          return _buildMobilePlayerInfo(isSmallMobile);
-        } else {
-          return _buildDesktopPlayerInfo();
-        }
-      },
-    );
-  }
-
-  /// Version mobile (2 lignes)
-  Widget _buildMobilePlayerInfo(bool isSmallMobile) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Ligne 1 : Infos joueur
-        Row(
-          children: [
-            Icon(
-              myData.gender.toString().contains('male')
-                  ? Icons.male
-                  : Icons.female,
-              color: Colors.white70,
-              size: isSmallMobile ? 14 : 16,
-            ),
-            SizedBox(width: isSmallMobile ? 2 : 4),
-            Expanded(
-              child: Text(
-                myData.name,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: isSmallMobile ? 11 : 13,
-                  fontWeight: FontWeight.bold,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            SizedBox(width: isSmallMobile ? 4 : 8),
-            _buildPIControl(isMobile: true, isSmallMobile: isSmallMobile),
-            if (myData.handCardIds.length >= 7)
-              _buildFullHandIndicator(isSmallMobile: isSmallMobile),
-          ],
-        ),
-        // Ligne 2 : Enchantements si présents
-        if (myData.activeEnchantmentIds.isNotEmpty) ...[
-          SizedBox(height: isSmallMobile ? 4 : 6),
-          CompactEnchantementsWidget(
-            enchantmentIds: myData.activeEnchantmentIds,
-            isMyEnchantments: true,
-            onEnchantmentTap: onShowDeleteEnchantmentDialog,
-          ),
-        ],
-      ],
-    );
-  }
-
-  /// Version desktop (1 ligne)
-  Widget _buildDesktopPlayerInfo() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
+        Icon(
+          myData.gender.toString().contains('male')
+              ? Icons.male
+              : Icons.female,
+          color: Colors.white70,
+          size: isSmallMobile ? 12 : (isMobile ? 14 : 16),
+        ),
+        SizedBox(width: isSmallMobile ? 3 : 5),
         Expanded(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                Icon(
-                  myData.gender.toString().contains('male')
-                      ? Icons.male
-                      : Icons.female,
-                  color: Colors.white70,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  myData.name,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                _buildPIControl(isMobile: false),
-                const SizedBox(width: 16),
-                if (myData.activeEnchantmentIds.isNotEmpty)
-                  CompactEnchantementsWidget(
-                    enchantmentIds: myData.activeEnchantmentIds,
-                    isMyEnchantments: true,
-                    onEnchantmentTap: onShowDeleteEnchantmentDialog,
-                  ),
-              ],
+          child: Text(
+            myData.name,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: isSmallMobile ? 11 : (isMobile ? 12 : 14),
+              fontWeight: FontWeight.bold,
             ),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
+        SizedBox(width: isSmallMobile ? 4 : 8),
+        _buildPIBadge(isMobile: isMobile, isSmallMobile: isSmallMobile),
+        if (myData.handCardIds.length >= 7)
+          _buildFullHandIndicator(isSmallMobile: isSmallMobile),
       ],
     );
   }
 
-  /// Contrôle des PI avec boutons +/-
-  Widget _buildPIControl({required bool isMobile, bool isSmallMobile = false}) {
+  /// Badge PI sans boutons +/-
+  Widget _buildPIBadge({required bool isMobile, bool isSmallMobile = false}) {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: isSmallMobile ? 4 : (isMobile ? 6 : 8),
         vertical: isSmallMobile ? 3 : (isMobile ? 4 : 6),
       ),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(isSmallMobile ? 14 : 20),
+        borderRadius: BorderRadius.circular(isSmallMobile ? 12 : 16),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -432,7 +372,7 @@ class PlayerZoneWidget extends ConsumerWidget {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.25),
-            blurRadius: isSmallMobile ? 4 : 8,
+            blurRadius: isSmallMobile ? 3 : 6,
             offset: const Offset(0, 3),
           ),
         ],
@@ -440,46 +380,14 @@ class PlayerZoneWidget extends ConsumerWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          InkWell(
-            onTap: onDecrementPI,
-            child: Icon(
-              Icons.remove_circle,
-              color: Colors.white,
-              size: isSmallMobile ? 14 : (isMobile ? 16 : 18),
-              shadows: const [
-                Shadow(
-                  color: Colors.black38,
-                  offset: Offset(0, 1),
-                  blurRadius: 3,
-                ),
-              ],
-            ),
-          ),
-          SizedBox(width: isSmallMobile ? 2 : (isMobile ? 4 : 6)),
           Text(
             isMobile
                 ? '${myData.inhibitionPoints}'
                 : '${myData.inhibitionPoints} PI',
             style: TextStyle(
               color: Colors.white,
-              fontSize: isSmallMobile ? 10 : (isMobile ? 12 : 14),
+              fontSize: isSmallMobile ? 10 : (isMobile ? 11 : 12),
               fontWeight: FontWeight.bold,
-              shadows: const [
-                Shadow(
-                  color: Colors.black38,
-                  offset: Offset(0, 1),
-                  blurRadius: 3,
-                ),
-              ],
-            ),
-          ),
-          SizedBox(width: isSmallMobile ? 2 : (isMobile ? 4 : 6)),
-          InkWell(
-            onTap: onIncrementPI,
-            child: Icon(
-              Icons.add_circle,
-              color: Colors.white,
-              size: isSmallMobile ? 14 : (isMobile ? 16 : 18),
               shadows: const [
                 Shadow(
                   color: Colors.black38,

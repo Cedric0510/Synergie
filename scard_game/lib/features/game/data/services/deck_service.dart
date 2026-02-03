@@ -18,8 +18,9 @@ class DeckService {
   DeckService(this._cardService);
 
   /// Génère un deck complet selon les règles :
-  /// - 2 exemplaires par carte (deck de base = 90 cartes)
+  /// - 2 exemplaires par carte (deck de base)
   /// - 1 exemplaire si maxPerDeck = 1 (Ultima uniquement)
+  /// - Maximum 4 cartes de négociation (vertes) par deck
   /// - Filtre par niveau : white, blue, yellow, red
   Future<List<String>> generateDeck({
     required List<CardColor> allowedColors,
@@ -30,7 +31,14 @@ class DeckService {
     print('📦 Génération deck - Couleurs autorisées: $allowedColors');
     print('📦 Total cartes chargées: ${allCards.length}');
 
-    for (final card in allCards) {
+    // Séparer les cartes vertes (négociations) des autres
+    final greenCards =
+        allCards.where((c) => c.color == CardColor.green).toList();
+    final otherCards =
+        allCards.where((c) => c.color != CardColor.green).toList();
+
+    // Ajouter les cartes non-vertes normalement
+    for (final card in otherCards) {
       // Vérifier si la couleur de la carte est autorisée pour ce niveau
       if (!allowedColors.contains(card.color)) {
         continue;
@@ -43,6 +51,20 @@ class DeckService {
       // Ajouter uniquement les cartes qui existent réellement dans cards.json
       for (int i = 0; i < count; i++) {
         deck.add(card.id);
+      }
+    }
+
+    // Ajouter exactement 4 cartes de négociation (vertes)
+    // On mélange les cartes vertes disponibles et on en prend 4
+    if (allowedColors.contains(CardColor.green) && greenCards.isNotEmpty) {
+      final shuffledGreen = List<GameCard>.from(greenCards)..shuffle(_random);
+      const maxGreenCards = 4;
+
+      for (int i = 0; i < maxGreenCards && i < shuffledGreen.length; i++) {
+        deck.add(shuffledGreen[i].id);
+        print(
+          '  ✅ ${shuffledGreen[i].id} (green) × 1 [négociation ${i + 1}/$maxGreenCards]',
+        );
       }
     }
 
