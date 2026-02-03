@@ -26,6 +26,18 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   bool get isDiscardMode;
   set isDiscardMode(bool value);
 
+  // État pour le drag & drop - permet de nettoyer quand la validation est terminée
+  GameCard? get pendingDroppedCard;
+  set pendingDroppedCard(GameCard? value);
+  int? get pendingDroppedCardIndex;
+  set pendingDroppedCardIndex(int? value);
+
+  /// Nettoie l'état de pending (drag & drop)
+  void _clearPendingDropState() {
+    pendingDroppedCard = null;
+    pendingDroppedCardIndex = null;
+  }
+
   /// Défausser la carte sélectionnée
   Future<void> discardSelectedCard() async {
     if (selectedCardIndex == null) return;
@@ -190,8 +202,14 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   }
 
   /// Jouer la carte sélectionnée
+  /// Jouer une carte - wrapper qui ne retourne pas de valeur
   Future<void> playCard() async {
-    if (selectedCardIndex == null) return;
+    await _playCardInternal();
+  }
+
+  /// Jouer une carte et retourner true si succès, false sinon
+  Future<bool> _playCardInternal() async {
+    if (selectedCardIndex == null) return false;
 
     final firebaseService = ref.read(firebaseServiceProvider);
     final cardService = ref.read(cardServiceProvider);
@@ -231,7 +249,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
             ),
           );
         }
-        return;
+        return false;
       }
 
       // Vérification type en phase response
@@ -247,13 +265,13 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
               ),
             );
           }
-          return;
+          return false;
         }
 
         // Logique spéciale pour les cartes vertes (Négociations)
         if (card.color == CardColor.green) {
           await _handleGreenCardNegotiation(session, isPlayer1, myData, cardId);
-          return;
+          return true; // Green card negotiation launched successfully
         }
       }
 
@@ -263,7 +281,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       if (card.color != CardColor.green && _hasTierEffects(card)) {
         selectedTier = await _selectTierForCard(effectiveLevel);
         if (selectedTier == null) {
-          return;
+          return false; // User cancelled tier selection
         }
       }
 
@@ -277,7 +295,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
               SnackBar(content: Text('❌ $e'), backgroundColor: Colors.red),
             );
           }
-          return;
+          return false;
         }
       }
 
@@ -328,13 +346,31 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
           ),
         );
       }
+      return true; // Card played successfully
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('❌ Erreur: $e'), backgroundColor: Colors.red),
         );
       }
+      return false;
     }
+  }
+
+  /// Jouer une carte via drag & drop (depuis PlayerZoneWidget ou PlayZoneWidget)
+  /// Cette méthode est appelée quand une carte est droppée sur la zone de jeu
+  /// Retourne true si la carte a été jouée avec succès, false sinon
+  Future<bool> playCardFromDrag(int cardIndex, GameCard card) async {
+    // Sélectionner la carte et jouer directement
+    setState(() {
+      selectedCardIndex = cardIndex;
+    });
+
+    // Petit délai pour laisser le state se mettre à jour
+    await Future.delayed(const Duration(milliseconds: 50));
+
+    // Appeler _playCardInternal qui retourne le résultat
+    return await _playCardInternal();
   }
 
   /// Gère la négociation pour les cartes vertes
@@ -722,6 +758,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
         await firebaseService.nextPhase(sessionId);
         setState(() {
           pendingCardValidation = false;
+          _clearPendingDropState();
         });
 
         if (mounted) {
@@ -737,6 +774,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
         await firebaseService.nextPhase(sessionId);
         setState(() {
           pendingCardValidation = false;
+          _clearPendingDropState();
         });
 
         if (mounted) {
@@ -812,6 +850,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
 
         setState(() {
           pendingCardValidation = false;
+          _clearPendingDropState();
         });
 
         if (mounted) {

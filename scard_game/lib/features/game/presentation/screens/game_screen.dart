@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/services/firebase_service.dart';
 import '../../data/services/card_service.dart';
 import '../../domain/models/game_session.dart';
+import '../../domain/models/game_card.dart';
 import '../../domain/models/player_data.dart';
 import '../../domain/enums/game_phase.dart';
 import '../../domain/enums/game_status.dart';
@@ -51,6 +52,10 @@ class _GameScreenState extends ConsumerState<GameScreen>
   bool _autoDrawInProgress = false;
   bool _hasShownEnchantmentEffects = false;
 
+  // Pour le drag & drop : carte en attente d'être jouée (affichée dans le slot)
+  GameCard? _pendingDroppedCard;
+  int? _pendingDroppedCardIndex;
+
   @override
   void initState() {
     super.initState();
@@ -87,6 +92,61 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
   @override
   set isDiscardMode(bool value) => _isDiscardMode = value;
+
+  // Getters/setters pour le drag & drop
+  @override
+  GameCard? get pendingDroppedCard => _pendingDroppedCard;
+
+  @override
+  set pendingDroppedCard(GameCard? value) => _pendingDroppedCard = value;
+
+  @override
+  int? get pendingDroppedCardIndex => _pendingDroppedCardIndex;
+
+  @override
+  set pendingDroppedCardIndex(int? value) => _pendingDroppedCardIndex = value;
+
+  /// Gère le drop d'une carte sur la zone de jeu
+  /// Affiche immédiatement la carte dans le slot puis lance le processus de jeu
+  void _handleCardDropped(int cardIndex, GameCard card) {
+    setState(() {
+      _pendingDroppedCard = card;
+      _pendingDroppedCardIndex = cardIndex;
+    });
+
+    // Lancer le processus de jeu après un court délai pour laisser l'UI se mettre à jour
+    Future.delayed(const Duration(milliseconds: 100), () async {
+      final success = await playCardFromDrag(cardIndex, card);
+      // Si échec (annulation de la sélection de palier, etc.), on nettoie
+      // pour permettre à l'utilisateur de redrag la carte
+      // Si succès, on NE nettoie PAS car la carte est maintenant en mode
+      // "pendingCardValidation" et l'utilisateur peut valider ou annuler
+      if (mounted && !success) {
+        setState(() {
+          _pendingDroppedCard = null;
+          _pendingDroppedCardIndex = null;
+        });
+      }
+    });
+  }
+
+  /// Gère le retour d'une carte depuis la zone de jeu vers la main
+  /// Si la carte est déjà dans Firebase (pendingCardValidation), appelle cancelPlayedCard
+  void _handleCardReturnedToHand() {
+    // Si la carte est déjà dans Firebase, il faut annuler l'action
+    if (_pendingCardValidation) {
+      // Appeler cancelPlayedCard qui va remettre la carte en main côté Firebase
+      // et nettoyer l'état local via _clearPendingDropState
+      cancelPlayedCard();
+    } else {
+      // La carte n'était pas encore dans Firebase, juste nettoyer l'état local
+      setState(() {
+        _pendingDroppedCard = null;
+        _pendingDroppedCardIndex = null;
+        _selectedCardIndex = null;
+      });
+    }
+  }
 
   // Implémentation des méthodes requises par GameValidationMixin
   // showResponseEffectDialog est maintenant fourni par GameResponseEffectsMixin
@@ -232,6 +292,10 @@ class _GameScreenState extends ConsumerState<GameScreen>
                           isMyTurn: isMyTurn,
                           playerId: widget.playerId,
                           onSkipResponse: skipResponse,
+                          onCardDropped: _handleCardDropped,
+                          onCardReturnedToHand: _handleCardReturnedToHand,
+                          pendingCard: _pendingDroppedCard,
+                          pendingCardValidation: _pendingCardValidation,
                         ),
                       ),
 
@@ -260,6 +324,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
                         onManualDrawCard: manualDrawCard,
                         onShowDeleteEnchantmentDialog:
                             showDeleteEnchantmentDialog,
+                        onCardDragged: _handleCardDropped,
+                        onCardReturnedFromPlayZone: _handleCardReturnedToHand,
+                        pendingCardIndex: _pendingDroppedCardIndex,
                       ),
                     ],
                   ),

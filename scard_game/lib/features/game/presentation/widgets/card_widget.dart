@@ -60,11 +60,12 @@ class CardWidget extends StatelessWidget {
     );
 
     if (showPreviewOnHover) {
-      // Pour les cartes jouées sur le plateau, on ajoute le tap/longPress pour ouvrir le dialog de preview
+      // Pour les cartes jouées sur le plateau, on ajoute le tap/doubleTap pour ouvrir le dialog de preview
+      // (onLongPress sera réservé au drag & drop)
       if (enableTapPreview) {
         return GestureDetector(
           onTap: () => _showCardPreviewDialog(context),
-          onLongPress: () => _showCardPreviewDialog(context),
+          onDoubleTap: () => _showCardPreviewDialog(context),
           behavior: HitTestBehavior.opaque,
           child: cardWidget,
         );

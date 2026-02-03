@@ -8,6 +8,7 @@ class GameButton extends StatelessWidget {
   final GameButtonStyle style;
   final double? width;
   final double? height;
+  final double? fontSize;
 
   const GameButton({
     super.key,
@@ -17,6 +18,7 @@ class GameButton extends StatelessWidget {
     this.style = GameButtonStyle.primary,
     this.width,
     this.height,
+    this.fontSize,
   });
 
   @override
@@ -102,11 +104,13 @@ class GameButton extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            const SizedBox(width: 8),
+                            SizedBox(
+                              width: fontSize != null && fontSize! < 15 ? 4 : 8,
+                            ),
                             Text(
                               label,
                               style: TextStyle(
-                                fontSize: 15,
+                                fontSize: fontSize ?? 15,
                                 fontWeight: FontWeight.w600,
                                 color:
                                     isDisabled
@@ -128,7 +132,7 @@ class GameButton extends StatelessWidget {
                         : Text(
                           label,
                           style: TextStyle(
-                            fontSize: 15,
+                            fontSize: fontSize ?? 15,
                             fontWeight: FontWeight.w600,
                             color:
                                 isDisabled ? Colors.white38 : colors.foreground,

@@ -1,20 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/services/card_service.dart';
 import '../../../domain/models/game_session.dart';
+import '../../../domain/models/game_card.dart';
 import '../../../domain/enums/game_phase.dart';
 import '../card_widget.dart';
 import '../counters/ultima_counter_widget.dart';
 import '../counters/deck_counter_widget.dart';
 import '../../../../../core/widgets/game_button.dart';
+import 'player_zone_widget.dart';
 
 /// Widget de la zone de jeu centrale affichant les cartes jouées ce tour
 /// Gère l'affichage des cartes en résolution, compteurs Ultima et Deck
-class PlayZoneWidget extends ConsumerWidget {
+class PlayZoneWidget extends ConsumerStatefulWidget {
   final GameSession session;
   final bool isMyTurn;
   final String playerId;
   final VoidCallback onSkipResponse;
+
+  /// Callback appelé quand une carte est droppée sur la zone de jeu
+  final Function(int cardIndex, GameCard card)? onCardDropped;
+
+  /// Callback appelé quand une carte est retirée de la zone de jeu (drag retour)
+  final VoidCallback? onCardReturnedToHand;
+
+  /// Carte en attente de validation (affichée dans le slot avant confirmation)
+  final GameCard? pendingCard;
+
+  /// Indique si une carte est en attente de validation (bouton Valider/Retour visible)
+  final bool pendingCardValidation;
 
   const PlayZoneWidget({
     super.key,
@@ -22,23 +37,35 @@ class PlayZoneWidget extends ConsumerWidget {
     required this.isMyTurn,
     required this.playerId,
     required this.onSkipResponse,
+    this.onCardDropped,
+    this.onCardReturnedToHand,
+    this.pendingCard,
+    this.pendingCardValidation = false,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PlayZoneWidget> createState() => _PlayZoneWidgetState();
+}
+
+class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
+  bool _isDragOver = false;
+
+  @override
+  Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 600;
     final isSmallMobile = screenWidth < 380;
     final smallFontSize = isSmallMobile ? 9.0 : (isMobile ? 11.0 : 13.0);
 
     // Récupérer les données du joueur actuel
-    final isPlayer1 = session.player1Id == playerId;
-    final myData = isPlayer1 ? session.player1Data : session.player2Data!;
+    final isPlayer1 = widget.session.player1Id == widget.playerId;
+    final myData =
+        isPlayer1 ? widget.session.player1Data : widget.session.player2Data!;
 
     return Stack(
       children: [
         // Zone de jeu principale avec slots de cartes
-        _buildCardSlots(context, ref, isMobile, isSmallMobile, smallFontSize),
+        _buildCardSlots(context, isMobile, isSmallMobile, smallFontSize),
 
         // Indicateurs sur le côté droit
         Positioned(
@@ -54,10 +81,15 @@ class PlayZoneWidget extends ConsumerWidget {
               SizedBox(height: isSmallMobile ? 4 : 8),
 
               // === COMPTEUR ULTIMA ===
-              if (session.ultimaOwnerId != null && session.ultimaTurnCount < 3)
-                UltimaCounterWidget(session: session, playerId: playerId),
+              if (widget.session.ultimaOwnerId != null &&
+                  widget.session.ultimaTurnCount < 3)
+                UltimaCounterWidget(
+                  session: widget.session,
+                  playerId: widget.playerId,
+                ),
 
-              if (session.ultimaOwnerId != null && session.ultimaTurnCount < 3)
+              if (widget.session.ultimaOwnerId != null &&
+                  widget.session.ultimaTurnCount < 3)
                 SizedBox(height: isSmallMobile ? 4 : 8),
 
               // === COMPTEUR DE DECK ===
@@ -72,7 +104,6 @@ class PlayZoneWidget extends ConsumerWidget {
   /// Zone de jeu avec les deux emplacements de cartes (adversaire en haut, moi en bas)
   Widget _buildCardSlots(
     BuildContext context,
-    WidgetRef ref,
     bool isMobile,
     bool isSmallMobile,
     double smallFontSize,
@@ -101,15 +132,16 @@ class PlayZoneWidget extends ConsumerWidget {
             // Déterminer les cartes à afficher
             Widget? opponentCard;
             Widget? myCard;
+            GameCard? myCardData; // Pour le drag de retour
 
-            if (snapshot.hasData && session.resolutionStack.isNotEmpty) {
+            if (snapshot.hasData && widget.session.resolutionStack.isNotEmpty) {
               final allCards = snapshot.data!;
-              final firstCardId = session.resolutionStack[0];
+              final firstCardId = widget.session.resolutionStack[0];
               final firstCard = allCards.firstWhere(
                 (c) => c.id == firstCardId,
                 orElse: () => allCards.first,
               );
-              final firstCardIsMe = isMyTurn;
+              final firstCardIsMe = widget.isMyTurn;
 
               // Première carte
               final firstCardWidget = CardWidget(
@@ -119,18 +151,19 @@ class PlayZoneWidget extends ConsumerWidget {
                 showPreviewOnHover: true,
                 showOnlySelectedTier: true,
                 enableTapPreview: true,
-                displayTierKey: session.playedCardTiers[firstCardId],
+                displayTierKey: widget.session.playedCardTiers[firstCardId],
               );
 
               if (firstCardIsMe) {
                 myCard = firstCardWidget;
+                myCardData = firstCard;
               } else {
                 opponentCard = firstCardWidget;
               }
 
               // Carte de réponse
-              if (session.resolutionStack.length > 1) {
-                final responseCardId = session.resolutionStack[1];
+              if (widget.session.resolutionStack.length > 1) {
+                final responseCardId = widget.session.resolutionStack[1];
                 final responseCardData = allCards.firstWhere(
                   (c) => c.id == responseCardId,
                   orElse: () => allCards.first,
@@ -142,16 +175,51 @@ class PlayZoneWidget extends ConsumerWidget {
                   showPreviewOnHover: true,
                   showOnlySelectedTier: true,
                   enableTapPreview: true,
-                  displayTierKey: session.playedCardTiers[responseCardId],
+                  displayTierKey:
+                      widget.session.playedCardTiers[responseCardId],
                 );
 
                 if (firstCardIsMe) {
                   opponentCard = responseCardWidget;
                 } else {
                   myCard = responseCardWidget;
+                  myCardData = responseCardData;
                 }
               }
             }
+
+            // Si une carte est en attente de validation (vient d'être droppée)
+            // On track si c'est une pendingCard pour le drag-back
+            final bool isPendingCard =
+                widget.pendingCard != null && myCard == null;
+            if (isPendingCard) {
+              myCardData = widget.pendingCard;
+              myCard = CardWidget(
+                card: widget.pendingCard!,
+                width: cardWidth,
+                compact: true,
+                showPreviewOnHover: true,
+              );
+            }
+
+            // Vérifier si on peut dropper une carte (phase main ou response, pas déjà une carte jouée)
+            final canAcceptDrop =
+                widget.onCardDropped != null &&
+                (widget.isMyTurn &&
+                        widget.session.currentPhase == GamePhase.main ||
+                    !widget.isMyTurn &&
+                        widget.session.currentPhase == GamePhase.response) &&
+                myCard == null;
+
+            // La carte peut être retirée si:
+            // 1. C'est une pendingCard (pas encore dans Firebase) OU
+            // 2. La carte est dans Firebase mais pendingCardValidation est true
+            //    (l'utilisateur n'a pas encore cliqué Valider/Retour)
+            final canDragBack =
+                widget.onCardReturnedToHand != null &&
+                (isPendingCard || widget.pendingCardValidation) &&
+                myCard != null &&
+                myCardData != null;
 
             return Column(
               children: [
@@ -172,32 +240,103 @@ class PlayZoneWidget extends ConsumerWidget {
                 // Séparateur central stylisé
                 _buildCenterDivider(constraints.maxWidth),
 
-                // === Zone joueur (bas) ===
+                // === Zone joueur (bas) avec DragTarget ===
                 Expanded(
                   child: Stack(
                     children: [
                       Center(
-                        child: _buildCardSlot(
-                          cardWidth: cardWidth,
-                          cardHeight: cardHeight,
-                          card: myCard,
-                          label: 'Vous',
-                          isOpponent: false,
-                          isMobile: isMobile,
+                        child: DragTarget<DraggedCardData>(
+                          onWillAcceptWithDetails: (details) {
+                            if (canAcceptDrop) {
+                              setState(() => _isDragOver = true);
+                              return true;
+                            }
+                            return false;
+                          },
+                          onLeave: (_) {
+                            setState(() => _isDragOver = false);
+                          },
+                          onAcceptWithDetails: (details) {
+                            setState(() => _isDragOver = false);
+                            HapticFeedback.heavyImpact();
+                            widget.onCardDropped?.call(
+                              details.data.cardIndex,
+                              details.data.card,
+                            );
+                          },
+                          builder: (context, candidateData, rejectedData) {
+                            // Si canDragBack, rendre la carte draggable pour le retour
+                            if (canDragBack) {
+                              return LongPressDraggable<DraggedCardData>(
+                                data: DraggedCardData(
+                                  cardIndex:
+                                      -1, // Index spécial pour carte en zone de jeu
+                                  cardId: myCardData!.id,
+                                  card: myCardData!,
+                                ),
+                                delay: const Duration(milliseconds: 150),
+                                hapticFeedbackOnStart: true,
+                                feedback: Transform.scale(
+                                  scale: 1.2,
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    elevation: 8,
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: CardWidget(
+                                      card: myCardData!,
+                                      width: cardWidth * 1.3,
+                                      compact: true,
+                                    ),
+                                  ),
+                                ),
+                                childWhenDragging: _buildCardSlot(
+                                  cardWidth: cardWidth,
+                                  cardHeight: cardHeight,
+                                  card: null, // Slot vide pendant le drag
+                                  label: 'Vous',
+                                  isOpponent: false,
+                                  isMobile: isMobile,
+                                  isHighlighted: false,
+                                ),
+                                onDragStarted: () {
+                                  HapticFeedback.mediumImpact();
+                                },
+                                child: _buildCardSlot(
+                                  cardWidth: cardWidth,
+                                  cardHeight: cardHeight,
+                                  card: myCard,
+                                  label: 'Vous',
+                                  isOpponent: false,
+                                  isMobile: isMobile,
+                                  isHighlighted: _isDragOver,
+                                  isPending: true, // Indicateur visuel
+                                ),
+                              );
+                            }
+
+                            return _buildCardSlot(
+                              cardWidth: cardWidth,
+                              cardHeight: cardHeight,
+                              card: myCard,
+                              label: 'Vous',
+                              isOpponent: false,
+                              isMobile: isMobile,
+                              isHighlighted: _isDragOver,
+                            );
+                          },
                         ),
                       ),
-                      // Bouton Passer en phase response
-                      if (!isMyTurn &&
-                          session.currentPhase == GamePhase.response)
+                      // Bouton Accepter en phase response (accepte l'action du partenaire)
+                      if (!widget.isMyTurn &&
+                          widget.session.currentPhase == GamePhase.response)
                         Positioned(
                           right: 8,
                           bottom: 8,
                           child: GameButton(
-                            label: 'Passer',
-                            icon: Icons.arrow_forward,
+                            label: 'Accepter',
                             style: GameButtonStyle.secondary,
                             height: isMobile ? 35 : 40,
-                            onPressed: onSkipResponse,
+                            onPressed: widget.onSkipResponse,
                           ),
                         ),
                     ],
@@ -219,6 +358,8 @@ class PlayZoneWidget extends ConsumerWidget {
     required String label,
     required bool isOpponent,
     required bool isMobile,
+    bool isHighlighted = false,
+    bool isPending = false,
   }) {
     final slotPadding = isMobile ? 6.0 : 10.0;
     final slotWidth = cardWidth + slotPadding * 2;
@@ -226,40 +367,62 @@ class PlayZoneWidget extends ConsumerWidget {
     final borderRadius = BorderRadius.circular(isMobile ? 12 : 16);
     final labelFontSize = isMobile ? 9.0 : 11.0;
 
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
       width: slotWidth,
       height: slotHeight,
       decoration: BoxDecoration(
-        // Fond légèrement plus clair et translucide
+        // Fond qui s'illumine quand on drag dessus ou si pending
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withOpacity(card != null ? 0.15 : 0.08),
-            Colors.white.withOpacity(card != null ? 0.08 : 0.03),
-          ],
+          colors:
+              isHighlighted
+                  ? [
+                    Colors.green.withOpacity(0.4),
+                    Colors.green.withOpacity(0.2),
+                  ]
+                  : isPending
+                  ? [
+                    Colors.amber.withOpacity(0.3),
+                    Colors.amber.withOpacity(0.15),
+                  ]
+                  : [
+                    Colors.white.withOpacity(card != null ? 0.15 : 0.08),
+                    Colors.white.withOpacity(card != null ? 0.08 : 0.03),
+                  ],
         ),
         borderRadius: borderRadius,
-        // Bordure subtile
+        // Bordure qui s'illumine
         border: Border.all(
           color:
-              card != null
+              isHighlighted
+                  ? Colors.greenAccent
+                  : isPending
+                  ? Colors.amber
+                  : card != null
                   ? Colors.white.withOpacity(0.25)
                   : Colors.white.withOpacity(0.12),
-          width: card != null ? 2 : 1,
+          width: isHighlighted ? 3 : (card != null ? 2 : 1),
         ),
-        // Ombre douce
+        // Ombre douce (plus forte quand highlighted)
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 12,
+            color:
+                isHighlighted
+                    ? Colors.greenAccent.withOpacity(0.4)
+                    : Colors.black.withOpacity(0.2),
+            blurRadius: isHighlighted ? 20 : 12,
             offset: const Offset(0, 4),
           ),
-          if (card != null)
+          if (card != null || isHighlighted)
             BoxShadow(
-              color: Colors.white.withOpacity(0.05),
+              color:
+                  isHighlighted
+                      ? Colors.greenAccent.withOpacity(0.3)
+                      : Colors.white.withOpacity(0.05),
               blurRadius: 20,
-              spreadRadius: -5,
+              spreadRadius: isHighlighted ? 5 : -5,
             ),
         ],
       ),
@@ -358,7 +521,7 @@ class PlayZoneWidget extends ConsumerWidget {
         ],
       ),
       child: Text(
-        session.currentPhase.displayName,
+        widget.session.currentPhase.displayName,
         style: TextStyle(
           color: Colors.white,
           fontSize: smallFontSize,
