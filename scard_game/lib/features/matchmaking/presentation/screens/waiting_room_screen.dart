@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/widgets/game_button.dart';
-import '../../../game/data/services/firebase_service.dart';
+import '../../../game/data/services/game_session_service.dart';
+import '../../../game/data/services/player_service.dart';
 import '../../../game/domain/enums/player_gender.dart';
 import '../../../game/domain/models/game_session.dart';
 import 'card_distribution_screen.dart';
@@ -24,7 +24,8 @@ class WaitingRoomScreen extends ConsumerStatefulWidget {
 class _WaitingRoomScreenState extends ConsumerState<WaitingRoomScreen> {
   @override
   Widget build(BuildContext context) {
-    final firebaseService = ref.watch(firebaseServiceProvider);
+    final gameSessionService = ref.watch(gameSessionServiceProvider);
+    final playerService = ref.watch(playerServiceProvider);
 
     return Scaffold(
       body: Container(
@@ -35,14 +36,14 @@ class _WaitingRoomScreenState extends ConsumerState<WaitingRoomScreen> {
             colors: [
               const Color(0xFF6DD5FA),
               const Color(0xFF2980B9),
-              const Color(0xFF8E44AD).withOpacity(0.7),
+              const Color(0xFF8E44AD).withValues(alpha: 0.7),
             ],
             stops: const [0.0, 0.6, 1.0],
           ),
         ),
         child: SafeArea(
           child: StreamBuilder<GameSession>(
-            stream: firebaseService.watchGameSession(widget.sessionId),
+            stream: gameSessionService.watchSession(widget.sessionId),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return Center(
@@ -106,13 +107,13 @@ class _WaitingRoomScreenState extends ConsumerState<WaitingRoomScreen> {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            Colors.white.withOpacity(0.45),
-                            Colors.white.withOpacity(0.30),
+                            Colors.white.withValues(alpha: 0.45),
+                            Colors.white.withValues(alpha: 0.30),
                           ],
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.25),
+                            color: Colors.black.withValues(alpha: 0.25),
                             blurRadius: 15,
                             offset: const Offset(0, 6),
                           ),
@@ -136,8 +137,8 @@ class _WaitingRoomScreenState extends ConsumerState<WaitingRoomScreen> {
                                   begin: Alignment.topCenter,
                                   end: Alignment.bottomCenter,
                                   colors: [
-                                    Colors.white.withOpacity(0.5),
-                                    Colors.white.withOpacity(0),
+                                    Colors.white.withValues(alpha: 0.5),
+                                    Colors.white.withValues(alpha: 0),
                                   ],
                                 ),
                               ),
@@ -222,7 +223,7 @@ class _WaitingRoomScreenState extends ConsumerState<WaitingRoomScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           _PlayerCard(
-                            name: myData!.name,
+                            name: myData.name,
                             gender: myData.gender,
                             isReady: myData.isReady,
                             isMe: true,
@@ -263,13 +264,13 @@ class _WaitingRoomScreenState extends ConsumerState<WaitingRoomScreen> {
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                     colors: [
-                                      Colors.white.withOpacity(0.25),
-                                      Colors.white.withOpacity(0.15),
+                                      Colors.white.withValues(alpha: 0.25),
+                                      Colors.white.withValues(alpha: 0.15),
                                     ],
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.25),
+                                      color: Colors.black.withValues(alpha: 0.25),
                                       blurRadius: 15,
                                       offset: const Offset(0, 6),
                                     ),
@@ -293,8 +294,8 @@ class _WaitingRoomScreenState extends ConsumerState<WaitingRoomScreen> {
                                             begin: Alignment.topCenter,
                                             end: Alignment.bottomCenter,
                                             colors: [
-                                              Colors.white.withOpacity(0.5),
-                                              Colors.white.withOpacity(0),
+                                              Colors.white.withValues(alpha: 0.5),
+                                              Colors.white.withValues(alpha: 0),
                                             ],
                                           ),
                                         ),
@@ -345,7 +346,7 @@ class _WaitingRoomScreenState extends ConsumerState<WaitingRoomScreen> {
                         onTap: () async {
                           // Si je ne suis pas prêt, je me marque comme prêt
                           if (!myData.isReady) {
-                            await firebaseService.setPlayerReady(
+                            await playerService.setPlayerReady(
                               widget.sessionId,
                               widget.playerId,
                               true,
@@ -353,7 +354,7 @@ class _WaitingRoomScreenState extends ConsumerState<WaitingRoomScreen> {
                           }
                           // Si les deux joueurs sont prêts, on lance la partie
                           else if (myData.isReady && opponentData.isReady) {
-                            await firebaseService.determineStartingPlayer(
+                            await playerService.determineStartingPlayer(
                               widget.sessionId,
                             );
 
@@ -379,13 +380,13 @@ class _WaitingRoomScreenState extends ConsumerState<WaitingRoomScreen> {
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                               colors: [
-                                Colors.white.withOpacity(0.45),
-                                Colors.white.withOpacity(0.30),
+                                Colors.white.withValues(alpha: 0.45),
+                                Colors.white.withValues(alpha: 0.30),
                               ],
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.25),
+                                color: Colors.black.withValues(alpha: 0.25),
                                 blurRadius: 15,
                                 offset: const Offset(0, 6),
                               ),
@@ -409,8 +410,8 @@ class _WaitingRoomScreenState extends ConsumerState<WaitingRoomScreen> {
                                       begin: Alignment.topCenter,
                                       end: Alignment.bottomCenter,
                                       colors: [
-                                        Colors.white.withOpacity(0.5),
-                                        Colors.white.withOpacity(0),
+                                        Colors.white.withValues(alpha: 0.5),
+                                        Colors.white.withValues(alpha: 0),
                                       ],
                                     ),
                                   ),
@@ -497,22 +498,22 @@ class _PlayerCard extends StatelessWidget {
           colors:
               isMe
                   ? [
-                    Colors.white.withOpacity(0.45),
-                    Colors.white.withOpacity(0.30),
+                    Colors.white.withValues(alpha: 0.45),
+                    Colors.white.withValues(alpha: 0.30),
                   ]
                   : (isReady
                       ? [
-                        Colors.white.withOpacity(0.35),
-                        Colors.white.withOpacity(0.25),
+                        Colors.white.withValues(alpha: 0.35),
+                        Colors.white.withValues(alpha: 0.25),
                       ]
                       : [
-                        Colors.white.withOpacity(0.25),
-                        Colors.white.withOpacity(0.15),
+                        Colors.white.withValues(alpha: 0.25),
+                        Colors.white.withValues(alpha: 0.15),
                       ]),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.25),
+            color: Colors.black.withValues(alpha: 0.25),
             blurRadius: 15,
             offset: const Offset(0, 6),
           ),
@@ -536,8 +537,8 @@ class _PlayerCard extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.white.withOpacity(0.5),
-                    Colors.white.withOpacity(0),
+                    Colors.white.withValues(alpha: 0.5),
+                    Colors.white.withValues(alpha: 0),
                   ],
                 ),
               ),
@@ -620,11 +621,11 @@ class _PlayerCard extends StatelessWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
+                        color: Colors.black.withValues(alpha: 0.2),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),

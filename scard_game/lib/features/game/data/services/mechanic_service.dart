@@ -1,19 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/extensions/extensions.dart';
+import '../../../../core/interfaces/i_game_session_service.dart';
 import '../../domain/models/game_card.dart';
 import '../../domain/models/card_mechanic.dart';
 import '../../domain/enums/mechanic_type.dart';
 import '../../domain/enums/target_type.dart';
 import '../../presentation/widgets/card_widget.dart';
 import 'firebase_service.dart';
+import 'game_session_service.dart';
 import 'card_service.dart';
 
 /// Service pour traiter les mécaniques spéciales des cartes
 class MechanicService {
   final FirebaseService _firebaseService;
+  final IGameSessionService _gameSessionService;
   final CardService _cardService;
 
-  MechanicService(this._firebaseService, this._cardService);
+  MechanicService(
+    this._firebaseService,
+    this._gameSessionService,
+    this._cardService,
+  );
 
   /// Exécute les actions pendantes d'un sort (appelé en phase Resolution si le sort n'est pas contré)
   Future<void> executePendingActions({
@@ -311,7 +319,7 @@ class MechanicService {
       case TargetType.opponentEnchantment:
         targetEnchantments = opponentEnchantmentIds;
         // Récupérer l'ID de l'adversaire
-        final session = await _firebaseService.getGameSession(sessionId);
+        final session = await _gameSessionService.getSession(sessionId);
         targetPlayerId =
             session.player1Id == playerId
                 ? session.player2Data!.playerId
@@ -350,7 +358,7 @@ class MechanicService {
     // Si anyEnchantment, déterminer le propriétaire
     if (mechanic.target == TargetType.anyEnchantment) {
       if (opponentEnchantmentIds.contains(selectedEnchantmentId)) {
-        final session = await _firebaseService.getGameSession(sessionId);
+        final session = await _gameSessionService.getSession(sessionId);
         targetPlayerId =
             session.player1Id == playerId
                 ? session.player2Data!.playerId
@@ -435,11 +443,10 @@ class MechanicService {
   }) async {
     final drawnCards = <GameCard>[];
     final allCards = await _cardService.loadAllCards();
-    final session = await _firebaseService.getGameSession(sessionId);
+    final session = await _gameSessionService.getSession(sessionId);
 
     // Déterminer le deck du joueur
-    final isPlayer1 = session.player1Id == playerId;
-    final playerData = isPlayer1 ? session.player1Data : session.player2Data!;
+    final playerData = session.getPlayerData(playerId);
 
     // Piocher jusqu'à trouver une carte correspondant au filtre
     for (final cardId in playerData.deckCardIds) {
@@ -473,9 +480,8 @@ class MechanicService {
     required String playerId,
   }) async {
     // Récupérer la session et les données du joueur
-    final session = await _firebaseService.getGameSession(sessionId);
-    final isPlayer1 = session.player1Id == playerId;
-    final playerData = isPlayer1 ? session.player1Data : session.player2Data!;
+    final session = await _gameSessionService.getSession(sessionId);
+    final playerData = session.getPlayerData(playerId);
     final handSize = playerData.handCardIds.length;
 
     // Mélanger la main dans le deck
@@ -505,12 +511,10 @@ class MechanicService {
 
     // Si counterSource est défini, calculer la valeur
     if (mechanic.counterSource == 'clothingCount') {
-      final session = await _firebaseService.getGameSession(sessionId);
-      final isPlayer1 = session.player1Id == playerId;
-      final playerData = isPlayer1 ? session.player1Data : session.player2Data!;
-
-      // Supposons un champ clothingCount dans PlayerData (TODO: ajouter si nécessaire)
-      // Pour l'instant, valeur par défaut
+      // TODO: Implémenter clothingCount dans PlayerData
+      // final session = await _gameSessionService.getSession(sessionId);
+      // final playerData = session.getPlayerData(playerId);
+      // counterValue = playerData.clothingCount ?? 1;
       counterValue = mechanic.initialCounterValue ?? 1;
     }
 
@@ -569,7 +573,7 @@ class MechanicService {
       case TargetType.opponentEnchantment:
         targetEnchantments = opponentEnchantmentIds;
         // Récupérer l'ID de l'adversaire
-        final session = await _firebaseService.getGameSession(sessionId);
+        final session = await _gameSessionService.getSession(sessionId);
         targetPlayerId =
             session.player1Id == playerId
                 ? session.player2Data!.playerId
@@ -578,7 +582,7 @@ class MechanicService {
       case TargetType.anyEnchantment:
       default:
         // Pour destroyAll avec anyEnchantment, créer des actions pendantes pour les deux joueurs
-        final session = await _firebaseService.getGameSession(sessionId);
+        final session = await _gameSessionService.getSession(sessionId);
         final opponentId =
             session.player1Id == playerId
                 ? session.player2Data!.playerId
@@ -823,6 +827,7 @@ enum PendingActionType {
 /// Provider pour le service de mécaniques
 final mechanicServiceProvider = Provider<MechanicService>((ref) {
   final firebaseService = ref.watch(firebaseServiceProvider);
+  final gameSessionService = ref.watch(gameSessionServiceProvider);
   final cardService = ref.watch(cardServiceProvider);
-  return MechanicService(firebaseService, cardService);
+  return MechanicService(firebaseService, gameSessionService, cardService);
 });

@@ -32,17 +32,17 @@ class UltimaCounterWidget extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            _getCounterColor(turnCount).withOpacity(0.4),
-            _getCounterColor(turnCount).withOpacity(0.25),
+            _getCounterColor(turnCount).withValues(alpha: 0.4),
+            _getCounterColor(turnCount).withValues(alpha: 0.25),
           ],
         ),
         border: Border.all(
-          color: _getCounterColor(turnCount).withOpacity(0.8),
+          color: _getCounterColor(turnCount).withValues(alpha: 0.8),
           width: isSmallMobile ? 1.5 : 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: _getCounterColor(turnCount).withOpacity(0.5),
+            color: _getCounterColor(turnCount).withValues(alpha: 0.5),
             blurRadius: isSmallMobile ? 6 : 12,
             spreadRadius: isSmallMobile ? 1 : 2,
           ),
@@ -90,7 +90,7 @@ class UltimaCounterWidget extends StatelessWidget {
               Text(
                 isSmallMobile ? '$turnCount/3' : 'Tour $turnCount/3',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha: 0.9),
                   fontSize: isSmallMobile ? 10 : (isMobile ? 13 : 15),
                   fontWeight: FontWeight.w900,
                   shadows: const [

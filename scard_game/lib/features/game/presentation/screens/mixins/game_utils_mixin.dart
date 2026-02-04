@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../../core/constants/game_constants.dart';
 import '../../../data/services/firebase_service.dart';
+import '../../../data/services/game_session_service.dart';
+import '../../../data/services/turn_service.dart';
 import '../../../data/services/mechanic_service.dart';
 import '../../../domain/models/game_session.dart';
 
@@ -18,9 +21,9 @@ mixin GameUtilsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
 
   /// Passe à la phase suivante
   Future<void> nextPhase() async {
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final turnService = ref.read(turnServiceProvider);
     try {
-      await firebaseService.nextPhase(sessionId);
+      await turnService.nextPhase(sessionId);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -47,10 +50,10 @@ mixin GameUtilsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
 
   /// Passer le tour sans jouer de carte
   Future<void> skipTurn() async {
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final turnService = ref.read(turnServiceProvider);
     try {
       // Terminer le tour sans jouer de carte
-      await firebaseService.endTurn(sessionId);
+      await turnService.endTurn(sessionId);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -117,10 +120,10 @@ mixin GameUtilsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
 
   /// Passe la phase réponse sans jouer de carte
   Future<void> skipResponse() async {
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final turnService = ref.read(turnServiceProvider);
     try {
       // Réponse → Résolution
-      await firebaseService.nextPhase(sessionId);
+      await turnService.nextPhase(sessionId);
 
       // Le dialog de validation apparaîtra automatiquement via le StreamBuilder
     } catch (e) {
@@ -135,15 +138,16 @@ mixin GameUtilsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   /// Donner la carte Ultima au joueur quand il atteint 100% de tension
   Future<void> giveUltimaCard() async {
     final firebaseService = ref.read(firebaseServiceProvider);
+    final gameSessionService = ref.read(gameSessionServiceProvider);
 
     try {
-      final session = await firebaseService.getGameSession(sessionId);
+      final session = await gameSessionService.getSession(sessionId);
       final isPlayer1 = session.player1Id == playerId;
       final myData = isPlayer1 ? session.player1Data : session.player2Data!;
 
       // Ajouter Ultima directement à la main (sans passer par le deck)
       final updatedHand = List<String>.from(myData.handCardIds);
-      updatedHand.add('red_016');
+      updatedHand.add(GameConstants.ultimaCardId);
 
       final updatedPlayerData = myData.copyWith(handCardIds: updatedHand);
 

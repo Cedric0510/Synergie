@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/services/card_service.dart';
 import '../../../data/services/firebase_service.dart';
+import '../../../data/services/game_session_service.dart';
+import '../../../data/services/turn_service.dart';
 import '../../../domain/enums/response_effect.dart';
 import '../../../domain/models/game_session.dart';
 
@@ -75,7 +77,7 @@ mixin GameResponseEffectsMixin<T extends ConsumerStatefulWidget>
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(
-                        color: Color(0xFF6DD5FA).withOpacity(0.5),
+                        color: Color(0xFF6DD5FA).withValues(alpha: 0.5),
                       ),
                     ),
                   ),
@@ -137,6 +139,7 @@ mixin GameResponseEffectsMixin<T extends ConsumerStatefulWidget>
   /// Gère l'annulation (Contre)
   Future<void> handleCancelEffect() async {
     final firebaseService = ref.read(firebaseServiceProvider);
+    final turnService = ref.read(turnServiceProvider);
 
     try {
       // Effacer les actions pendantes (le sort est contré, ne pas les exécuter)
@@ -146,8 +149,8 @@ mixin GameResponseEffectsMixin<T extends ConsumerStatefulWidget>
       await firebaseService.clearResolutionStack(sessionId);
 
       // Passer directement en fin de tour
-      await firebaseService.nextPhase(sessionId); // Resolution → End
-      await firebaseService.nextPhase(sessionId); // End → Draw
+      await turnService.nextPhase(sessionId); // Resolution → End
+      await turnService.nextPhase(sessionId); // End → Draw
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -169,11 +172,11 @@ mixin GameResponseEffectsMixin<T extends ConsumerStatefulWidget>
 
   /// Gère la copie (Miroir) - validation double
   Future<void> handleCopyEffect() async {
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final gameSessionService = ref.read(gameSessionServiceProvider);
     final cardService = ref.read(cardServiceProvider);
 
     try {
-      final session = await firebaseService.getGameSession(sessionId);
+      final session = await gameSessionService.getSession(sessionId);
 
       // EXÉCUTER LES ACTIONS PENDANTES (sort non contré)
       if (session.pendingSpellActions.isNotEmpty) {
@@ -243,7 +246,7 @@ mixin GameResponseEffectsMixin<T extends ConsumerStatefulWidget>
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Color(0xFFFFC107).withOpacity(0.1),
+                        color: Color(0xFFFFC107).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -293,7 +296,7 @@ mixin GameResponseEffectsMixin<T extends ConsumerStatefulWidget>
                             }
                             : null,
                     style: TextButton.styleFrom(
-                      backgroundColor: Color(0xFF6DD5FA).withOpacity(0.2),
+                      backgroundColor: Color(0xFF6DD5FA).withValues(alpha: 0.2),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,
                         vertical: 12,

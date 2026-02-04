@@ -48,7 +48,7 @@ class CardWidget extends StatelessWidget {
             border: Border.all(color: borderColor, width: 4),
             boxShadow: [
               BoxShadow(
-                color: borderColor.withOpacity(0.3),
+                color: borderColor.withValues(alpha: 0.3),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -332,13 +332,13 @@ class CardWidget extends StatelessWidget {
   Widget _buildTierBubble(_TierEffect effect) {
     final isEnabled = _isTierEnabled(effect.label);
     final isWhiteTier = effect.label.trim().toLowerCase() == 'blanc';
-    final border = isEnabled ? effect.color : Colors.grey.withOpacity(0.85);
+    final border = isEnabled ? effect.color : Colors.grey.withValues(alpha: 0.85);
     final background =
         isEnabled
             ? (isWhiteTier
                 ? const Color(0xFF5E5E5E)
-                : effect.color.withOpacity(0.08))
-            : Colors.black.withOpacity(0.12);
+                : effect.color.withValues(alpha: 0.08))
+            : Colors.black.withValues(alpha: 0.12);
 
     return Container(
       width: double.infinity,
@@ -346,7 +346,7 @@ class CardWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: border.withOpacity(0.7), width: 1.5),
+        border: Border.all(color: border.withValues(alpha: 0.7), width: 1.5),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -489,19 +489,6 @@ class CardWidget extends StatelessWidget {
     return card.imageUrl;
   }
 
-  List<String> _availableTierKeysForLevel(CardLevel level) {
-    switch (level) {
-      case CardLevel.white:
-        return ['white'];
-      case CardLevel.blue:
-        return ['white', 'blue'];
-      case CardLevel.yellow:
-        return ['white', 'blue', 'yellow'];
-      case CardLevel.red:
-        return ['white', 'blue', 'yellow', 'red'];
-    }
-  }
-
   int _levelRank(CardLevel level) {
     switch (level) {
       case CardLevel.white:
@@ -513,160 +500,6 @@ class CardWidget extends StatelessWidget {
       case CardLevel.red:
         return 3;
     }
-  }
-
-  /// Tiers central : Coût de lancement
-  Widget _buildCostSection() {
-    return Expanded(
-      flex: 8,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-        child: Container(
-          decoration: BoxDecoration(
-            color: _getBorderColor(card.color).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: _getBorderColor(card.color), width: 2),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                decoration: BoxDecoration(
-                  color: _getBorderColor(card.color),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  card.name,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(height: 1),
-              Text(
-                'Coût',
-                style: TextStyle(
-                  fontSize: 7,
-                  fontWeight: FontWeight.bold,
-                  color: _getBorderColor(card.color),
-                ),
-              ),
-              Flexible(
-                child: Text(
-                  card.launcherCost,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 8,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF1565C0),
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Tiers inférieur : Effets (en jeu + IRL)
-  Widget _buildEffectsSection() {
-    return Expanded(
-      flex: 11,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        decoration: BoxDecoration(
-          borderRadius: const BorderRadius.only(
-            bottomLeft: Radius.circular(8),
-            bottomRight: Radius.circular(8),
-          ),
-          color: Colors.grey[50],
-        ),
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(bottom: 18),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Effet en jeu
-                    Text(
-                      'En jeu :',
-                      style: TextStyle(
-                        fontSize: 8,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[700],
-                      ),
-                    ),
-                    Text(
-                      card.gameEffect,
-                      style: const TextStyle(
-                        fontSize: 9,
-                        height: 1.1,
-                        color: Color(0xFF1565C0),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    // Effet IRL
-                    if (card.targetEffect != null) ...[
-                      Text(
-                        'IRL :',
-                        style: TextStyle(
-                          fontSize: 8,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey[700],
-                        ),
-                      ),
-                      Text(
-                        card.targetEffect!,
-                        style: const TextStyle(
-                          fontSize: 9,
-                          height: 1.1,
-                          color: Color(0xFF1565C0),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-            // Badge type en bas à gauche
-            Positioned(
-              bottom: 0,
-              left: 0,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                decoration: BoxDecoration(
-                  color: _getBorderColor(card.color),
-                  borderRadius: BorderRadius.circular(3),
-                ),
-                child: Text(
-                  _getCardTypeLabel(card.type),
-                  style: const TextStyle(
-                    fontSize: 7,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   /// Récupère la couleur de bordure selon la couleur de la carte

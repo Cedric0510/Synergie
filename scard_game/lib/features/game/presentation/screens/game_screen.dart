@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/game_constants.dart';
 import '../../data/services/firebase_service.dart';
+import '../../data/services/game_session_service.dart';
+import '../../data/services/player_service.dart';
+import '../../data/services/turn_service.dart';
 import '../../data/services/card_service.dart';
 import '../../domain/models/game_session.dart';
 import '../../domain/models/game_card.dart';
@@ -155,11 +159,11 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
   @override
   Widget build(BuildContext context) {
-    final firebaseService = ref.watch(firebaseServiceProvider);
+    final gameSessionService = ref.watch(gameSessionServiceProvider);
 
     return Scaffold(
       body: StreamBuilder<GameSession>(
-        stream: firebaseService.watchGameSession(widget.sessionId),
+        stream: gameSessionService.watchSession(widget.sessionId),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
@@ -231,9 +235,11 @@ class _GameScreenState extends ConsumerState<GameScreen>
           // ULTIMA : Donner automatiquement la carte Ultima à 100% de tension
           if (myData.tension >= 100 && !_hasReceivedUltima) {
             // Vérifier si le joueur n'a pas déjà Ultima en main ou en jeu
-            final hasUltimaInHand = myData.handCardIds.contains('red_016');
+            final hasUltimaInHand = myData.handCardIds.contains(
+              GameConstants.ultimaCardId,
+            );
             final hasUltimaInPlay = myData.activeEnchantmentIds.contains(
-              'red_016',
+              GameConstants.ultimaCardId,
             );
 
             if (!hasUltimaInHand && !hasUltimaInPlay) {
@@ -270,7 +276,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
                 colors: [
                   const Color(0xFF6DD5FA), // Bleu clair
                   const Color(0xFF2980B9), // Bleu moyen
-                  const Color(0xFF8E44AD).withOpacity(0.7), // Violet doux
+                  const Color(0xFF8E44AD).withValues(alpha: 0.7), // Violet doux
                 ],
                 stops: const [0.0, 0.6, 1.0],
               ),
@@ -331,57 +337,6 @@ class _GameScreenState extends ConsumerState<GameScreen>
                     ],
                   ),
                 ),
-
-                // Bouton "?" pour réouvrir les règles (en haut à droite)
-                Positioned(
-                  top: 16,
-                  right: 16,
-                  child: SafeArea(
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () => RulesDialog.show(context),
-                        borderRadius: BorderRadius.circular(20),
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.white.withOpacity(0.25),
-                                Colors.white.withOpacity(0.15),
-                              ],
-                            ),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.4),
-                              width: 1.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: const Center(
-                            child: Text(
-                              '?',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
           );
@@ -406,6 +361,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
     if (responseCard.color != CardColor.green) return;
 
     _hasShownNegotiationDialog = true;
+    if (!mounted) return;
     final agreement = await GameDialogs.showNegotiationDialog(context);
     if (agreement != null) {
       await resolveNegotiation(agreement);
@@ -507,8 +463,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
     // Si pas d'enchantements à afficher, passer directement en phase Main
     if (notices.isEmpty) {
-      final firebaseService = ref.read(firebaseServiceProvider);
-      await firebaseService.nextPhase(sessionId);
+      final turnService = ref.read(turnServiceProvider);
+      await turnService.nextPhase(sessionId);
       return;
     }
 
@@ -529,12 +485,12 @@ class _GameScreenState extends ConsumerState<GameScreen>
               ),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: const Color(0xFF6DD5FA).withOpacity(0.5),
+                color: const Color(0xFF6DD5FA).withValues(alpha: 0.5),
                 width: 2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF6DD5FA).withOpacity(0.3),
+                  color: const Color(0xFF6DD5FA).withValues(alpha: 0.3),
                   blurRadius: 30,
                   spreadRadius: 0,
                 ),
@@ -548,8 +504,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        const Color(0xFF6DD5FA).withOpacity(0.3),
-                        const Color(0xFF6DD5FA).withOpacity(0.1),
+                        const Color(0xFF6DD5FA).withValues(alpha: 0.3),
+                        const Color(0xFF6DD5FA).withValues(alpha: 0.1),
                       ],
                     ),
                     borderRadius: const BorderRadius.only(
@@ -562,7 +518,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF6DD5FA).withOpacity(0.2),
+                          color: const Color(0xFF6DD5FA).withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -597,10 +553,10 @@ class _GameScreenState extends ConsumerState<GameScreen>
                             padding: const EdgeInsets.all(12),
                             margin: const EdgeInsets.only(bottom: 12),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.06),
+                              color: Colors.white.withValues(alpha: 0.06),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: Colors.white.withOpacity(0.1),
+                                color: Colors.white.withValues(alpha: 0.1),
                               ),
                             ),
                             child: Column(
@@ -711,16 +667,16 @@ class _GameScreenState extends ConsumerState<GameScreen>
       );
 
       if (completed == false && action.blockOnRefusal) {
-        final firebaseService = ref.read(firebaseServiceProvider);
-        await firebaseService.forceTurnToPlayer(sessionId, action.ownerId);
+        final turnService = ref.read(turnServiceProvider);
+        await turnService.forceTurnToPlayer(sessionId, action.ownerId);
         return;
       }
     }
 
     // Après la popup des enchantements, passer automatiquement en phase Main
     if (mounted) {
-      final firebaseService = ref.read(firebaseServiceProvider);
-      await firebaseService.nextPhase(sessionId);
+      final turnService = ref.read(turnServiceProvider);
+      await turnService.nextPhase(sessionId);
     }
   }
 
@@ -770,12 +726,15 @@ class _GameScreenState extends ConsumerState<GameScreen>
   }
 
   Future<void> _applyRecurringEnchantmentEffects() async {
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final turnService = ref.read(turnServiceProvider);
+    final gameSessionService = ref.read(gameSessionServiceProvider);
     final cardService = ref.read(cardServiceProvider);
+    final firebaseService = ref.read(firebaseServiceProvider);
+    final playerService = ref.read(playerServiceProvider);
 
     try {
-      await firebaseService.setEnchantmentEffectsDoneThisTurn(sessionId, true);
-      final session = await firebaseService.getGameSession(sessionId);
+      await turnService.setEnchantmentEffectsDoneThisTurn(sessionId, true);
+      final session = await gameSessionService.getSession(sessionId);
       if (session.currentPlayerId != widget.playerId) return;
 
       final allCards = await cardService.loadAllCards();
@@ -831,7 +790,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
                 await firebaseService.drawCard(sessionId, targetPlayerId);
               }
             } else if (effectType == 'pi_change' && value is int) {
-              await firebaseService.updatePlayerPI(
+              await playerService.updatePlayerPI(
                 sessionId,
                 targetPlayerId,
                 value,
@@ -839,7 +798,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
             } else if (effectType == 'tension_change' &&
                 (value is int || value is double)) {
               final delta = value is int ? value.toDouble() : value as double;
-              await firebaseService.updatePlayerTension(
+              await playerService.updatePlayerTension(
                 sessionId,
                 targetPlayerId,
                 delta,
@@ -847,7 +806,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
             } else if (effectType == 'tension_decrease' &&
                 (value is int || value is double)) {
               final delta = value is int ? value.toDouble() : value as double;
-              await firebaseService.updatePlayerTension(
+              await playerService.updatePlayerTension(
                 sessionId,
                 targetPlayerId,
                 -delta.abs(),
@@ -956,13 +915,14 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
   Future<void> _autoDrawAtTurnStart() async {
     final firebaseService = ref.read(firebaseServiceProvider);
+    final turnService = ref.read(turnServiceProvider);
 
     try {
       // Marquer d'abord pour ?viter les doubles d?clenchements
-      await firebaseService.setDrawDoneThisTurn(sessionId, true);
+      await turnService.setDrawDoneThisTurn(sessionId, true);
       await firebaseService.drawCard(sessionId, playerId);
     } catch (e) {
-      await firebaseService.setDrawDoneThisTurn(sessionId, true);
+      await turnService.setDrawDoneThisTurn(sessionId, true);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

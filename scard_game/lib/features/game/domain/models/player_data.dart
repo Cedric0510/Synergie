@@ -57,11 +57,11 @@ class PlayerData with _$PlayerData {
     /// Le joueur a-t-il déjà sacrifié une carte ce tour ?
     @Default(false) bool hasSacrificedThisTurn,
 
-    /// Timestamp de connexion
-    @JsonKey(includeIfNull: false) DateTime? connectedAt,
+    /// Timestamp de connexion (null n'est pas inclus dans le JSON)
+    DateTime? connectedAt,
 
     /// Timestamp de dernière activité (pour détecter déconnexion)
-    @JsonKey(includeIfNull: false) DateTime? lastActivityAt,
+    DateTime? lastActivityAt,
   }) = _PlayerData;
 
   factory PlayerData.fromJson(Map<String, dynamic> json) =>

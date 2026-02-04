@@ -1,5 +1,4 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'game_card.dart';
 import 'active_enchantment.dart';
 import '../enums/card_color.dart';
 

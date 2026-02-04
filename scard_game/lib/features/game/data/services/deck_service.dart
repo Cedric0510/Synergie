@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/enums/card_color.dart';
 import '../../domain/models/game_card.dart';
@@ -28,8 +29,8 @@ class DeckService {
     final allCards = await _cardService.loadAllCards();
     final List<String> deck = [];
 
-    print('📦 Génération deck - Couleurs autorisées: $allowedColors');
-    print('📦 Total cartes chargées: ${allCards.length}');
+    debugPrint('📦 Génération deck - Couleurs autorisées: $allowedColors');
+    debugPrint('📦 Total cartes chargées: ${allCards.length}');
 
     // Séparer les cartes vertes (négociations) des autres
     final greenCards =
@@ -46,7 +47,7 @@ class DeckService {
 
       // Nouvelle règle : 2 exemplaires par défaut, sauf Ultima (1 seul)
       final int count = (card.maxPerDeck == 1) ? 1 : 2;
-      print('  ✅ ${card.id} (${card.color}) × $count');
+      debugPrint('  ✅ ${card.id} (${card.color}) × $count');
 
       // Ajouter uniquement les cartes qui existent réellement dans cards.json
       for (int i = 0; i < count; i++) {
@@ -62,13 +63,13 @@ class DeckService {
 
       for (int i = 0; i < maxGreenCards && i < shuffledGreen.length; i++) {
         deck.add(shuffledGreen[i].id);
-        print(
+        debugPrint(
           '  ✅ ${shuffledGreen[i].id} (green) × 1 [négociation ${i + 1}/$maxGreenCards]',
         );
       }
     }
 
-    print('📦 Deck généré: ${deck.length} cartes');
+    debugPrint('📦 Deck généré: ${deck.length} cartes');
     return deck;
   }
 
@@ -139,8 +140,8 @@ class DeckService {
     // Mélanger la main pour ne pas avoir toutes les blanches d'abord
     startingHand.shuffle(_random);
 
-    print('🎴 Main initiale: 4 blanches + 2 bleues');
-    print('🎴 Deck restant: ${remainingDeck.length} cartes');
+    debugPrint('🎴 Main initiale: 4 blanches + 2 bleues');
+    debugPrint('🎴 Deck restant: ${remainingDeck.length} cartes');
 
     return (hand: startingHand, deck: remainingDeck);
   }

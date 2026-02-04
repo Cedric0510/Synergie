@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/game_button.dart';
 import '../../../game/data/services/card_service.dart';
 import '../../../game/data/services/deck_service.dart';
-import '../../../game/data/services/firebase_service.dart';
+import '../../../game/data/services/game_session_service.dart';
+import '../../../game/data/services/player_service.dart';
 import '../../../game/domain/enums/card_color.dart';
 import '../../../game/domain/models/game_card.dart';
 import '../../../game/presentation/screens/game_screen.dart';
@@ -40,10 +41,10 @@ class _CardDistributionScreenState
   Future<void> _initializeCards() async {
     try {
       final deckService = ref.read(deckServiceProvider);
-      final firebaseService = ref.read(firebaseServiceProvider);
+      final playerService = ref.read(playerServiceProvider);
 
       // IMPORTANT: Réinitialiser le flag isReady à false pour cette nouvelle phase
-      await firebaseService.setPlayerReady(
+      await playerService.setPlayerReady(
         widget.sessionId,
         widget.playerId,
         false, // Reset à false pour la phase de distribution
@@ -68,15 +69,15 @@ class _CardDistributionScreenState
       });
 
       // Sauvegarde dans Firebase
-      await firebaseService.updatePlayerCards(
+      await playerService.updatePlayerCards(
         sessionId: widget.sessionId,
         playerId: widget.playerId,
         handCardIds: result.hand,
         deckCardIds: result.deck,
       );
     } catch (e, stackTrace) {
-      print('❌ ERREUR DISTRIBUTION: $e');
-      print('❌ STACK: $stackTrace');
+      debugPrint('❌ ERREUR DISTRIBUTION: $e');
+      debugPrint('❌ STACK: $stackTrace');
 
       if (mounted) {
         setState(() {
@@ -96,7 +97,7 @@ class _CardDistributionScreenState
 
   @override
   Widget build(BuildContext context) {
-    final firebaseService = ref.watch(firebaseServiceProvider);
+    final gameSessionService = ref.watch(gameSessionServiceProvider);
 
     return Scaffold(
       body: Container(
@@ -107,7 +108,7 @@ class _CardDistributionScreenState
             colors: [
               const Color(0xFF6DD5FA),
               const Color(0xFF2980B9),
-              const Color(0xFF8E44AD).withOpacity(0.7),
+              const Color(0xFF8E44AD).withValues(alpha: 0.7),
             ],
             stops: const [0.0, 0.6, 1.0],
           ),
@@ -129,7 +130,7 @@ class _CardDistributionScreenState
                     ),
                   )
                   : StreamBuilder(
-                    stream: firebaseService.watchGameSession(widget.sessionId),
+                    stream: gameSessionService.watchSession(widget.sessionId),
                     builder: (context, snapshot) {
                       if (!snapshot.hasData) {
                         return const Center(
@@ -229,7 +230,7 @@ class _CardDistributionScreenState
             final card = allCards.firstWhere((c) => c.id == id);
             handCards.add(card);
           } catch (e) {
-            print('⚠️ Carte non trouvée: $id');
+            debugPrint('⚠️ Carte non trouvée: $id');
             // Ignorer les cartes qui n'existent pas
           }
         }
@@ -263,13 +264,10 @@ class _CardDistributionScreenState
   }
 
   Future<void> _startGame() async {
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final playerService = ref.read(playerServiceProvider);
 
     // Marque ce joueur comme prêt
-    await firebaseService.setPlayerCardsReady(
-      widget.sessionId,
-      widget.playerId,
-    );
+    await playerService.setPlayerCardsReady(widget.sessionId, widget.playerId);
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

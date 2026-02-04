@@ -1,18 +1,19 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/game_constants.dart';
+import '../../../../core/extensions/extensions.dart';
+import '../../../../core/interfaces/i_game_session_service.dart';
+import '../../../../core/interfaces/i_tension_service.dart';
 import '../../domain/enums/card_level.dart';
 import '../../domain/enums/card_color.dart';
-import 'firebase_service.dart';
+import 'game_session_service.dart';
 
 /// Service pour gérer la tension et la progression des niveaux
-class TensionService {
-  final FirebaseService _firebaseService;
+/// Implémente ITensionService pour respecter le principe D (Dependency Inversion)
+class TensionService implements ITensionService {
+  final IGameSessionService _gameSessionService;
 
-  TensionService(this._firebaseService);
-
-  /// Seuils de tension pour débloquer les niveaux (%)
-  static const double blueThreshold = 25.0; // 25% pour débloquer bleu
-  static const double yellowThreshold = 50.0; // 50% pour débloquer jaune
-  static const double redThreshold = 75.0; // 75% pour débloquer rouge
+  TensionService(this._gameSessionService);
 
   /// Incrémente la tension d'un joueur
   /// Retourne true si le niveau a changé (pour déclencher une pioche)
@@ -21,18 +22,20 @@ class TensionService {
     String playerId,
     double amount,
   ) async {
-    final session = await _firebaseService.getGameSession(sessionId);
-    final isPlayer1 = session.player1Id == playerId;
-    final playerData = isPlayer1 ? session.player1Data : session.player2Data!;
+    final session = await _gameSessionService.getSession(sessionId);
+    final playerData = session.getPlayerData(playerId);
 
     // Sauvegarder l'ancien niveau
     final oldLevel = playerData.currentLevel;
 
     // Calculer la nouvelle tension (max 100%)
-    final newTension = (playerData.tension + amount).clamp(0.0, 100.0);
+    final newTension = (playerData.tension + amount).clamp(
+      GameConstants.minTension,
+      GameConstants.maxTension,
+    );
 
     // Déterminer le nouveau niveau basé sur la tension
-    final newLevel = _getLevelFromTension(newTension);
+    final newLevel = getEffectiveLevel(newTension);
 
     // Mettre à jour
     final updatedPlayerData = playerData.copyWith(
@@ -40,30 +43,31 @@ class TensionService {
       currentLevel: newLevel,
     );
 
-    final updatedSession =
-        isPlayer1
-            ? session.copyWith(player1Data: updatedPlayerData)
-            : session.copyWith(player2Data: updatedPlayerData);
+    final updatedSession = session.updatePlayerData(
+      playerId,
+      updatedPlayerData,
+    );
 
     // Debug
-    print(
+    debugPrint(
       '📊 increaseTension - Ancienne tension: ${playerData.tension}%, Nouveau: $newTension% - Ancien niveau: $oldLevel, Nouveau: $newLevel',
     );
 
     // Sauvegarder
-    await _firebaseService.updateSession(sessionId, updatedSession);
+    await _gameSessionService.updateSession(sessionId, updatedSession);
 
     // Retourner true si le niveau a changé
     return oldLevel != newLevel;
   }
 
   /// Détermine le niveau basé sur la tension
-  CardLevel _getLevelFromTension(double tension) {
-    if (tension >= redThreshold) {
+  @override
+  CardLevel getEffectiveLevel(double tension) {
+    if (tension >= GameConstants.tensionThresholdRed) {
       return CardLevel.red;
-    } else if (tension >= yellowThreshold) {
+    } else if (tension >= GameConstants.tensionThresholdYellow) {
       return CardLevel.yellow;
-    } else if (tension >= blueThreshold) {
+    } else if (tension >= GameConstants.tensionThresholdBlue) {
       return CardLevel.blue;
     } else {
       return CardLevel.white;
@@ -72,24 +76,37 @@ class TensionService {
 
   /// Obtient le niveau actuel d'un joueur
   Future<CardLevel> getCurrentLevel(String sessionId, String playerId) async {
-    final session = await _firebaseService.getGameSession(sessionId);
-    final isPlayer1 = session.player1Id == playerId;
-    final playerData = isPlayer1 ? session.player1Data : session.player2Data!;
+    final session = await _gameSessionService.getSession(sessionId);
+    final playerData = session.getPlayerData(playerId);
     return playerData.currentLevel;
   }
 
   /// Vérifie si une carte peut être jouée selon le niveau actuel
+  @override
   bool canPlayCard(CardColor cardColor, CardLevel currentLevel) {
     // Convertir CardColor en string pour la comparaison
     final colorString = cardColor.toString().split('.').last;
     final canPlay = currentLevel.availableColors.contains(colorString);
 
     // Debug
-    print(
+    debugPrint(
       '🎴 canPlayCard - Color: $colorString, Level: $currentLevel, Available: ${currentLevel.availableColors}, CanPlay: $canPlay',
     );
 
     return canPlay;
+  }
+
+  /// Calcule l'augmentation de tension pour une couleur de carte
+  @override
+  double getTensionIncrease(CardColor cardColor) {
+    final colorKey = cardColor.toString().split('.').last;
+    return GameConstants.tensionByCardColor[colorKey] ?? 0.0;
+  }
+
+  /// Vérifie si le niveau permet de jouer une couleur
+  @override
+  bool isColorUnlocked(CardColor color, CardLevel level) {
+    return canPlayCard(color, level);
   }
 
   /// Retourne le pourcentage de progression vers le prochain niveau
@@ -97,16 +114,18 @@ class TensionService {
     switch (currentLevel) {
       case CardLevel.white:
         // Progression de 0% à 25%
-        return (currentTension / blueThreshold) * 100;
+        return (currentTension / GameConstants.tensionThresholdBlue) * 100;
       case CardLevel.blue:
         // Progression de 25% à 50%
-        return ((currentTension - blueThreshold) /
-                (yellowThreshold - blueThreshold)) *
+        return ((currentTension - GameConstants.tensionThresholdBlue) /
+                (GameConstants.tensionThresholdYellow -
+                    GameConstants.tensionThresholdBlue)) *
             100;
       case CardLevel.yellow:
         // Progression de 50% à 75%
-        return ((currentTension - yellowThreshold) /
-                (redThreshold - yellowThreshold)) *
+        return ((currentTension - GameConstants.tensionThresholdYellow) /
+                (GameConstants.tensionThresholdRed -
+                    GameConstants.tensionThresholdYellow)) *
             100;
       case CardLevel.red:
         // Déjà au niveau max
@@ -131,6 +150,6 @@ class TensionService {
 
 /// Provider pour le service de tension
 final tensionServiceProvider = Provider<TensionService>((ref) {
-  final firebaseService = ref.watch(firebaseServiceProvider);
-  return TensionService(firebaseService);
+  final gameSessionService = ref.watch(gameSessionServiceProvider);
+  return TensionService(gameSessionService);
 });

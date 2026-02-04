@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/services/card_service.dart';
 import '../../../data/services/firebase_service.dart';
+import '../../../data/services/game_session_service.dart';
+import '../../../data/services/player_service.dart';
+import '../../../data/services/turn_service.dart';
 import '../../../data/services/card_effect_service.dart';
 import '../../../domain/models/game_card.dart';
 import '../../../domain/models/game_session.dart';
@@ -23,11 +26,11 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
 
   /// Continue la validation après une réponse
   Future<void> continueValidationAfterResponse() async {
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final gameSessionService = ref.read(gameSessionServiceProvider);
     final cardService = ref.read(cardServiceProvider);
 
     try {
-      final session = await firebaseService.getGameSession(sessionId);
+      final session = await gameSessionService.getSession(sessionId);
 
       // EXÉCUTER LES ACTIONS PENDANTES (sort non contré)
       if (session.pendingSpellActions.isNotEmpty) {
@@ -79,12 +82,12 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
                   ),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: const Color(0xFF8E44AD).withOpacity(0.5),
+                    color: const Color(0xFF8E44AD).withValues(alpha: 0.5),
                     width: 2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF8E44AD).withOpacity(0.3),
+                      color: const Color(0xFF8E44AD).withValues(alpha: 0.3),
                       blurRadius: 30,
                       spreadRadius: 0,
                     ),
@@ -101,8 +104,8 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              const Color(0xFF8E44AD).withOpacity(0.3),
-                              const Color(0xFF8E44AD).withOpacity(0.1),
+                              const Color(0xFF8E44AD).withValues(alpha: 0.3),
+                              const Color(0xFF8E44AD).withValues(alpha: 0.1),
                             ],
                           ),
                           borderRadius: BorderRadius.circular(16),
@@ -112,7 +115,9 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF8E44AD).withOpacity(0.2),
+                                color: const Color(
+                                  0xFF8E44AD,
+                                ).withValues(alpha: 0.2),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
@@ -141,10 +146,10 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.05),
+                          color: Colors.white.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.1),
+                            color: Colors.white.withValues(alpha: 0.1),
                             width: 1,
                           ),
                         ),
@@ -178,7 +183,7 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
                               decoration: BoxDecoration(
                                 color: const Color(
                                   0xFF8E44AD,
-                                ).withOpacity(0.15),
+                                ).withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
@@ -233,11 +238,11 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
 
   /// Affiche le dialogue de validation et gère le flow complet
   Future<void> showValidationDialog() async {
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final gameSessionService = ref.read(gameSessionServiceProvider);
     final cardService = ref.read(cardServiceProvider);
 
     try {
-      final session = await firebaseService.getGameSession(sessionId);
+      final session = await gameSessionService.getSession(sessionId);
 
       // Pas de carte à valider si pile vide
       if (session.resolutionStack.isEmpty) {
@@ -308,139 +313,154 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
                     ),
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
-                      color: const Color(0xFF8E44AD).withOpacity(0.5),
+                      color: const Color(0xFF6DD5FA).withValues(alpha: 0.5),
                       width: 2,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF8E44AD).withOpacity(0.3),
+                        color: const Color(0xFF6DD5FA).withValues(alpha: 0.3),
                         blurRadius: 30,
                         spreadRadius: 0,
                       ),
                     ],
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // En-tête avec icône
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                const Color(0xFF8E44AD).withOpacity(0.3),
-                                const Color(0xFF8E44AD).withOpacity(0.1),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: const Color(
-                                    0xFF8E44AD,
-                                  ).withOpacity(0.2),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.check_circle_outline,
-                                  color: Color(0xFF8E44AD),
-                                  size: 28,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              const Expanded(
-                                child: Text(
-                                  'Validation de l\'action',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Header avec brillance crystal
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              const Color(0xFF6DD5FA).withValues(alpha: 0.3),
+                              const Color(0xFF6DD5FA).withValues(alpha: 0.1),
                             ],
                           ),
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(22),
+                            topRight: Radius.circular(22),
+                          ),
                         ),
-                        const SizedBox(height: 20),
-                        // Contenu
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.05),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.1),
-                              width: 1,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(
+                                  0xFF6DD5FA,
+                                ).withValues(alpha: 0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.check_circle_outline,
+                                color: Color(0xFF6DD5FA),
+                                size: 28,
+                              ),
                             ),
-                          ),
-                          child: Column(
-                            children: [
-                              const Text(
-                                'L\'adversaire a-t-il effectué l\'action suivante ?',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.white70,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                textAlign: TextAlign.center,
+                            const SizedBox(width: 12),
+                            const Text(
+                              'Validation de l\'action',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
                               ),
-                              const SizedBox(height: 12),
-                              // Afficher le titre du tier si disponible
-                              if (tierTitle != null) ...[
-                                Text(
-                                  tierTitle,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: _getTierColor(selectedTierKey),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 8),
-                              ],
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Contenu avec couleur tapis de jeu
+                      Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1a2332),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
                                   color: const Color(
-                                    0xFF8E44AD,
-                                  ).withOpacity(0.15),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  '"$effectText"',
-                                  style: const TextStyle(
-                                    fontSize: 15,
-                                    color: Colors.white,
-                                    fontStyle: FontStyle.italic,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  textAlign: TextAlign.center,
+                                    0xFF6DD5FA,
+                                  ).withValues(alpha: 0.2),
+                                  width: 1,
                                 ),
                               ),
-                            ],
-                          ),
+                              child: Column(
+                                children: [
+                                  const Text(
+                                    'L\'adversaire a-t-il effectué l\'action suivante ?',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      color: Color(0xFFB0B0B0),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  // Afficher le titre du tier si disponible
+                                  if (tierTitle != null) ...[
+                                    Text(
+                                      tierTitle,
+                                      style: TextStyle(
+                                        fontSize: 17,
+                                        color: _getTierColor(selectedTierKey),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 10),
+                                  ],
+                                  Container(
+                                    padding: const EdgeInsets.all(14),
+                                    decoration: BoxDecoration(
+                                      color: const Color(
+                                        0xFF6DD5FA,
+                                      ).withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: const Color(
+                                          0xFF6DD5FA,
+                                        ).withValues(alpha: 0.15),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      '"$effectText"',
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        color: Color(0xFFE0E0E0),
+                                        fontStyle: FontStyle.italic,
+                                        fontWeight: FontWeight.w600,
+                                        height: 1.4,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            // Boutons crystal en relief
+                            _buildGlassButton(
+                              label: '✅ Action effectuée',
+                              color: Colors.green,
+                              onPressed: () => Navigator.pop(context, true),
+                            ),
+                            const SizedBox(height: 12),
+                            _buildGlassButton(
+                              label: '❌ Action refusée',
+                              color: Colors.red,
+                              onPressed: () => Navigator.pop(context, false),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 24),
-                        // Boutons
-                        _buildGlassButton(
-                          label: '✅ Action effectuée',
-                          color: Colors.green,
-                          onPressed: () => Navigator.pop(context, true),
-                        ),
-                        const SizedBox(height: 12),
-                        _buildGlassButton(
-                          label: '❌ Action refusée',
-                          color: Colors.red,
-                          onPressed: () => Navigator.pop(context, false),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -489,11 +509,13 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
   /// Résoudre les effets sans validation
   Future<void> resolveEffectsWithoutValidation() async {
     final firebaseService = ref.read(firebaseServiceProvider);
+    final turnService = ref.read(turnServiceProvider);
     final cardEffectService = ref.read(cardEffectServiceProvider);
+    final gameSessionService = ref.read(gameSessionServiceProvider);
     final cardService = ref.read(cardServiceProvider);
 
     try {
-      final session = await firebaseService.getGameSession(sessionId);
+      final session = await gameSessionService.getSession(sessionId);
 
       // EXÉCUTER LES ACTIONS PENDANTES (sort non contré)
       if (session.pendingSpellActions.isNotEmpty) {
@@ -518,10 +540,10 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
       await firebaseService.clearPlayedCards(sessionId);
 
       // Auto-transition: Résolution → Fin de tour
-      await firebaseService.nextPhase(sessionId);
+      await turnService.nextPhase(sessionId);
 
       // Auto-transition: Fin → Tour suivant (Draw du prochain joueur)
-      await firebaseService.nextPhase(sessionId);
+      await turnService.nextPhase(sessionId);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -551,14 +573,14 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
     int damageIfRefused,
   ) async {
     final firebaseService = ref.read(firebaseServiceProvider);
+    final turnService = ref.read(turnServiceProvider);
+    final playerService = ref.read(playerServiceProvider);
     final cardEffectService = ref.read(cardEffectServiceProvider);
+    final gameSessionService = ref.read(gameSessionServiceProvider);
     final cardService = ref.read(cardServiceProvider);
 
     try {
-      final session = await firebaseService.getGameSession(sessionId);
-      final allCards = await cardService.loadAllCards();
-      final isPlayer1 = session.player1Id == playerId;
-      final opponentId = isPlayer1 ? session.player2Id! : session.player1Id;
+      final session = await gameSessionService.getSession(sessionId);
 
       // Exécuter les actions pendantes (sort non contré)
       if (session.pendingSpellActions.isNotEmpty) {
@@ -567,13 +589,16 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
 
       // Déduction automatique des PI si l'action est refusée
       if (!actionCompleted) {
-        await firebaseService.updatePlayerPI(sessionId, playerId, -3);
+        await playerService.updatePlayerPI(sessionId, playerId, -3);
       }
+
+      // Charger les cartes pour la résolution
+      final cards = await cardService.loadAllCards();
 
       // Résoudre les autres effets
       for (int i = session.resolutionStack.length - 1; i >= 0; i--) {
         final stackCardId = session.resolutionStack[i];
-        final card = allCards.firstWhere((c) => c.id == stackCardId);
+        final card = cards.firstWhere((c) => c.id == stackCardId);
 
         await cardEffectService.applyCardEffect(
           sessionId,
@@ -586,10 +611,10 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
       await firebaseService.clearPlayedCards(sessionId);
 
       // Auto-transition: Résolution → Fin de tour
-      await firebaseService.nextPhase(sessionId);
+      await turnService.nextPhase(sessionId);
 
       // Auto-transition: Fin → Tour suivant (Draw du prochain joueur)
-      await firebaseService.nextPhase(sessionId);
+      await turnService.nextPhase(sessionId);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -624,21 +649,24 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
     int damageIfRefused,
   ) async {
     final firebaseService = ref.read(firebaseServiceProvider);
+    final turnService = ref.read(turnServiceProvider);
+    final playerService = ref.read(playerServiceProvider);
     final cardEffectService = ref.read(cardEffectServiceProvider);
+    final gameSessionService = ref.read(gameSessionServiceProvider);
     final cardService = ref.read(cardServiceProvider);
 
     try {
-      final session = await firebaseService.getGameSession(sessionId);
+      final session = await gameSessionService.getSession(sessionId);
       final allCards = await cardService.loadAllCards();
       final isPlayer1 = session.player1Id == playerId;
       final opponentId = isPlayer1 ? session.player2Id! : session.player1Id;
 
       // Déduction automatique des PI si actions refusées
       if (!player1Completed) {
-        await firebaseService.updatePlayerPI(sessionId, playerId, -3);
+        await playerService.updatePlayerPI(sessionId, playerId, -3);
       }
       if (!player2Completed) {
-        await firebaseService.updatePlayerPI(sessionId, opponentId, -3);
+        await playerService.updatePlayerPI(sessionId, opponentId, -3);
       }
 
       // Résoudre les effets pour les 2 joueurs
@@ -661,8 +689,8 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
       await firebaseService.clearPlayedCards(sessionId);
 
       // Auto-transition
-      await firebaseService.nextPhase(sessionId);
-      await firebaseService.nextPhase(sessionId);
+      await turnService.nextPhase(sessionId);
+      await turnService.nextPhase(sessionId);
 
       if (mounted) {
         final p1Status = player1Completed ? '✅' : '❌';
@@ -689,12 +717,15 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
     }
   }
 
-  /// Widget de bouton avec effet de verre
+  /// Widget de bouton avec effet crystal
   Widget _buildGlassButton({
     required String label,
     required Color color,
     required VoidCallback onPressed,
   }) {
+    // Style crystal uniforme avec accent de couleur
+    const crystalColor = Color(0xFF6DD5FA);
+
     return Container(
       width: double.infinity,
       height: 52,
@@ -702,7 +733,7 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.3),
+            color: crystalColor.withValues(alpha: 0.25),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -710,16 +741,22 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
       ),
       child: Stack(
         children: [
-          // Corps principal avec gradient transparent
+          // Corps principal avec gradient crystal
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [color.withOpacity(0.25), color.withOpacity(0.15)],
+                colors: [
+                  crystalColor.withValues(alpha: 0.20),
+                  crystalColor.withValues(alpha: 0.10),
+                ],
               ),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: color.withOpacity(0.4), width: 1.5),
+              border: Border.all(
+                color: crystalColor.withValues(alpha: 0.4),
+                width: 1.5,
+              ),
             ),
           ),
           // Reflet/brillance en haut
@@ -734,8 +771,8 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.white.withOpacity(0.3),
-                    Colors.white.withOpacity(0.0),
+                    Colors.white.withValues(alpha: 0.35),
+                    Colors.white.withValues(alpha: 0.0),
                   ],
                 ),
                 borderRadius: const BorderRadius.only(
@@ -751,8 +788,8 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
             child: InkWell(
               onTap: onPressed,
               borderRadius: BorderRadius.circular(16),
-              splashColor: color.withOpacity(0.3),
-              highlightColor: color.withOpacity(0.2),
+              splashColor: crystalColor.withValues(alpha: 0.3),
+              highlightColor: crystalColor.withValues(alpha: 0.2),
               child: Center(
                 child: Text(
                   label,
@@ -763,7 +800,7 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
                     color: color,
                     shadows: [
                       Shadow(
-                        color: Colors.black.withOpacity(0.3),
+                        color: Colors.black.withValues(alpha: 0.3),
                         offset: const Offset(0, 1),
                         blurRadius: 3,
                       ),

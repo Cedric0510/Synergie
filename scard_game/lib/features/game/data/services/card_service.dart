@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/interfaces/i_card_service.dart';
 import '../../domain/models/game_card.dart';
 import '../../domain/enums/card_color.dart' as game;
 
@@ -23,8 +25,10 @@ final cardsByColorProvider =
     });
 
 /// Service pour gérer les cartes
-class CardService {
+/// Implémente ICardService pour respecter le principe D (Dependency Inversion)
+class CardService implements ICardService {
   /// Charge toutes les cartes depuis le fichier JSON
+  @override
   Future<List<GameCard>> loadAllCards() async {
     try {
       // Charger le fichier JSON
@@ -41,22 +45,41 @@ class CardService {
           final card = GameCard.fromJson(cardJson);
           cards.add(card);
         } catch (e) {
-          print('❌ Erreur lors du chargement de la carte à l\'index $i: $e');
-          print('JSON de la carte: ${cardsJson[i]}');
+          debugPrint(
+            '❌ CardService: Erreur lors du chargement de la carte à l\'index $i: $e',
+          );
+          debugPrint('CardService: JSON de la carte: ${cardsJson[i]}');
           rethrow;
         }
       }
 
       return cards;
     } catch (e) {
-      print('Erreur lors du chargement des cartes: $e');
+      debugPrint('❌ CardService: Erreur lors du chargement des cartes: $e');
       rethrow;
     }
   }
 
   /// Récupère les cartes d'une couleur spécifique
+  @override
   List<GameCard> filterByColor(List<GameCard> cards, game.CardColor color) {
     return cards.where((card) => card.color == color).toList();
+  }
+
+  /// Filtre les cartes par IDs
+  @override
+  List<GameCard> filterByIds(List<GameCard> allCards, List<String> ids) {
+    return allCards.where((card) => ids.contains(card.id)).toList();
+  }
+
+  /// Récupère une carte par son ID
+  @override
+  GameCard? getCardById(List<GameCard> allCards, String id) {
+    try {
+      return allCards.firstWhere((card) => card.id == id);
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Trie les cartes par nom

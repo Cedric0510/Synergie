@@ -100,7 +100,7 @@ class _VictoryScreenWidgetState extends State<VictoryScreenWidget> {
                 icon: const Icon(Icons.skip_next),
                 label: const Text('Passer'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white.withOpacity(0.8),
+                  backgroundColor: Colors.white.withValues(alpha: 0.8),
                   foregroundColor: Colors.black87,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
@@ -179,10 +179,10 @@ class _VictoryScreenWidgetState extends State<VictoryScreenWidget> {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Colors.black.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.3),
+                      color: Colors.white.withValues(alpha: 0.3),
                       width: 2,
                     ),
                   ),
@@ -212,7 +212,7 @@ class _VictoryScreenWidgetState extends State<VictoryScreenWidget> {
                             : 'Vous devez un orgasme à votre adversaire\n(lui/elle d\'abord) 💕',
                         style: TextStyle(
                           fontSize: 16,
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           fontStyle: FontStyle.italic,
                         ),
                         textAlign: TextAlign.center,
@@ -232,7 +232,7 @@ class _VictoryScreenWidgetState extends State<VictoryScreenWidget> {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white.withOpacity(0.9),
+                    backgroundColor: Colors.white.withValues(alpha: 0.9),
                     foregroundColor: Colors.black87,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 32,

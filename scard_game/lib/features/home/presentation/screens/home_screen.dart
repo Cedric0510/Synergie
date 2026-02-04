@@ -134,9 +134,9 @@ class _HomeScreenState extends State<HomeScreen>
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withOpacity(0.3),
-                    Colors.black.withOpacity(0.5),
-                    Colors.black.withOpacity(0.7),
+                    Colors.black.withValues(alpha: 0.3),
+                    Colors.black.withValues(alpha: 0.5),
+                    Colors.black.withValues(alpha: 0.7),
                   ],
                   stops: const [0.0, 0.5, 1.0],
                 ),
@@ -186,7 +186,7 @@ class _HomeScreenState extends State<HomeScreen>
                       height: 1.3,
                       shadows: [
                         Shadow(
-                          color: Colors.black.withOpacity(0.8),
+                          color: Colors.black.withValues(alpha: 0.8),
                           offset: const Offset(0, 2),
                           blurRadius: 8,
                         ),
@@ -209,8 +209,8 @@ class _HomeScreenState extends State<HomeScreen>
                         icon: Icons.favorite_border,
                         gradient: LinearGradient(
                           colors: [
-                            Colors.white.withOpacity(0.95),
-                            Colors.white.withOpacity(0.9),
+                            Colors.white.withValues(alpha: 0.95),
+                            Colors.white.withValues(alpha: 0.9),
                           ],
                         ),
                         textColor: Colors.white,
@@ -230,8 +230,8 @@ class _HomeScreenState extends State<HomeScreen>
                         icon: Icons.people_outline,
                         gradient: LinearGradient(
                           colors: [
-                            Colors.white.withOpacity(0.85),
-                            Colors.white.withOpacity(0.8),
+                            Colors.white.withValues(alpha: 0.85),
+                            Colors.white.withValues(alpha: 0.8),
                           ],
                         ),
                         textColor: Colors.white,
@@ -251,8 +251,8 @@ class _HomeScreenState extends State<HomeScreen>
                         icon: Icons.photo_library_outlined,
                         gradient: LinearGradient(
                           colors: [
-                            Colors.white.withOpacity(0.3),
-                            Colors.white.withOpacity(0.25),
+                            Colors.white.withValues(alpha: 0.3),
+                            Colors.white.withValues(alpha: 0.25),
                           ],
                         ),
                         textColor: Colors.white,
@@ -318,7 +318,7 @@ class _MenuButton extends StatelessWidget {
         boxShadow: [
           // Ombre portée
           BoxShadow(
-            color: Colors.black.withOpacity(0.25),
+            color: Colors.black.withValues(alpha: 0.25),
             blurRadius: 15,
             offset: const Offset(0, 6),
           ),
@@ -333,15 +333,15 @@ class _MenuButton extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.white.withOpacity(isOutlined ? 0.15 : 0.35),
-                  Colors.white.withOpacity(isOutlined ? 0.08 : 0.20),
+                  Colors.white.withValues(alpha: isOutlined ? 0.15 : 0.35),
+                  Colors.white.withValues(alpha: isOutlined ? 0.08 : 0.20),
                 ],
               ),
               borderRadius: BorderRadius.circular(30),
               border:
                   isOutlined
                       ? Border.all(
-                        color: Colors.white.withOpacity(0.4),
+                        color: Colors.white.withValues(alpha: 0.4),
                         width: 1.5,
                       )
                       : null,
@@ -360,8 +360,8 @@ class _MenuButton extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.white.withOpacity(0.5),
-                    Colors.white.withOpacity(0.0),
+                    Colors.white.withValues(alpha: 0.5),
+                    Colors.white.withValues(alpha: 0.0),
                   ],
                 ),
                 borderRadius: const BorderRadius.only(
@@ -378,8 +378,8 @@ class _MenuButton extends StatelessWidget {
             child: InkWell(
               onTap: onPressed,
               borderRadius: BorderRadius.circular(30),
-              splashColor: Colors.white.withOpacity(0.2),
-              highlightColor: Colors.white.withOpacity(0.1),
+              splashColor: Colors.white.withValues(alpha: 0.2),
+              highlightColor: Colors.white.withValues(alpha: 0.1),
               child: Center(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -395,7 +395,7 @@ class _MenuButton extends StatelessWidget {
                         color: textColor,
                         shadows: [
                           Shadow(
-                            color: Colors.black.withOpacity(0.3),
+                            color: Colors.black.withValues(alpha: 0.3),
                             offset: const Offset(0, 1),
                             blurRadius: 3,
                           ),

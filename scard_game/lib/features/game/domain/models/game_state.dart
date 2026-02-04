@@ -55,7 +55,6 @@ class GameState with _$GameState {
 
   /// Le joueur peut-il jouer une carte de cette couleur ?
   bool canPlayColor(String playerId, int colorValue) {
-    final player = getPlayer(playerId);
     // Conversion de colorValue en CardColor à faire dans l'extension
     return true; // Simplifié pour l'instant
   }

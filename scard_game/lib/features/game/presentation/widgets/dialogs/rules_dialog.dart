@@ -75,12 +75,12 @@ class _RulesDialogState extends State<RulesDialog> {
           ),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: const Color(0xFF6DD5FA).withOpacity(0.5),
+            color: const Color(0xFF6DD5FA).withValues(alpha: 0.5),
             width: 2,
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF6DD5FA).withOpacity(0.3),
+              color: const Color(0xFF6DD5FA).withValues(alpha: 0.3),
               blurRadius: 30,
               spreadRadius: 0,
             ),
@@ -99,8 +99,8 @@ class _RulesDialogState extends State<RulesDialog> {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            const Color(0xFF6DD5FA).withOpacity(0.3),
-                            const Color(0xFF6DD5FA).withOpacity(0.1),
+                            const Color(0xFF6DD5FA).withValues(alpha: 0.3),
+                            const Color(0xFF6DD5FA).withValues(alpha: 0.1),
                           ],
                         ),
                         borderRadius: const BorderRadius.only(
@@ -113,7 +113,7 @@ class _RulesDialogState extends State<RulesDialog> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF6DD5FA).withOpacity(0.2),
+                              color: const Color(0xFF6DD5FA).withValues(alpha: 0.2),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
@@ -163,10 +163,10 @@ class _RulesDialogState extends State<RulesDialog> {
                                       colors: [
                                         const Color(
                                           0xFF6DD5FA,
-                                        ).withOpacity(0.2),
+                                        ).withValues(alpha: 0.2),
                                         const Color(
                                           0xFF6DD5FA,
-                                        ).withOpacity(0.1),
+                                        ).withValues(alpha: 0.1),
                                       ],
                                     ),
                                     borderRadius: BorderRadius.circular(12),
@@ -187,10 +187,10 @@ class _RulesDialogState extends State<RulesDialog> {
                                     child: Container(
                                       padding: const EdgeInsets.all(16),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.05),
+                                        color: Colors.white.withValues(alpha: 0.05),
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
-                                          color: Colors.white.withOpacity(0.1),
+                                          color: Colors.white.withValues(alpha: 0.1),
                                           width: 1,
                                         ),
                                       ),
@@ -228,7 +228,7 @@ class _RulesDialogState extends State<RulesDialog> {
                                 color:
                                     _currentPage == index
                                         ? const Color(0xFF6DD5FA)
-                                        : Colors.white.withOpacity(0.3),
+                                        : Colors.white.withValues(alpha: 0.3),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                             ),
@@ -263,7 +263,7 @@ class _RulesDialogState extends State<RulesDialog> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.3),
+            color: color.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -277,10 +277,10 @@ class _RulesDialogState extends State<RulesDialog> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [color.withOpacity(0.25), color.withOpacity(0.15)],
+                colors: [color.withValues(alpha: 0.25), color.withValues(alpha: 0.15)],
               ),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: color.withOpacity(0.4), width: 1.5),
+              border: Border.all(color: color.withValues(alpha: 0.4), width: 1.5),
             ),
           ),
           // Reflet/brillance en haut
@@ -295,8 +295,8 @@ class _RulesDialogState extends State<RulesDialog> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.white.withOpacity(0.3),
-                    Colors.white.withOpacity(0.0),
+                    Colors.white.withValues(alpha: 0.3),
+                    Colors.white.withValues(alpha: 0.0),
                   ],
                 ),
                 borderRadius: const BorderRadius.only(
@@ -312,8 +312,8 @@ class _RulesDialogState extends State<RulesDialog> {
             child: InkWell(
               onTap: onPressed,
               borderRadius: BorderRadius.circular(16),
-              splashColor: color.withOpacity(0.3),
-              highlightColor: color.withOpacity(0.2),
+              splashColor: color.withValues(alpha: 0.3),
+              highlightColor: color.withValues(alpha: 0.2),
               child: Center(
                 child: Text(
                   label,
@@ -324,7 +324,7 @@ class _RulesDialogState extends State<RulesDialog> {
                     color: color,
                     shadows: [
                       Shadow(
-                        color: Colors.black.withOpacity(0.3),
+                        color: Colors.black.withValues(alpha: 0.3),
                         offset: const Offset(0, 1),
                         blurRadius: 3,
                       ),

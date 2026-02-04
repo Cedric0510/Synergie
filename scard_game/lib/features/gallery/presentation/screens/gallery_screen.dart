@@ -26,7 +26,7 @@ class GalleryScreen extends ConsumerWidget {
             colors: [
               const Color(0xFF6DD5FA), // Bleu clair
               const Color(0xFF2980B9), // Bleu moyen
-              const Color(0xFF8E44AD).withOpacity(0.7), // Violet doux
+              const Color(0xFF8E44AD).withValues(alpha: 0.7), // Violet doux
             ],
             stops: const [0.0, 0.6, 1.0],
           ),
@@ -135,7 +135,7 @@ class GalleryScreen extends ConsumerWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.2),
+            color: color.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: color, width: 2),
           ),
@@ -148,7 +148,7 @@ class GalleryScreen extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: color.withOpacity(0.8),
+                  color: color.withValues(alpha: 0.8),
                 ),
               ),
               const Spacer(),
@@ -156,7 +156,7 @@ class GalleryScreen extends ConsumerWidget {
                 '${cards.length} cartes',
                 style: TextStyle(
                   fontSize: 14,
-                  color: color.withOpacity(0.7),
+                  color: color.withValues(alpha: 0.7),
                   fontWeight: FontWeight.w500,
                 ),
               ),

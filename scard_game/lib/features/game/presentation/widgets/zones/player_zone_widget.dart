@@ -9,7 +9,6 @@ import '../../../domain/models/player_data.dart';
 import '../../../domain/enums/game_phase.dart';
 import '../../../domain/enums/card_type.dart';
 import '../../../domain/enums/card_level.dart';
-import '../../../domain/enums/card_color.dart';
 import '../card_widget.dart';
 import '../counters/tension_bar_widget.dart';
 import '../enchantments/compact_enchantments_widget.dart';
@@ -178,7 +177,7 @@ class _PlayerZoneWidgetState extends ConsumerState<PlayerZoneWidget> {
                         : null,
                 color:
                     _isDragOverHand
-                        ? Colors.amber.withOpacity(0.1)
+                        ? Colors.amber.withValues(alpha: 0.1)
                         : Colors.transparent,
               ),
               child:
@@ -339,7 +338,11 @@ class _PlayerZoneWidgetState extends ConsumerState<PlayerZoneWidget> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 margin: EdgeInsets.only(right: 8, top: isSelected ? 0 : 20),
-                transform: Matrix4.identity()..scale(isSelected ? 1.1 : 1.0),
+                transform: Matrix4.diagonal3Values(
+                  isSelected ? 1.1 : 1.0,
+                  isSelected ? 1.1 : 1.0,
+                  1.0,
+                ),
                 child: Opacity(
                   opacity: canSelect ? 1.0 : 0.5,
                   child: cardWidget,
@@ -357,7 +360,11 @@ class _PlayerZoneWidgetState extends ConsumerState<PlayerZoneWidget> {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             margin: EdgeInsets.only(right: 8, top: isSelected ? 0 : 20),
-            transform: Matrix4.identity()..scale(isSelected ? 1.1 : 1.0),
+            transform: Matrix4.diagonal3Values(
+              isSelected ? 1.1 : 1.0,
+              isSelected ? 1.1 : 1.0,
+              1.0,
+            ),
             child: Opacity(opacity: canSelect ? 1.0 : 0.5, child: cardWidget),
           ),
         );
@@ -383,9 +390,9 @@ class _PlayerZoneWidgetState extends ConsumerState<PlayerZoneWidget> {
               isSelected
                   ? Colors.green
                   : isPlayableInResponse
-                  ? Colors.red.withOpacity(0.5)
+                  ? Colors.red.withValues(alpha: 0.5)
                   : isLocked
-                  ? Colors.grey.withOpacity(0.5)
+                  ? Colors.grey.withValues(alpha: 0.5)
                   : Colors.transparent,
           width: isSelected ? 3 : (isPlayableInResponse || isLocked ? 2 : 0),
         ),
@@ -393,7 +400,7 @@ class _PlayerZoneWidgetState extends ConsumerState<PlayerZoneWidget> {
             isSelected
                 ? [
                   BoxShadow(
-                    color: Colors.green.withOpacity(0.5),
+                    color: Colors.green.withValues(alpha: 0.5),
                     blurRadius: 15,
                     spreadRadius: 2,
                   ),
@@ -415,7 +422,7 @@ class _PlayerZoneWidgetState extends ConsumerState<PlayerZoneWidget> {
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.3),
+                  color: Colors.red.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Center(
@@ -430,7 +437,7 @@ class _PlayerZoneWidgetState extends ConsumerState<PlayerZoneWidget> {
                 ignoring: true,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Center(
@@ -492,13 +499,13 @@ class _PlayerZoneWidgetState extends ConsumerState<PlayerZoneWidget> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.white.withOpacity(0.35),
-            Colors.white.withOpacity(0.20),
+            Colors.white.withValues(alpha: 0.35),
+            Colors.white.withValues(alpha: 0.20),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.25),
+            color: Colors.black.withValues(alpha: 0.25),
             blurRadius: isSmallMobile ? 3 : 6,
             offset: const Offset(0, 3),
           ),
@@ -529,58 +536,6 @@ class _PlayerZoneWidgetState extends ConsumerState<PlayerZoneWidget> {
     );
   }
 
-  /// Bouton de pioche
-  Widget _buildDrawButton({
-    required bool isMobile,
-    bool isSmallMobile = false,
-  }) {
-    final isHandFull = widget.myData.handCardIds.length >= 7;
-
-    return InkWell(
-      onTap: isHandFull ? null : widget.onManualDrawCard,
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: isMobile ? 0 : 12,
-          vertical: isSmallMobile ? 5 : (isMobile ? 8 : 8),
-        ),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(
-            isSmallMobile ? 12 : (isMobile ? 16 : 20),
-          ),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors:
-                isHandFull
-                    ? [
-                      Colors.white.withOpacity(0.15),
-                      Colors.white.withOpacity(0.10),
-                    ]
-                    : [
-                      Colors.white.withOpacity(0.35),
-                      Colors.white.withOpacity(0.20),
-                    ],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.25),
-              blurRadius: isSmallMobile ? 4 : 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Icon(
-          Icons.layers,
-          color: isHandFull ? Colors.white38 : Colors.white,
-          size: isSmallMobile ? 14 : (isMobile ? 18 : 16),
-          shadows: const [
-            Shadow(color: Colors.black38, offset: Offset(0, 1), blurRadius: 3),
-          ],
-        ),
-      ),
-    );
-  }
-
   /// Indicateur main pleine (mobile)
   Widget _buildFullHandIndicator({bool isSmallMobile = false}) {
     return Container(
@@ -595,13 +550,13 @@ class _PlayerZoneWidgetState extends ConsumerState<PlayerZoneWidget> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.white.withOpacity(0.35),
-            Colors.white.withOpacity(0.20),
+            Colors.white.withValues(alpha: 0.35),
+            Colors.white.withValues(alpha: 0.20),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.25),
+            color: Colors.black.withValues(alpha: 0.25),
             blurRadius: isSmallMobile ? 4 : 8,
             offset: const Offset(0, 3),
           ),

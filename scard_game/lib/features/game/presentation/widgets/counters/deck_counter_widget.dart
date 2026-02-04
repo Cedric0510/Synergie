@@ -24,17 +24,17 @@ class DeckCounterWidget extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            _getCounterColor().withOpacity(0.3),
-            _getCounterColor().withOpacity(0.2),
+            _getCounterColor().withValues(alpha: 0.3),
+            _getCounterColor().withValues(alpha: 0.2),
           ],
         ),
         border: Border.all(
-          color: _getCounterColor().withOpacity(0.6),
+          color: _getCounterColor().withValues(alpha: 0.6),
           width: isSmallMobile ? 1.0 : 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: _getCounterColor().withOpacity(0.3),
+            color: _getCounterColor().withValues(alpha: 0.3),
             blurRadius: isSmallMobile ? 4 : 8,
             spreadRadius: isSmallMobile ? 0 : 1,
           ),

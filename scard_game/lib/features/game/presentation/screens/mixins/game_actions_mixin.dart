@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../core/constants/game_constants.dart';
+import '../../../../../core/extensions/game_session_extensions.dart';
 import '../../../data/services/card_service.dart';
 import '../../../data/services/firebase_service.dart';
+import '../../../data/services/game_session_service.dart';
+import '../../../data/services/player_service.dart';
+import '../../../data/services/turn_service.dart';
 import '../../../data/services/mechanic_service.dart';
 import '../../../data/services/tension_service.dart';
 import '../../../domain/enums/card_color.dart';
@@ -12,7 +17,6 @@ import '../../../domain/enums/game_phase.dart';
 import '../../../domain/models/game_card.dart';
 import '../../../domain/models/game_session.dart';
 import '../../../domain/models/player_data.dart';
-import '../../widgets/dialogs/game_dialogs.dart';
 
 /// Mixin contenant toutes les actions de jeu (jouer carte, valider, annuler, etc.)
 mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
@@ -43,23 +47,21 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
     if (selectedCardIndex == null) return;
 
     final firebaseService = ref.read(firebaseServiceProvider);
+    final gameSessionService = ref.read(gameSessionServiceProvider);
 
     try {
-      final session = await firebaseService.getGameSession(sessionId);
-      final isPlayer1 = session.player1Id == playerId;
-      final myData = isPlayer1 ? session.player1Data : session.player2Data!;
-
-      final cardId = myData.handCardIds[selectedCardIndex!];
+      final session = await gameSessionService.getSession(sessionId);
+      final myData = session.getPlayerData(playerId);
 
       // Retirer la carte de la main
       final updatedHand = List<String>.from(myData.handCardIds);
       updatedHand.removeAt(selectedCardIndex!);
 
       final updatedPlayerData = myData.copyWith(handCardIds: updatedHand);
-      final updatedSession =
-          isPlayer1
-              ? session.copyWith(player1Data: updatedPlayerData)
-              : session.copyWith(player2Data: updatedPlayerData);
+      final updatedSession = session.updatePlayerData(
+        playerId,
+        updatedPlayerData,
+      );
 
       // Mettre à jour Firebase
       final docRef = firebaseService.firestore
@@ -102,9 +104,9 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
 
   /// Incrémenter les PI manuellement
   Future<void> incrementPI() async {
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final playerService = ref.read(playerServiceProvider);
     try {
-      await firebaseService.updatePlayerPI(sessionId, playerId, 1);
+      await playerService.updatePlayerPI(sessionId, playerId, 1);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -125,9 +127,9 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
 
   /// Décrémenter les PI manuellement
   Future<void> decrementPI() async {
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final playerService = ref.read(playerServiceProvider);
     try {
-      await firebaseService.updatePlayerPI(sessionId, playerId, -1);
+      await playerService.updatePlayerPI(sessionId, playerId, -1);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -149,22 +151,22 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   /// Piocher une carte manuellement
   Future<void> manualDrawCard() async {
     final firebaseService = ref.read(firebaseServiceProvider);
+    final gameSessionService = ref.read(gameSessionServiceProvider);
 
     // Vérifier la limite de main (7 cartes max)
     try {
-      final session = await firebaseService.getGameSession(sessionId);
-      final isPlayer1 = session.player1Id == playerId;
-      final myData = isPlayer1 ? session.player1Data : session.player2Data!;
+      final session = await gameSessionService.getSession(sessionId);
+      final myData = session.getPlayerData(playerId);
 
-      if (myData.handCardIds.length >= 7) {
+      if (myData.handCardIds.length >= GameConstants.maxHandSize) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text(
-                '⚠️ Main pleine (7/7) - Jouez ou sacrifiez une carte',
+                '⚠️ Main pleine (${GameConstants.maxHandSize}/${GameConstants.maxHandSize}) - Jouez ou sacrifiez une carte',
               ),
               backgroundColor: Colors.orange,
-              duration: Duration(seconds: 2),
+              duration: const Duration(seconds: 2),
             ),
           );
         }
@@ -212,12 +214,13 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
     if (selectedCardIndex == null) return false;
 
     final firebaseService = ref.read(firebaseServiceProvider);
+    final gameSessionService = ref.read(gameSessionServiceProvider);
     final cardService = ref.read(cardServiceProvider);
     final tensionService = ref.read(tensionServiceProvider);
 
     try {
       // Vérifier le type de carte et récupérer la carte
-      final session = await firebaseService.getGameSession(sessionId);
+      final session = await gameSessionService.getSession(sessionId);
       final isPlayer1 = session.player1Id == playerId;
       final myData = isPlayer1 ? session.player1Data : session.player2Data!;
       final cardId = myData.handCardIds[selectedCardIndex!];
@@ -226,16 +229,8 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       final card = allCards.firstWhere((c) => c.id == cardId);
 
       // Calculer le niveau effectif basé sur la tension
-      CardLevel effectiveLevel = myData.currentLevel;
-      if (myData.tension >= 75) {
-        effectiveLevel = CardLevel.red;
-      } else if (myData.tension >= 50) {
-        effectiveLevel = CardLevel.yellow;
-      } else if (myData.tension >= 25) {
-        effectiveLevel = CardLevel.blue;
-      } else {
-        effectiveLevel = CardLevel.white;
-      }
+      // Utilise TensionService pour respecter le principe DRY
+      final effectiveLevel = tensionService.getEffectiveLevel(myData.tension);
 
       // Vérifier si la carte peut être jouée selon le niveau effectif
       if (!tensionService.canPlayCard(card.color, effectiveLevel)) {
@@ -542,7 +537,8 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
     if (count <= 0) return;
 
     final firebaseService = ref.read(firebaseServiceProvider);
-    final session = await firebaseService.getGameSession(sessionId);
+    final gameSessionService = ref.read(gameSessionServiceProvider);
+    final session = await gameSessionService.getSession(sessionId);
 
     final pendingActions =
         session.pendingSpellActions
@@ -604,8 +600,11 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
 
     final mechanicService = ref.read(mechanicServiceProvider);
     final firebaseService = ref.read(firebaseServiceProvider);
+    final gameSessionService = ref.read(gameSessionServiceProvider);
 
-    final updatedSession = await firebaseService.getGameSession(sessionId);
+    final updatedSession = await gameSessionService.getSession(sessionId);
+    if (!mounted) return;
+
     final updatedMyData =
         isPlayer1 ? updatedSession.player1Data : updatedSession.player2Data!;
     final opponentData =
@@ -679,7 +678,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   /// Augmente la tension après avoir joué une carte
   Future<void> _handleTensionIncrease(GameCard card) async {
     final tensionService = ref.read(tensionServiceProvider);
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final gameSessionService = ref.read(gameSessionServiceProvider);
 
     double tensionAmount = 0;
     switch (card.color) {
@@ -708,7 +707,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       );
 
       if (levelChanged) {
-        final updatedSession = await firebaseService.getGameSession(sessionId);
+        final updatedSession = await gameSessionService.getSession(sessionId);
         final isPlayer1 = updatedSession.player1Id == playerId;
         final playerData =
             isPlayer1
@@ -749,13 +748,14 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
 
   /// Valider la carte jouée
   Future<void> validatePlayedCard() async {
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final gameSessionService = ref.read(gameSessionServiceProvider);
+    final turnService = ref.read(turnServiceProvider);
 
     try {
-      final session = await firebaseService.getGameSession(sessionId);
+      final session = await gameSessionService.getSession(sessionId);
 
       if (session.currentPhase == GamePhase.response) {
-        await firebaseService.nextPhase(sessionId);
+        await turnService.nextPhase(sessionId);
         setState(() {
           pendingCardValidation = false;
           _clearPendingDropState();
@@ -771,7 +771,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
           );
         }
       } else {
-        await firebaseService.nextPhase(sessionId);
+        await turnService.nextPhase(sessionId);
         setState(() {
           pendingCardValidation = false;
           _clearPendingDropState();
@@ -802,9 +802,10 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   /// Annuler la carte jouée
   Future<void> cancelPlayedCard() async {
     final firebaseService = ref.read(firebaseServiceProvider);
+    final gameSessionService = ref.read(gameSessionServiceProvider);
 
     try {
-      final currentSession = await firebaseService.getGameSession(sessionId);
+      final currentSession = await gameSessionService.getSession(sessionId);
       final currentIsPlayer1 = currentSession.player1Id == playerId;
       final currentMyData =
           currentIsPlayer1
@@ -915,9 +916,10 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   /// Supprimer un enchantement
   Future<void> deleteEnchantment(String enchantmentId) async {
     final firebaseService = ref.read(firebaseServiceProvider);
+    final gameSessionService = ref.read(gameSessionServiceProvider);
 
     try {
-      final session = await firebaseService.getGameSession(sessionId);
+      final session = await gameSessionService.getSession(sessionId);
       final isPlayer1 = session.player1Id == playerId;
       final myData = isPlayer1 ? session.player1Data : session.player2Data!;
 
@@ -932,7 +934,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
 
       // Logique spéciale pour Ultima
       final updatedHand = List<String>.from(myData.handCardIds);
-      if (enchantmentId.contains('red_016')) {
+      if (enchantmentId.contains(GameConstants.ultimaCardId)) {
         updatedHand.add(enchantmentId);
       }
 
@@ -1021,9 +1023,11 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   /// - Pas d'accord : sort joué normalement, carte négociation remélangée dans le deck
   Future<void> resolveNegotiation(bool agreement) async {
     final firebaseService = ref.read(firebaseServiceProvider);
+    final gameSessionService = ref.read(gameSessionServiceProvider);
+    final turnService = ref.read(turnServiceProvider);
 
     try {
-      final session = await firebaseService.getGameSession(sessionId);
+      final session = await gameSessionService.getSession(sessionId);
 
       if (session.resolutionStack.length < 2) return;
 
@@ -1041,7 +1045,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       if (agreement) {
         // Entente trouvée → sort contré, carte négociation DÉFAUSSÉE (perdue)
         final updatedCurrentHand = List<String>.from(currentData.handCardIds);
-        if (originalCardId.contains('red_016')) {
+        if (originalCardId.contains(GameConstants.ultimaCardId)) {
           updatedCurrentHand.add(originalCardId);
         }
 
@@ -1104,7 +1108,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       }
 
       await firebaseService.updateSession(sessionId, updatedSession);
-      await firebaseService.nextPhase(sessionId);
+      await turnService.nextPhase(sessionId);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -180,7 +180,7 @@ class ActionButtonsWidget extends StatelessWidget {
               onPressed: onNextPhase,
               tooltip: 'Phase Suivante',
               style: IconButton.styleFrom(
-                backgroundColor: Colors.blue.withOpacity(0.2),
+                backgroundColor: Colors.blue.withValues(alpha: 0.2),
                 padding: const EdgeInsets.all(8),
               ),
             ),
@@ -195,7 +195,7 @@ class ActionButtonsWidget extends StatelessWidget {
               tooltip: isDiscardMode ? 'Annuler' : 'Défausser',
               style: IconButton.styleFrom(
                 backgroundColor: (isDiscardMode ? Colors.grey : Colors.red)
-                    .withOpacity(0.2),
+                    .withValues(alpha: 0.2),
                 padding: const EdgeInsets.all(8),
               ),
             ),
@@ -212,7 +212,7 @@ class ActionButtonsWidget extends StatelessWidget {
               onPressed: onDiscardSelectedCard,
               tooltip: 'Confirmer défausse',
               style: IconButton.styleFrom(
-                backgroundColor: Colors.red.withOpacity(0.2),
+                backgroundColor: Colors.red.withValues(alpha: 0.2),
                 padding: const EdgeInsets.all(8),
               ),
             ),
@@ -228,7 +228,7 @@ class ActionButtonsWidget extends StatelessWidget {
               onPressed: onSkipTurn,
               tooltip: 'Passer mon tour',
               style: IconButton.styleFrom(
-                backgroundColor: Colors.grey.withOpacity(0.2),
+                backgroundColor: Colors.grey.withValues(alpha: 0.2),
                 padding: const EdgeInsets.all(8),
               ),
             ),
@@ -256,7 +256,7 @@ class ActionButtonsWidget extends StatelessWidget {
                       onPressed: canPlay ? onPlayCard : null,
                       tooltip: 'Jouer la carte',
                       style: IconButton.styleFrom(
-                        backgroundColor: Colors.green.withOpacity(0.2),
+                        backgroundColor: Colors.green.withValues(alpha: 0.2),
                         padding: const EdgeInsets.all(8),
                       ),
                     ),
@@ -270,7 +270,7 @@ class ActionButtonsWidget extends StatelessWidget {
                       onPressed: canSacrifice ? onSacrificeCard : null,
                       tooltip: 'Sacrifier',
                       style: IconButton.styleFrom(
-                        backgroundColor: Colors.red.withOpacity(0.2),
+                        backgroundColor: Colors.red.withValues(alpha: 0.2),
                         padding: const EdgeInsets.all(8),
                       ),
                     ),
@@ -308,7 +308,7 @@ class ActionButtonsWidget extends StatelessWidget {
                   padding: EdgeInsets.all(padding),
                   margin: EdgeInsets.only(bottom: spaceBetween),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.2),
+                    color: Colors.blue.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.blue, width: 2),
                   ),
@@ -365,7 +365,7 @@ class ActionButtonsWidget extends StatelessWidget {
                   Container(
                     padding: EdgeInsets.all(padding - 4),
                     decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.2),
+                      color: Colors.orange.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Colors.orange, width: 2),
                     ),

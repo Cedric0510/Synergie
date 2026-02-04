@@ -9,6 +9,7 @@ import '../card_widget.dart';
 import '../counters/ultima_counter_widget.dart';
 import '../counters/deck_counter_widget.dart';
 import '../../../../../core/widgets/game_button.dart';
+import '../dialogs/rules_dialog.dart';
 import 'player_zone_widget.dart';
 
 /// Widget de la zone de jeu centrale affichant les cartes jouées ce tour
@@ -94,6 +95,11 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
 
               // === COMPTEUR DE DECK ===
               DeckCounterWidget(remainingCards: myData.deckCardIds.length),
+
+              SizedBox(height: isSmallMobile ? 4 : 8),
+
+              // === BOUTON RÈGLES ===
+              _buildRulesButton(isSmallMobile),
             ],
           ),
         ),
@@ -266,13 +272,15 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
                           },
                           builder: (context, candidateData, rejectedData) {
                             // Si canDragBack, rendre la carte draggable pour le retour
-                            if (canDragBack) {
+                            if (canDragBack && myCardData != null) {
+                              final cardData =
+                                  myCardData; // Capture pour analyse null-safety
                               return LongPressDraggable<DraggedCardData>(
                                 data: DraggedCardData(
                                   cardIndex:
                                       -1, // Index spécial pour carte en zone de jeu
-                                  cardId: myCardData!.id,
-                                  card: myCardData!,
+                                  cardId: cardData.id,
+                                  card: cardData,
                                 ),
                                 delay: const Duration(milliseconds: 150),
                                 hapticFeedbackOnStart: true,
@@ -283,7 +291,7 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
                                     elevation: 8,
                                     borderRadius: BorderRadius.circular(12),
                                     child: CardWidget(
-                                      card: myCardData!,
+                                      card: cardData,
                                       width: cardWidth * 1.3,
                                       compact: true,
                                     ),
@@ -379,17 +387,17 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
           colors:
               isHighlighted
                   ? [
-                    Colors.green.withOpacity(0.4),
-                    Colors.green.withOpacity(0.2),
+                    Colors.green.withValues(alpha: 0.4),
+                    Colors.green.withValues(alpha: 0.2),
                   ]
                   : isPending
                   ? [
-                    Colors.amber.withOpacity(0.3),
-                    Colors.amber.withOpacity(0.15),
+                    Colors.amber.withValues(alpha: 0.3),
+                    Colors.amber.withValues(alpha: 0.15),
                   ]
                   : [
-                    Colors.white.withOpacity(card != null ? 0.15 : 0.08),
-                    Colors.white.withOpacity(card != null ? 0.08 : 0.03),
+                    Colors.white.withValues(alpha: card != null ? 0.15 : 0.08),
+                    Colors.white.withValues(alpha: card != null ? 0.08 : 0.03),
                   ],
         ),
         borderRadius: borderRadius,
@@ -401,8 +409,8 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
                   : isPending
                   ? Colors.amber
                   : card != null
-                  ? Colors.white.withOpacity(0.25)
-                  : Colors.white.withOpacity(0.12),
+                  ? Colors.white.withValues(alpha: 0.25)
+                  : Colors.white.withValues(alpha: 0.12),
           width: isHighlighted ? 3 : (card != null ? 2 : 1),
         ),
         // Ombre douce (plus forte quand highlighted)
@@ -410,8 +418,8 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
           BoxShadow(
             color:
                 isHighlighted
-                    ? Colors.greenAccent.withOpacity(0.4)
-                    : Colors.black.withOpacity(0.2),
+                    ? Colors.greenAccent.withValues(alpha: 0.4)
+                    : Colors.black.withValues(alpha: 0.2),
             blurRadius: isHighlighted ? 20 : 12,
             offset: const Offset(0, 4),
           ),
@@ -419,8 +427,8 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
             BoxShadow(
               color:
                   isHighlighted
-                      ? Colors.greenAccent.withOpacity(0.3)
-                      : Colors.white.withOpacity(0.05),
+                      ? Colors.greenAccent.withValues(alpha: 0.3)
+                      : Colors.white.withValues(alpha: 0.05),
               blurRadius: 20,
               spreadRadius: isHighlighted ? 5 : -5,
             ),
@@ -443,7 +451,7 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
               child: Text(
                 label,
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.3),
+                  color: Colors.white.withValues(alpha: 0.3),
                   fontSize: labelFontSize - 1,
                   fontWeight: FontWeight.w500,
                 ),
@@ -464,7 +472,7 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
     return Center(
       child: Icon(
         Icons.style_outlined,
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.white.withValues(alpha: 0.15),
         size: cardWidth * 0.35,
       ),
     );
@@ -480,9 +488,9 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
         gradient: LinearGradient(
           colors: [
             Colors.transparent,
-            Colors.white.withOpacity(0.3),
-            Colors.white.withOpacity(0.4),
-            Colors.white.withOpacity(0.3),
+            Colors.white.withValues(alpha: 0.3),
+            Colors.white.withValues(alpha: 0.4),
+            Colors.white.withValues(alpha: 0.3),
             Colors.transparent,
           ],
         ),
@@ -508,13 +516,13 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.white.withOpacity(0.35),
-            Colors.white.withOpacity(0.20),
+            Colors.white.withValues(alpha: 0.35),
+            Colors.white.withValues(alpha: 0.20),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.25),
+            color: Colors.black.withValues(alpha: 0.25),
             blurRadius: isSmallMobile ? 4 : 8,
             offset: const Offset(0, 3),
           ),
@@ -529,6 +537,56 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
           shadows: const [
             Shadow(color: Colors.black38, offset: Offset(0, 1), blurRadius: 3),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Bouton "?" pour afficher les règles du jeu
+  Widget _buildRulesButton(bool isSmallMobile) {
+    final size = isSmallMobile ? 32.0 : 40.0;
+    final fontSize = isSmallMobile ? 16.0 : 20.0;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => RulesDialog.show(context),
+        borderRadius: BorderRadius.circular(size / 2),
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.white.withValues(alpha: 0.25),
+                Colors.white.withValues(alpha: 0.15),
+              ],
+            ),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.4),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              '?',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: fontSize,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
         ),
       ),
     );

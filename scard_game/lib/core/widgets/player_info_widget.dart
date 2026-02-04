@@ -30,14 +30,14 @@ class PlayerInfoWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color:
             isCurrentPlayer
-                ? const Color(0xFF27AE60).withOpacity(0.2)
-                : Colors.white.withOpacity(0.1),
+                ? const Color(0xFF27AE60).withValues(alpha: 0.2)
+                : Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color:
               isCurrentPlayer
                   ? const Color(0xFF27AE60)
-                  : Colors.white.withOpacity(0.3),
+                  : Colors.white.withValues(alpha: 0.3),
           width: isCurrentPlayer ? 3 : 2,
         ),
       ),
@@ -150,7 +150,7 @@ class _InfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
+        color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color, width: 1),
       ),
@@ -192,7 +192,7 @@ class _PIControlChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
+        color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color, width: 1),
       ),
@@ -248,7 +248,7 @@ class _DeckControlChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
         decoration: BoxDecoration(
-          color: Colors.grey.withOpacity(0.2),
+          color: Colors.grey.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: cardsInDeck > 0 ? Colors.blue : Colors.grey,

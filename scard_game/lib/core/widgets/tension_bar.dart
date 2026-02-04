@@ -44,10 +44,10 @@ class TensionBar extends StatelessWidget {
           height: height,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.5), width: 2),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 2),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withValues(alpha: 0.2),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -58,7 +58,7 @@ class TensionBar extends StatelessWidget {
             child: Stack(
               children: [
                 // Fond
-                Container(color: Colors.white.withOpacity(0.3)),
+                Container(color: Colors.white.withValues(alpha: 0.3)),
                 // Progression avec gradient
                 FractionallySizedBox(
                   widthFactor: progress,
@@ -80,7 +80,7 @@ class TensionBar extends StatelessWidget {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.white.withOpacity(0.3),
+                          Colors.white.withValues(alpha: 0.3),
                           Colors.transparent,
                         ],
                       ),

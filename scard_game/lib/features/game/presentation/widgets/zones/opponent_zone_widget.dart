@@ -148,13 +148,13 @@ class OpponentZoneWidget extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.white.withOpacity(0.35),
-            Colors.white.withOpacity(0.20),
+            Colors.white.withValues(alpha: 0.35),
+            Colors.white.withValues(alpha: 0.20),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.25),
+            color: Colors.black.withValues(alpha: 0.25),
             blurRadius: isSmallMobile ? 4 : 8,
             offset: const Offset(0, 3),
           ),
@@ -192,13 +192,13 @@ class OpponentZoneWidget extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.white.withOpacity(0.25),
-            Colors.white.withOpacity(0.15),
+            Colors.white.withValues(alpha: 0.25),
+            Colors.white.withValues(alpha: 0.15),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.25),
+            color: Colors.black.withValues(alpha: 0.25),
             blurRadius: isSmallMobile ? 4 : 8,
             offset: const Offset(0, 3),
           ),

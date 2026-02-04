@@ -85,10 +85,8 @@ Map<String, dynamic> _$$PlayerDataImplToJson(_$PlayerDataImpl instance) =>
       'currentLevel': _$CardLevelEnumMap[instance.currentLevel]!,
       'isReady': instance.isReady,
       'hasSacrificedThisTurn': instance.hasSacrificedThisTurn,
-      if (instance.connectedAt?.toIso8601String() case final value?)
-        'connectedAt': value,
-      if (instance.lastActivityAt?.toIso8601String() case final value?)
-        'lastActivityAt': value,
+      'connectedAt': instance.connectedAt?.toIso8601String(),
+      'lastActivityAt': instance.lastActivityAt?.toIso8601String(),
     };
 
 const _$PlayerGenderEnumMap = {

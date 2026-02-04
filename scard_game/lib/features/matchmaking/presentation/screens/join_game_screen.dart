@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/widgets/game_button.dart';
-import '../../../game/data/services/firebase_service.dart';
+import '../../../game/data/services/game_session_service.dart';
 import '../../../game/domain/enums/player_gender.dart';
 import 'waiting_room_screen.dart';
 
@@ -43,8 +42,8 @@ class _JoinGameScreenState extends ConsumerState<JoinGameScreen> {
     setState(() => _isJoining = true);
 
     try {
-      final firebaseService = ref.read(firebaseServiceProvider);
-      final session = await firebaseService.joinGame(
+      final gameSessionService = ref.read(gameSessionServiceProvider);
+      final session = await gameSessionService.joinGame(
         gameCode: _codeController.text.trim(),
         playerName: _nameController.text.trim(),
         playerGender: _selectedGender,
@@ -85,7 +84,7 @@ class _JoinGameScreenState extends ConsumerState<JoinGameScreen> {
             colors: [
               const Color(0xFF6DD5FA),
               const Color(0xFF2980B9),
-              const Color(0xFF8E44AD).withOpacity(0.7),
+              const Color(0xFF8E44AD).withValues(alpha: 0.7),
             ],
             stops: const [0.0, 0.6, 1.0],
           ),
@@ -135,13 +134,13 @@ class _JoinGameScreenState extends ConsumerState<JoinGameScreen> {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        Colors.white.withOpacity(0.35),
-                        Colors.white.withOpacity(0.20),
+                        Colors.white.withValues(alpha: 0.35),
+                        Colors.white.withValues(alpha: 0.20),
                       ],
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.25),
+                        color: Colors.black.withValues(alpha: 0.25),
                         blurRadius: 15,
                         offset: const Offset(0, 6),
                       ),
@@ -165,8 +164,8 @@ class _JoinGameScreenState extends ConsumerState<JoinGameScreen> {
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                Colors.white.withOpacity(0.5),
-                                Colors.white.withOpacity(0),
+                                Colors.white.withValues(alpha: 0.5),
+                                Colors.white.withValues(alpha: 0),
                               ],
                             ),
                           ),
@@ -189,12 +188,12 @@ class _JoinGameScreenState extends ConsumerState<JoinGameScreen> {
                         decoration: InputDecoration(
                           labelText: 'Code de partie',
                           labelStyle: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                             fontWeight: FontWeight.w500,
                           ),
                           hintText: 'Ex: ABC123',
                           hintStyle: TextStyle(
-                            color: Colors.white.withOpacity(0.5),
+                            color: Colors.white.withValues(alpha: 0.5),
                           ),
                           prefixIcon: const Icon(
                             Icons.vpn_key,
@@ -223,13 +222,13 @@ class _JoinGameScreenState extends ConsumerState<JoinGameScreen> {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        Colors.white.withOpacity(0.35),
-                        Colors.white.withOpacity(0.20),
+                        Colors.white.withValues(alpha: 0.35),
+                        Colors.white.withValues(alpha: 0.20),
                       ],
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.25),
+                        color: Colors.black.withValues(alpha: 0.25),
                         blurRadius: 15,
                         offset: const Offset(0, 6),
                       ),
@@ -253,8 +252,8 @@ class _JoinGameScreenState extends ConsumerState<JoinGameScreen> {
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                Colors.white.withOpacity(0.5),
-                                Colors.white.withOpacity(0),
+                                Colors.white.withValues(alpha: 0.5),
+                                Colors.white.withValues(alpha: 0),
                               ],
                             ),
                           ),
@@ -277,12 +276,12 @@ class _JoinGameScreenState extends ConsumerState<JoinGameScreen> {
                         decoration: InputDecoration(
                           labelText: 'Votre nom',
                           labelStyle: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                             fontWeight: FontWeight.w500,
                           ),
                           hintText: 'Entrez votre nom',
                           hintStyle: TextStyle(
-                            color: Colors.white.withOpacity(0.5),
+                            color: Colors.white.withValues(alpha: 0.5),
                           ),
                           prefixIcon: const Icon(
                             Icons.person,
@@ -346,13 +345,13 @@ class _JoinGameScreenState extends ConsumerState<JoinGameScreen> {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Colors.white.withOpacity(0.45),
-                          Colors.white.withOpacity(0.30),
+                          Colors.white.withValues(alpha: 0.45),
+                          Colors.white.withValues(alpha: 0.30),
                         ],
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.25),
+                          color: Colors.black.withValues(alpha: 0.25),
                           blurRadius: 15,
                           offset: const Offset(0, 6),
                         ),
@@ -376,8 +375,8 @@ class _JoinGameScreenState extends ConsumerState<JoinGameScreen> {
                                 begin: Alignment.topCenter,
                                 end: Alignment.bottomCenter,
                                 colors: [
-                                  Colors.white.withOpacity(0.5),
-                                  Colors.white.withOpacity(0),
+                                  Colors.white.withValues(alpha: 0.5),
+                                  Colors.white.withValues(alpha: 0),
                                 ],
                               ),
                             ),
@@ -458,17 +457,17 @@ class _GenderOption extends StatelessWidget {
             colors:
                 isSelected
                     ? [
-                      Colors.white.withOpacity(0.45),
-                      Colors.white.withOpacity(0.30),
+                      Colors.white.withValues(alpha: 0.45),
+                      Colors.white.withValues(alpha: 0.30),
                     ]
                     : [
-                      Colors.white.withOpacity(0.25),
-                      Colors.white.withOpacity(0.15),
+                      Colors.white.withValues(alpha: 0.25),
+                      Colors.white.withValues(alpha: 0.15),
                     ],
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.25),
+              color: Colors.black.withValues(alpha: 0.25),
               blurRadius: 15,
               offset: const Offset(0, 6),
             ),
@@ -492,8 +491,8 @@ class _GenderOption extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.white.withOpacity(0.5),
-                      Colors.white.withOpacity(0),
+                      Colors.white.withValues(alpha: 0.5),
+                      Colors.white.withValues(alpha: 0),
                     ],
                   ),
                 ),
@@ -508,14 +507,14 @@ class _GenderOption extends StatelessWidget {
                     shape: BoxShape.circle,
                     color:
                         isSelected
-                            ? Colors.white.withOpacity(0.9)
+                            ? Colors.white.withValues(alpha: 0.9)
                             : Colors.transparent,
                     border: Border.all(color: Colors.white, width: 2),
                     boxShadow:
                         isSelected
                             ? [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
+                                color: Colors.black.withValues(alpha: 0.2),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),

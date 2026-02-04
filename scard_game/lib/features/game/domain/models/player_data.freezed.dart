@@ -71,12 +71,10 @@ mixin _$PlayerData {
   /// Le joueur a-t-il déjà sacrifié une carte ce tour ?
   bool get hasSacrificedThisTurn => throw _privateConstructorUsedError;
 
-  /// Timestamp de connexion
-  @JsonKey(includeIfNull: false)
+  /// Timestamp de connexion (null n'est pas inclus dans le JSON)
   DateTime? get connectedAt => throw _privateConstructorUsedError;
 
   /// Timestamp de dernière activité (pour détecter déconnexion)
-  @JsonKey(includeIfNull: false)
   DateTime? get lastActivityAt => throw _privateConstructorUsedError;
 
   /// Serializes this PlayerData to a JSON map.
@@ -113,8 +111,8 @@ abstract class $PlayerDataCopyWith<$Res> {
     CardLevel currentLevel,
     bool isReady,
     bool hasSacrificedThisTurn,
-    @JsonKey(includeIfNull: false) DateTime? connectedAt,
-    @JsonKey(includeIfNull: false) DateTime? lastActivityAt,
+    DateTime? connectedAt,
+    DateTime? lastActivityAt,
   });
 }
 
@@ -276,8 +274,8 @@ abstract class _$$PlayerDataImplCopyWith<$Res>
     CardLevel currentLevel,
     bool isReady,
     bool hasSacrificedThisTurn,
-    @JsonKey(includeIfNull: false) DateTime? connectedAt,
-    @JsonKey(includeIfNull: false) DateTime? lastActivityAt,
+    DateTime? connectedAt,
+    DateTime? lastActivityAt,
   });
 }
 
@@ -431,8 +429,8 @@ class _$PlayerDataImpl implements _PlayerData {
     this.currentLevel = CardLevel.white,
     this.isReady = false,
     this.hasSacrificedThisTurn = false,
-    @JsonKey(includeIfNull: false) this.connectedAt,
-    @JsonKey(includeIfNull: false) this.lastActivityAt,
+    this.connectedAt,
+    this.lastActivityAt,
   }) : _handCardIds = handCardIds,
        _deckCardIds = deckCardIds,
        _graveyardCardIds = graveyardCardIds,
@@ -574,14 +572,12 @@ class _$PlayerDataImpl implements _PlayerData {
   @JsonKey()
   final bool hasSacrificedThisTurn;
 
-  /// Timestamp de connexion
+  /// Timestamp de connexion (null n'est pas inclus dans le JSON)
   @override
-  @JsonKey(includeIfNull: false)
   final DateTime? connectedAt;
 
   /// Timestamp de dernière activité (pour détecter déconnexion)
   @override
-  @JsonKey(includeIfNull: false)
   final DateTime? lastActivityAt;
 
   @override
@@ -697,8 +693,8 @@ abstract class _PlayerData implements PlayerData {
     final CardLevel currentLevel,
     final bool isReady,
     final bool hasSacrificedThisTurn,
-    @JsonKey(includeIfNull: false) final DateTime? connectedAt,
-    @JsonKey(includeIfNull: false) final DateTime? lastActivityAt,
+    final DateTime? connectedAt,
+    final DateTime? lastActivityAt,
   }) = _$PlayerDataImpl;
 
   factory _PlayerData.fromJson(Map<String, dynamic> json) =
@@ -768,14 +764,12 @@ abstract class _PlayerData implements PlayerData {
   @override
   bool get hasSacrificedThisTurn;
 
-  /// Timestamp de connexion
+  /// Timestamp de connexion (null n'est pas inclus dans le JSON)
   @override
-  @JsonKey(includeIfNull: false)
   DateTime? get connectedAt;
 
   /// Timestamp de dernière activité (pour détecter déconnexion)
   @override
-  @JsonKey(includeIfNull: false)
   DateTime? get lastActivityAt;
 
   /// Create a copy of PlayerData

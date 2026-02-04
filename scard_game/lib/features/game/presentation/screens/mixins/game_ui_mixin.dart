@@ -44,8 +44,8 @@ mixin GameUIMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
             icon: Icons.skip_next,
             onPressed: skipTurn,
             gradientColors: [
-              Colors.grey.withOpacity(0.45),
-              Colors.grey.withOpacity(0.30),
+              Colors.grey.withValues(alpha: 0.45),
+              Colors.grey.withValues(alpha: 0.30),
             ],
           ),
 
@@ -57,8 +57,8 @@ mixin GameUIMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
             icon: Icons.check,
             onPressed: validatePlayedCard,
             gradientColors: [
-              Colors.blue.withOpacity(0.45),
-              Colors.blue.withOpacity(0.30),
+              Colors.blue.withValues(alpha: 0.45),
+              Colors.blue.withValues(alpha: 0.30),
             ],
           ),
           buildCrystalButton(
@@ -66,8 +66,8 @@ mixin GameUIMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
             icon: Icons.undo,
             onPressed: cancelPlayedCard,
             gradientColors: [
-              Colors.orange.withOpacity(0.45),
-              Colors.orange.withOpacity(0.30),
+              Colors.orange.withValues(alpha: 0.45),
+              Colors.orange.withValues(alpha: 0.30),
             ],
           ),
         ] else if (selectedCardIndex != null) ...[
@@ -87,8 +87,8 @@ mixin GameUIMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
                     icon: Icons.play_arrow,
                     onPressed: canPlay ? playCard : null,
                     gradientColors: [
-                      Colors.green.withOpacity(0.45),
-                      Colors.green.withOpacity(0.30),
+                      Colors.green.withValues(alpha: 0.45),
+                      Colors.green.withValues(alpha: 0.30),
                     ],
                   ),
                   const SizedBox(width: 4),
@@ -97,8 +97,8 @@ mixin GameUIMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
                     icon: Icons.delete_outline,
                     onPressed: canSacrifice ? sacrificeCard : null,
                     gradientColors: [
-                      Colors.red.withOpacity(0.45),
-                      Colors.red.withOpacity(0.30),
+                      Colors.red.withValues(alpha: 0.45),
+                      Colors.red.withValues(alpha: 0.30),
                     ],
                   ),
                 ],
@@ -131,14 +131,14 @@ mixin GameUIMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
             colors:
                 isDisabled
                     ? [
-                      Colors.white.withOpacity(0.15),
-                      Colors.white.withOpacity(0.10),
+                      Colors.white.withValues(alpha: 0.15),
+                      Colors.white.withValues(alpha: 0.10),
                     ]
                     : gradientColors,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.25),
+              color: Colors.black.withValues(alpha: 0.25),
               blurRadius: 8,
               offset: const Offset(0, 3),
             ),
@@ -162,8 +162,8 @@ mixin GameUIMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.white.withOpacity(isDisabled ? 0.2 : 0.5),
-                      Colors.white.withOpacity(0),
+                      Colors.white.withValues(alpha: isDisabled ? 0.2 : 0.5),
+                      Colors.white.withValues(alpha: 0),
                     ],
                   ),
                 ),

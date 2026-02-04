@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/game_card.dart';
 import '../../../domain/enums/response_effect.dart';
@@ -56,7 +55,7 @@ class GameDialogs {
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(
-                        color: Color(0xFF6DD5FA).withOpacity(0.5),
+                        color: Color(0xFF6DD5FA).withValues(alpha: 0.5),
                       ),
                     ),
                   ),
@@ -125,7 +124,7 @@ class GameDialogs {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Color(0xFF8E44AD).withOpacity(0.1),
+                      color: Color(0xFF8E44AD).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -178,7 +177,7 @@ class GameDialogs {
                     }
                   },
                   style: TextButton.styleFrom(
-                    backgroundColor: Colors.green.withOpacity(0.2),
+                    backgroundColor: Colors.green.withValues(alpha: 0.2),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 10,
@@ -198,101 +197,6 @@ class GameDialogs {
           },
         );
       },
-    );
-  }
-
-  /// Affiche le dialogue de validation d'action standard
-  static Future<bool?> showActionValidationDialog(
-    BuildContext context,
-    GameCard card,
-  ) async {
-    return showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder:
-          (context) => AlertDialog(
-            backgroundColor: const Color(0xFF2d4263),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: const BorderSide(color: Color(0xFF8E44AD), width: 2),
-            ),
-            title: Row(
-              children: [
-                Icon(
-                  Icons.check_circle_outline,
-                  color: Color(0xFF8E44AD),
-                  size: 28,
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  'Validation de l\'action',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            content: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Color(0xFF8E44AD).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                'L\'adversaire a-t-il effectué l\'action suivante ?\n\n'
-                '"${card.targetEffect ?? card.gameEffect}"',
-                style: const TextStyle(fontSize: 14, color: Colors.white70),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            actions: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.green.withOpacity(0.2),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
-                    ),
-                    child: const Text(
-                      '✅ Action effectuée',
-                      style: TextStyle(
-                        color: Colors.green,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.red.withOpacity(0.2),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
-                    ),
-                    child: const Text(
-                      '❌ Action refusée',
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
     );
   }
 
@@ -328,9 +232,11 @@ class GameDialogs {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
+                  color: Colors.green.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.green.withOpacity(0.3)),
+                  border: Border.all(
+                    color: Colors.green.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: const Text(
                   '💬 Le joueur contré peut demander ce qu\'il veut en échange de son sort contré.\n\nÀ vous de négocier !',
@@ -342,7 +248,7 @@ class GameDialogs {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.2),
+                  color: Colors.orange.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(
@@ -361,7 +267,7 @@ class GameDialogs {
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
               style: TextButton.styleFrom(
-                backgroundColor: Colors.red.withOpacity(0.2),
+                backgroundColor: Colors.red.withValues(alpha: 0.2),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
                   vertical: 12,
@@ -380,7 +286,7 @@ class GameDialogs {
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
               style: TextButton.styleFrom(
-                backgroundColor: Colors.green.withOpacity(0.3),
+                backgroundColor: Colors.green.withValues(alpha: 0.3),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
                   vertical: 12,
@@ -439,7 +345,7 @@ class GameDialogs {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Color(0xFF6DD5FA).withOpacity(0.1),
+                    color: Color(0xFF6DD5FA).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -468,7 +374,7 @@ class GameDialogs {
                   TextButton(
                     onPressed: () => Navigator.pop(context, true),
                     style: TextButton.styleFrom(
-                      backgroundColor: Colors.green.withOpacity(0.2),
+                      backgroundColor: Colors.green.withValues(alpha: 0.2),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 10,
@@ -487,7 +393,7 @@ class GameDialogs {
                   TextButton(
                     onPressed: () => Navigator.pop(context, false),
                     style: TextButton.styleFrom(
-                      backgroundColor: Colors.orange.withOpacity(0.2),
+                      backgroundColor: Colors.orange.withValues(alpha: 0.2),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 10,
@@ -552,7 +458,7 @@ class GameDialogs {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Color(0xFFFF6B9D).withOpacity(0.1),
+                    color: Color(0xFFFF6B9D).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -565,10 +471,10 @@ class GameDialogs {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.15),
+                    color: Colors.orange.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: Colors.orange.withOpacity(0.5),
+                      color: Colors.orange.withValues(alpha: 0.5),
                       width: 1.5,
                     ),
                   ),
@@ -609,7 +515,7 @@ class GameDialogs {
                   TextButton(
                     onPressed: () => Navigator.pop(context, true),
                     style: TextButton.styleFrom(
-                      backgroundColor: Colors.red.withOpacity(0.2),
+                      backgroundColor: Colors.red.withValues(alpha: 0.2),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 10,
@@ -628,7 +534,7 @@ class GameDialogs {
                   TextButton(
                     onPressed: () => Navigator.pop(context, false),
                     style: TextButton.styleFrom(
-                      backgroundColor: Colors.grey.withOpacity(0.2),
+                      backgroundColor: Colors.grey.withValues(alpha: 0.2),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 10,

@@ -50,6 +50,7 @@ class FirebaseService {
   }
 
   /// Crée une nouvelle partie
+  /// @deprecated Utilisez GameSessionService.createGame à la place
   Future<GameSession> createGame({
     required String playerName,
     required PlayerGender playerGender,
@@ -102,6 +103,7 @@ class FirebaseService {
   }
 
   /// Rejoindre une partie existante
+  /// @deprecated Utilisez GameSessionService.joinGame à la place
   Future<GameSession> joinGame({
     required String gameCode,
     required String playerName,
@@ -149,7 +151,7 @@ class FirebaseService {
         'player2Id': updatedSession.player2Id,
         'player2Data': playerData.toJson(),
         'status': updatedSession.status.name,
-        'updatedAt': updatedSession.updatedAt?.toIso8601String(),
+        'updatedAt': updatedSession.updatedAt.toIso8601String(),
       });
 
       return updatedSession;
@@ -169,6 +171,7 @@ class FirebaseService {
   }
 
   /// Stream temps réel de la session
+  /// @deprecated Utilisez GameSessionService.watchSession à la place
   Stream<GameSession> watchGameSession(String sessionId) {
     return _firestore
         .collection('game_sessions')
@@ -183,6 +186,7 @@ class FirebaseService {
   }
 
   /// Met à jour l'activité du joueur (heartbeat)
+  /// @deprecated Utilisez PlayerService.updatePlayerActivity à la place
   Future<void> updatePlayerActivity(String sessionId, String playerId) async {
     final docRef = _firestore.collection('game_sessions').doc(sessionId);
     final doc = await docRef.get();
@@ -206,6 +210,7 @@ class FirebaseService {
   }
 
   /// Marque le joueur comme prêt
+  /// @deprecated Utilisez PlayerService.setPlayerReady à la place
   Future<void> setPlayerReady(
     String sessionId,
     String playerId,
@@ -250,6 +255,7 @@ class FirebaseService {
   }
 
   /// Détermine quel joueur commence
+  /// @deprecated Utilisez PlayerService.determineStartingPlayer à la place
   Future<void> determineStartingPlayer(String sessionId) async {
     final docRef = _firestore.collection('game_sessions').doc(sessionId);
     final doc = await docRef.get();
@@ -258,13 +264,14 @@ class FirebaseService {
 
     final session = GameSession.fromJson(doc.data()!);
 
-    if (session.player1Data == null || session.player2Data == null) return;
+    // player2Data peut être null si le joueur 2 n'a pas encore rejoint
+    if (session.player2Data == null) return;
 
     String startingPlayerId;
 
     // Si sexes différents, la femme commence
-    if (session.player1Data!.gender != session.player2Data!.gender) {
-      if (session.player1Data!.gender == PlayerGender.female) {
+    if (session.player1Data.gender != session.player2Data!.gender) {
+      if (session.player1Data.gender == PlayerGender.female) {
         startingPlayerId = session.player1Id;
       } else if (session.player2Data!.gender == PlayerGender.female) {
         startingPlayerId = session.player2Id!;
@@ -292,6 +299,7 @@ class FirebaseService {
   }
 
   /// Sauvegarde les cartes du joueur (main et deck)
+  /// @deprecated Utilisez PlayerService.updatePlayerCards à la place
   Future<void> updatePlayerCards({
     required String sessionId,
     required String playerId,
@@ -348,6 +356,7 @@ class FirebaseService {
   }
 
   /// Passer à la phase suivante du jeu
+  /// @deprecated Utilisez TurnService.nextPhase à la place
   Future<void> nextPhase(String sessionId) async {
     final docRef = _firestore.collection('game_sessions').doc(sessionId);
     final snapshot = await docRef.get();
@@ -496,9 +505,7 @@ class FirebaseService {
     }
 
     if (isPlayer1) {
-      await docRef.update({
-        'player1Data': updatedSession.player1Data.toJson(),
-      });
+      await docRef.update({'player1Data': updatedSession.player1Data.toJson()});
     } else {
       await docRef.update({
         'player2Data': updatedSession.player2Data!.toJson(),
@@ -507,15 +514,14 @@ class FirebaseService {
   }
 
   /// Marque la pioche automatique comme effectu?e pour ce tour
-  Future<void> setDrawDoneThisTurn(
-    String sessionId,
-    bool value,
-  ) async {
+  /// @deprecated Utilisez TurnService.setDrawDoneThisTurn à la place
+  Future<void> setDrawDoneThisTurn(String sessionId, bool value) async {
     final docRef = _firestore.collection('game_sessions').doc(sessionId);
     await docRef.update({'drawDoneThisTurn': value});
   }
 
   /// Marque les effets d'enchantements comme appliqués pour ce tour
+  /// @deprecated Utilisez TurnService.setEnchantmentEffectsDoneThisTurn à la place
   Future<void> setEnchantmentEffectsDoneThisTurn(
     String sessionId,
     bool value,
@@ -524,6 +530,7 @@ class FirebaseService {
     await docRef.update({'enchantmentEffectsDoneThisTurn': value});
   }
 
+  /// @deprecated Utilisez TurnService.forceTurnToPlayer à la place
   Future<void> forceTurnToPlayer(String sessionId, String playerId) async {
     final docRef = _firestore.collection('game_sessions').doc(sessionId);
     await docRef.update({
@@ -533,7 +540,6 @@ class FirebaseService {
       'enchantmentEffectsDoneThisTurn': false,
     });
   }
-
 
   /// Piocher une carte d'une couleur spécifique (pour déblocage de niveau)
   Future<bool> drawCardOfColor(
@@ -615,9 +621,7 @@ class FirebaseService {
     }
 
     if (isPlayer1) {
-      await docRef.update({
-        'player1Data': updatedSession.player1Data.toJson(),
-      });
+      await docRef.update({'player1Data': updatedSession.player1Data.toJson()});
     } else {
       await docRef.update({
         'player2Data': updatedSession.player2Data!.toJson(),
@@ -800,6 +804,7 @@ class FirebaseService {
   }
 
   /// Ajoute ou retire des PI d'un joueur
+  /// @deprecated Utilisez PlayerService.updatePlayerPI à la place
   Future<void> updatePlayerPI(
     String sessionId,
     String playerId,
@@ -837,9 +842,7 @@ class FirebaseService {
     }
 
     if (isPlayer1) {
-      await docRef.update({
-        'player1Data': updatedSession.player1Data.toJson(),
-      });
+      await docRef.update({'player1Data': updatedSession.player1Data.toJson()});
     } else {
       await docRef.update({
         'player2Data': updatedSession.player2Data!.toJson(),
@@ -848,6 +851,7 @@ class FirebaseService {
   }
 
   /// Met à jour la tension d'un joueur
+  /// @deprecated Utilisez PlayerService.updatePlayerTension à la place
   Future<void> updatePlayerTension(
     String sessionId,
     String playerId,
@@ -881,9 +885,7 @@ class FirebaseService {
     }
 
     if (isPlayer1) {
-      await docRef.update({
-        'player1Data': updatedSession.player1Data.toJson(),
-      });
+      await docRef.update({'player1Data': updatedSession.player1Data.toJson()});
     } else {
       await docRef.update({
         'player2Data': updatedSession.player2Data!.toJson(),
@@ -892,6 +894,7 @@ class FirebaseService {
   }
 
   /// Termine le tour du joueur actuel et passe au joueur suivant
+  /// @deprecated Utilisez TurnService.endTurn à la place
   Future<void> endTurn(String sessionId) async {
     final docRef = _firestore.collection('game_sessions').doc(sessionId);
     final snapshot = await docRef.get();
@@ -973,9 +976,7 @@ class FirebaseService {
 
     final docRef = _firestore.collection('game_sessions').doc(sessionId);
     if (isPlayer1) {
-      await docRef.update({
-        'player1Data': updatedSession.player1Data.toJson(),
-      });
+      await docRef.update({'player1Data': updatedSession.player1Data.toJson()});
     } else {
       await docRef.update({
         'player2Data': updatedSession.player2Data!.toJson(),
@@ -1014,9 +1015,7 @@ class FirebaseService {
 
     final docRef = _firestore.collection('game_sessions').doc(sessionId);
     if (isPlayer1) {
-      await docRef.update({
-        'player1Data': updatedSession.player1Data.toJson(),
-      });
+      await docRef.update({'player1Data': updatedSession.player1Data.toJson()});
     } else {
       await docRef.update({
         'player2Data': updatedSession.player2Data!.toJson(),
@@ -1234,9 +1233,7 @@ class FirebaseService {
 
     final docRef = _firestore.collection('game_sessions').doc(sessionId);
     if (isPlayer1) {
-      await docRef.update({
-        'player1Data': updatedSession.player1Data.toJson(),
-      });
+      await docRef.update({'player1Data': updatedSession.player1Data.toJson()});
     } else {
       await docRef.update({
         'player2Data': updatedSession.player2Data!.toJson(),
@@ -1456,9 +1453,7 @@ class FirebaseService {
 
     final docRef = _firestore.collection('game_sessions').doc(sessionId);
     if (isPlayer1) {
-      await docRef.update({
-        'player1Data': updatedSession.player1Data.toJson(),
-      });
+      await docRef.update({'player1Data': updatedSession.player1Data.toJson()});
     } else {
       await docRef.update({
         'player2Data': updatedSession.player2Data!.toJson(),
