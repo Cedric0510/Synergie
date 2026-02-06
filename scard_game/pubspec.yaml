@@ -111,10 +111,6 @@ flutter:
     - assets/data/intro.png
     - assets/data/titre.png
     - assets/images/cards/white/
-    - assets/images/cards/blue/
-    - assets/images/cards/yellow/
-    - assets/images/cards/red/
-    - assets/images/cards/green/
     - assets/videos/
 
   # An image asset can refer to one or more resolution-specific "variants", see

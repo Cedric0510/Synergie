@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Sessions de jeu - accessible uniquement aux joueurs de la session
+    match /game_sessions/{sessionId} {
+      // Lecture: joueur authentifié qui fait partie de la session
+      allow read: if request.auth != null && 
+        (resource.data.player1Id == request.auth.uid || 
+         resource.data.player2Id == request.auth.uid);
+      
+      // Création: joueur authentifié
+      allow create: if request.auth != null && 
+        request.resource.data.player1Id == request.auth.uid;
+      
+      // Mise à jour: joueur authentifié qui fait partie de la session
+      allow update: if request.auth != null && 
+        (resource.data.player1Id == request.auth.uid || 
+         resource.data.player2Id == request.auth.uid);
+      
+      // Suppression: uniquement le créateur (player1)
+      allow delete: if request.auth != null && 
+        resource.data.player1Id == request.auth.uid;
+    }
+    
+    // Règle par défaut: refuser tout accès
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
