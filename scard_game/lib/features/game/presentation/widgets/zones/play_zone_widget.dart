@@ -9,6 +9,7 @@ import '../card_widget.dart';
 import '../counters/ultima_counter_widget.dart';
 import '../counters/deck_counter_widget.dart';
 import '../../../../../core/widgets/game_button.dart';
+import '../../../../../core/widgets/game_timer_widget.dart';
 import '../dialogs/rules_dialog.dart';
 import 'player_zone_widget.dart';
 
@@ -100,6 +101,11 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
 
               // === BOUTON RÈGLES ===
               _buildRulesButton(isSmallMobile),
+
+              SizedBox(height: isSmallMobile ? 4 : 8),
+
+              // === BOUTON MINUTEUR ===
+              GameTimerWidget(isSmallMobile: isSmallMobile),
             ],
           ),
         ),

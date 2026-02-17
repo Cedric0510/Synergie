@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../../core/services/game_timer_notifier.dart';
+import '../../../../../core/models/timer_state.dart';
 import '../../../data/services/card_service.dart';
 import '../../../data/services/firebase_service.dart';
 import '../../../data/services/game_session_service.dart';
@@ -10,6 +12,7 @@ import '../../../domain/models/game_card.dart';
 import '../../../domain/models/game_session.dart';
 import '../../../domain/enums/card_type.dart';
 import '../../widgets/dialogs/game_dialogs.dart';
+import '../../widgets/dialogs/timer_countdown_dialog.dart';
 
 /// Mixin contenant la logique de validation et résolution des effets de cartes
 mixin GameValidationMixin<T extends ConsumerStatefulWidget>
@@ -65,11 +68,14 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
 
       if (!mounted) return;
 
-      // Validation simple
-      final actionCompleted = await showDialog<bool>(
-        context: context,
-        barrierDismissible: false,
-        builder:
+      // Boucle de validation avec support du timer
+      dynamic actionCompleted;
+      do {
+        // Validation simple
+        actionCompleted = await showDialog<dynamic>(
+          context: context,
+          barrierDismissible: false,
+          builder:
             (context) => Dialog(
               backgroundColor: Colors.transparent,
               child: Container(
@@ -201,6 +207,28 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
                         ),
                       ),
                       const SizedBox(height: 24),
+                      
+                      // Raccourcis timer
+                      Text(
+                        '⏱️ Démarrer un timer',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.7),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildTimerShortcut(context, ref, 0.5, '30s'),
+                          _buildTimerShortcut(context, ref, 1, '1min'),
+                          _buildTimerShortcut(context, ref, 2, '2min'),
+                          _buildTimerShortcut(context, ref, 3, '3min'),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      
                       // Boutons
                       _buildGlassButton(
                         label: '✅ Action effectuée',
@@ -218,9 +246,41 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
                 ),
               ),
             ),
-      );
+        );
+        
+        // Si un timer a été démarré, afficher le popup de décompte
+        if (actionCompleted == 'timer') {
+          if (!mounted) return;
+          
+          // Afficher le dialog de décompte
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => const TimerCountdownDialog(),
+          );
+          
+          // Écouter l'état du timer jusqu'à ce qu'il soit terminé
+          await Future.doWhile(() async {
+            final timerState = ref.read(gameTimerProvider);
+            if (timerState.status == TimerStatus.finished || 
+                timerState.status == TimerStatus.idle) {
+              return false; // Timer terminé, sortir de la boucle
+            }
+            await Future.delayed(const Duration(milliseconds: 500));
+            return true; // Continuer à attendre
+          });
+          
+          // Attendre un petit délai pour que l'utilisateur voit le timer terminé
+          await Future.delayed(const Duration(seconds: 1));
+          
+          // Fermer le dialog de décompte
+          if (mounted) {
+            Navigator.of(context).pop();
+          }
+        }
+      } while (actionCompleted == 'timer'); // Reboucler si timer lancé
 
-      if (actionCompleted != null) {
+      if (actionCompleted != null && actionCompleted is bool) {
         await resolveEffectsWithValidation(
           cardToValidate,
           actionCompleted,
@@ -294,10 +354,13 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
       }
 
       if (mounted) {
-        final actionCompleted = await showDialog<bool>(
-          context: context,
-          barrierDismissible: false,
-          builder:
+        // Boucle de validation avec support du timer
+        dynamic actionCompleted;
+        do {
+          actionCompleted = await showDialog<dynamic>(
+            context: context,
+            barrierDismissible: false,
+            builder:
               (context) => Dialog(
                 backgroundColor: Colors.transparent,
                 child: Container(
@@ -445,6 +508,28 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
                               ),
                             ),
                             const SizedBox(height: 20),
+                            
+                            // Raccourcis timer
+                            Text(
+                              '⏱️ Démarrer un timer',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.7),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                _buildTimerShortcut(context, ref, 0.5, '30s'),
+                                _buildTimerShortcut(context, ref, 1, '1min'),
+                                _buildTimerShortcut(context, ref, 2, '2min'),
+                                _buildTimerShortcut(context, ref, 3, '3min'),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            
                             // Boutons crystal en relief
                             _buildGlassButton(
                               label: '✅ Action effectuée',
@@ -464,9 +549,41 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
                   ),
                 ),
               ),
-        );
+          );
+          
+          // Si un timer a été démarré, afficher le popup de décompte
+          if (actionCompleted == 'timer') {
+            if (!mounted) return;
+            
+            // Afficher le dialog de décompte
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => const TimerCountdownDialog(),
+            );
+            
+            // Écouter l'état du timer jusqu'à ce qu'il soit terminé
+            await Future.doWhile(() async {
+              final timerState = ref.read(gameTimerProvider);
+              if (timerState.status == TimerStatus.finished || 
+                  timerState.status == TimerStatus.idle) {
+                return false; // Timer terminé, sortir de la boucle
+              }
+              await Future.delayed(const Duration(milliseconds: 500));
+              return true; // Continuer à attendre
+            });
+            
+            // Attendre un petit délai pour que l'utilisateur voit le timer terminé
+            await Future.delayed(const Duration(seconds: 1));
+            
+            // Fermer le dialog de décompte
+            if (mounted) {
+              Navigator.of(context).pop();
+            }
+          }
+        } while (actionCompleted == 'timer'); // Reboucler si timer lancé
 
-        if (actionCompleted != null) {
+        if (actionCompleted != null && actionCompleted is bool) {
           await resolveEffectsWithValidation(
             cardToValidate,
             actionCompleted,
@@ -811,6 +928,61 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Widget de raccourci timer compact
+  Widget _buildTimerShortcut(
+    BuildContext context,
+    WidgetRef ref,
+    num minutes,
+    String label,
+  ) {
+    const crystalColor = Color(0xFF6DD5FA);
+
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Container(
+          height: 36,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                crystalColor.withValues(alpha: 0.15),
+                crystalColor.withValues(alpha: 0.08),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: crystalColor.withValues(alpha: 0.3),
+              width: 1,
+            ),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                ref.read(gameTimerProvider.notifier).start(minutes);
+                Navigator.pop(context, 'timer'); // Fermer le popup et signaler timer
+              },
+              borderRadius: BorderRadius.circular(10),
+              splashColor: crystalColor.withValues(alpha: 0.3),
+              child: Center(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: crystalColor,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

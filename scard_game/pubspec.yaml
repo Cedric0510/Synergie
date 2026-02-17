@@ -60,6 +60,9 @@ dependencies:
   
   # Video Player
   video_player: ^2.8.0
+  
+  # Audio
+  audioplayers: ^6.1.0
 
 dev_dependencies:
   flutter_test:

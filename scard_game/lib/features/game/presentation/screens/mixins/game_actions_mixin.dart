@@ -305,6 +305,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
         // Toujours passer le tierKey pour afficher le bon énoncé sur la carte jouée
         enchantmentTierKey: tierKey,
       );
+      
       setState(() {
         selectedCardIndex = null;
       });

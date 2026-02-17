@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -454,6 +455,7 @@ class FirebaseService {
   }
 
   /// Piocher une carte (phase draw)
+  /// Si le deck est vide, remélange automatiquement le cimetière (graveyard) dans le deck
   Future<void> drawCard(String sessionId, String playerId) async {
     final docRef = _firestore.collection('game_sessions').doc(sessionId);
     final snapshot = await docRef.get();
@@ -469,11 +471,22 @@ class FirebaseService {
 
     GameSession updatedSession;
     if (isPlayer1) {
-      final deck = List<String>.from(session.player1Data.deckCardIds);
+      var deck = List<String>.from(session.player1Data.deckCardIds);
       final hand = List<String>.from(session.player1Data.handCardIds);
+      var graveyard = List<String>.from(session.player1Data.graveyardCardIds);
 
+      // Si le deck est vide, remélanger le cimetière
       if (deck.isEmpty) {
-        throw Exception('Deck vide - impossible de piocher');
+        if (graveyard.isEmpty) {
+          throw Exception('Deck et cimetière vides - impossible de piocher');
+        }
+        
+        // Remélanger le cimetière dans le deck
+        deck = List<String>.from(graveyard);
+        deck.shuffle(Random());
+        graveyard = [];
+        
+        // Message visuel sera géré par l'UI
       }
 
       final drawnCard = deck.removeAt(0);
@@ -483,14 +496,26 @@ class FirebaseService {
         player1Data: session.player1Data.copyWith(
           deckCardIds: deck,
           handCardIds: hand,
+          graveyardCardIds: graveyard,
         ),
       );
     } else {
-      final deck = List<String>.from(session.player2Data!.deckCardIds);
+      var deck = List<String>.from(session.player2Data!.deckCardIds);
       final hand = List<String>.from(session.player2Data!.handCardIds);
+      var graveyard = List<String>.from(session.player2Data!.graveyardCardIds);
 
+      // Si le deck est vide, remélanger le cimetière
       if (deck.isEmpty) {
-        throw Exception('Deck vide - impossible de piocher');
+        if (graveyard.isEmpty) {
+          throw Exception('Deck et cimetière vides - impossible de piocher');
+        }
+        
+        // Remélanger le cimetière dans le deck
+        deck = List<String>.from(graveyard);
+        deck.shuffle(Random());
+        graveyard = [];
+        
+        // Message visuel sera géré par l'UI
       }
 
       final drawnCard = deck.removeAt(0);
@@ -500,6 +525,7 @@ class FirebaseService {
         player2Data: session.player2Data!.copyWith(
           deckCardIds: deck,
           handCardIds: hand,
+          graveyardCardIds: graveyard,
         ),
       );
     }
