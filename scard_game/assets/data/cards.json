@@ -13,7 +13,7 @@
       "piCost": 0,
       "isEnchantment": false,
       "maxPerDeck": null,
-      "imageUrl": "assets/images/cards/white/01.png",
+      "imageUrl": "images/cards/white/01.png",
       "drawCards": 0,
       "drawCardsPerTurn": 0,
       "removeClothing": 0,
@@ -40,10 +40,10 @@
         "red": "Frotter"
       },
       "tierImageUrls": {
-        "white": "assets/images/cards/white/001.png",
-        "blue": "assets/images/cards/blue/001.png",
-        "yellow": "assets/images/cards/yellow/001.png",
-        "red": "assets/images/cards/red/006.png"
+        "white": "images/cards/white/001.png",
+        "blue": "images/cards/blue/001.png",
+        "yellow": "images/cards/yellow/001.png",
+        "red": "images/cards/red/016.png"
       }
     },
     {
@@ -59,7 +59,7 @@
       "piCost": 0,
       "isEnchantment": false,
       "maxPerDeck": null,
-      "imageUrl": "assets/images/cards/white/04.png",
+      "imageUrl": "images/cards/white/04.png",
       "drawCards": 0,
       "drawCardsPerTurn": 0,
       "removeClothing": 0,
@@ -86,10 +86,10 @@
         "red": "Plaisir (bouche)"
       },
       "tierImageUrls": {
-        "white": "assets/images/cards/white/004.png",
-        "blue": "assets/images/cards/blue/003.png",
-        "yellow": "assets/images/cards/yellow/004.png",
-        "red": "assets/images/cards/red/001.png"
+        "white": "images/cards/white/004.png",
+        "blue": "images/cards/blue/003.png",
+        "yellow": "images/cards/yellow/004.png",
+        "red": "images/cards/red/016.png"
       }
     },
     {
@@ -105,7 +105,7 @@
       "piCost": 0,
       "isEnchantment": false,
       "maxPerDeck": null,
-      "imageUrl": "assets/images/cards/white/05.png",
+      "imageUrl": "images/cards/white/05.png",
       "drawCards": 0,
       "drawCardsPerTurn": 0,
       "removeClothing": 0,
@@ -132,10 +132,10 @@
         "red": "Caresse intime"
       },
       "tierImageUrls": {
-        "white": "assets/images/cards/white/005.png",
-        "blue": "assets/images/cards/blue/006.png",
-        "yellow": "assets/images/cards/yellow/006.png",
-        "red": "assets/images/cards/red/005.png"
+        "white": "images/cards/white/005.png",
+        "blue": "images/cards/blue/006.png",
+        "yellow": "images/cards/yellow/006.png",
+        "red": "images/cards/red/016.png"
       }
     },
     {
@@ -151,7 +151,7 @@
       "piCost": 0,
       "isEnchantment": false,
       "maxPerDeck": null,
-      "imageUrl": "assets/images/cards/white/03.png",
+      "imageUrl": "images/cards/white/03.png",
       "drawCards": 0,
       "drawCardsPerTurn": 0,
       "removeClothing": 0,
@@ -187,10 +187,10 @@
         "red": "Point G"
       },
       "tierImageUrls": {
-        "white": "assets/images/cards/white/003.png",
-        "blue": "assets/images/cards/blue/004.png",
-        "yellow": "assets/images/cards/yellow/002.png",
-        "red": "assets/images/cards/red/007.png"
+        "white": "images/cards/white/003.png",
+        "blue": "images/cards/blue/004.png",
+        "yellow": "images/cards/yellow/002.png",
+        "red": "images/cards/red/016.png"
       }
     },
     {
@@ -206,7 +206,7 @@
       "piCost": 0,
       "isEnchantment": false,
       "maxPerDeck": null,
-      "imageUrl": "assets/images/cards/white/02.png",
+      "imageUrl": "images/cards/white/02.png",
       "drawCards": 0,
       "drawCardsPerTurn": 0,
       "removeClothing": 0,
@@ -233,10 +233,10 @@
         "red": "Plaisir (main)"
       },
       "tierImageUrls": {
-        "white": "assets/images/cards/white/002.png",
-        "blue": "assets/images/cards/blue/002.png",
-        "yellow": "assets/images/cards/yellow/003.png",
-        "red": "assets/images/cards/red/002.png"
+        "white": "images/cards/white/002.png",
+        "blue": "images/cards/blue/002.png",
+        "yellow": "images/cards/yellow/003.png",
+        "red": "images/cards/red/016.png"
       }
     },
     {
@@ -252,7 +252,7 @@
       "piCost": 0,
       "isEnchantment": false,
       "maxPerDeck": null,
-      "imageUrl": "assets/images/cards/white/06.png",
+      "imageUrl": "images/cards/white/06.png",
       "drawCards": 0,
       "drawCardsPerTurn": 0,
       "removeClothing": 0,
@@ -279,10 +279,10 @@
         "red": "Plaisir (sextoys)"
       },
       "tierImageUrls": {
-        "white": "assets/images/cards/white/002.png",
-        "blue": "assets/images/cards/blue/005.png",
-        "yellow": "assets/images/cards/yellow/005.png",
-        "red": "assets/images/cards/red/003.png"
+        "white": "images/cards/white/002.png",
+        "blue": "images/cards/blue/005.png",
+        "yellow": "images/cards/yellow/005.png",
+        "red": "images/cards/red/016.png"
       }
     },
     {
@@ -298,7 +298,7 @@
       "piCost": 0,
       "isEnchantment": false,
       "maxPerDeck": null,
-      "imageUrl": "assets/images/cards/white/07.png",
+      "imageUrl": "images/cards/white/07.png",
       "drawCards": 0,
       "drawCardsPerTurn": 0,
       "removeClothing": 0,
@@ -325,10 +325,10 @@
         "red": "Sextoys"
       },
       "tierImageUrls": {
-        "white": "assets/images/cards/white/005.png",
-        "blue": "assets/images/cards/blue/005.png",
-        "yellow": "assets/images/cards/yellow/005.png",
-        "red": "assets/images/cards/red/004.png"
+        "white": "images/cards/white/005.png",
+        "blue": "images/cards/blue/005.png",
+        "yellow": "images/cards/yellow/005.png",
+        "red": "images/cards/red/016.png"
       }
     },
     {
@@ -344,7 +344,7 @@
       "piCost": 0,
       "isEnchantment": true,
       "maxPerDeck": null,
-      "imageUrl": "assets/images/cards/white/09.png",
+      "imageUrl": "images/cards/white/09.png",
       "drawCards": 0,
       "drawCardsPerTurn": 0,
       "removeClothing": 0,
@@ -387,10 +387,10 @@
         "red": "Caresse ou rien"
       },
       "tierImageUrls": {
-        "white": "assets/images/cards/white/010.png",
-        "blue": "assets/images/cards/blue/011.png",
-        "yellow": "assets/images/cards/yellow/012.png",
-        "red": "assets/images/cards/red/013.png"
+        "white": "images/cards/white/010.png",
+        "blue": "images/cards/blue/011.png",
+        "yellow": "images/cards/yellow/012.png",
+        "red": "images/cards/red/016.png"
       }
     },
     {
@@ -406,7 +406,7 @@
       "piCost": 0,
       "isEnchantment": true,
       "maxPerDeck": null,
-      "imageUrl": "assets/images/cards/white/08.png",
+      "imageUrl": "images/cards/white/08.png",
       "drawCards": 0,
       "drawCardsPerTurn": 0,
       "removeClothing": 0,
@@ -439,10 +439,10 @@
         "red": "Extase"
       },
       "tierImageUrls": {
-        "white": "assets/images/cards/white/009.png",
-        "blue": "assets/images/cards/blue/012.png",
-        "yellow": "assets/images/cards/yellow/011.png",
-        "red": "assets/images/cards/red/015.png"
+        "white": "images/cards/white/009.png",
+        "blue": "images/cards/blue/012.png",
+        "yellow": "images/cards/yellow/011.png",
+        "red": "images/cards/red/016.png"
       }
     },
     {
@@ -458,7 +458,7 @@
       "piCost": 0,
       "isEnchantment": true,
       "maxPerDeck": null,
-      "imageUrl": "assets/images/cards/white/10.png",
+      "imageUrl": "images/cards/white/10.png",
       "drawCards": 0,
       "drawCardsPerTurn": 0,
       "removeClothing": 0,
@@ -507,10 +507,10 @@
         "red": "Gagn\u00e9?"
       },
       "tierImageUrls": {
-        "white": "assets/images/cards/white/011.png",
-        "blue": "assets/images/cards/blue/013.png",
-        "yellow": "assets/images/cards/yellow/013.png",
-        "red": "assets/images/cards/red/014.png"
+        "white": "images/cards/white/011.png",
+        "blue": "images/cards/blue/013.png",
+        "yellow": "images/cards/yellow/013.png",
+        "red": "images/cards/red/016.png"
       }
     },
     {
@@ -524,7 +524,7 @@
       "damageIfRefused": 0,
       "tensionPerTurn": 0,
       "maxPerDeck": 1,
-      "imageUrl": "assets/images/cards/red/016.png",
+      "imageUrl": "images/cards/red/016.png",
       "drawCards": 0,
       "drawCardsPerTurn": 0,
       "removeClothing": 0,
@@ -572,7 +572,7 @@
       "piCost": 0,
       "isEnchantment": false,
       "maxPerDeck": null,
-      "imageUrl": "assets/images/cards/green/001.png",
+      "imageUrl": "images/cards/green/001.png",
       "drawCards": 0,
       "drawCardsPerTurn": 0,
       "removeClothing": 0,
@@ -605,7 +605,7 @@
       "piCost": 0,
       "isEnchantment": false,
       "maxPerDeck": null,
-      "imageUrl": "assets/images/cards/green/002.png",
+      "imageUrl": "images/cards/green/002.png",
       "drawCards": 0,
       "drawCardsPerTurn": 0,
       "removeClothing": 0,
@@ -638,7 +638,7 @@
       "piCost": 0,
       "isEnchantment": false,
       "maxPerDeck": null,
-      "imageUrl": "assets/images/cards/green/003.png",
+      "imageUrl": "images/cards/green/003.png",
       "drawCards": 0,
       "drawCardsPerTurn": 0,
       "removeClothing": 0,
@@ -671,7 +671,7 @@
       "piCost": 0,
       "isEnchantment": false,
       "maxPerDeck": null,
-      "imageUrl": "assets/images/cards/green/004.png",
+      "imageUrl": "images/cards/green/004.png",
       "drawCards": 0,
       "drawCardsPerTurn": 0,
       "removeClothing": 0,
@@ -704,7 +704,7 @@
       "piCost": 0,
       "isEnchantment": false,
       "maxPerDeck": null,
-      "imageUrl": "assets/images/cards/green/005.png",
+      "imageUrl": "images/cards/green/005.png",
       "drawCards": 0,
       "drawCardsPerTurn": 0,
       "removeClothing": 0,
@@ -737,7 +737,7 @@
       "piCost": 0,
       "isEnchantment": false,
       "maxPerDeck": null,
-      "imageUrl": "assets/images/cards/green/006.png",
+      "imageUrl": "images/cards/green/001.png",
       "drawCards": 0,
       "drawCardsPerTurn": 0,
       "removeClothing": 0,
@@ -770,7 +770,7 @@
       "piCost": 0,
       "isEnchantment": false,
       "maxPerDeck": null,
-      "imageUrl": "assets/images/cards/green/007.png",
+      "imageUrl": "images/cards/green/007.png",
       "drawCards": 0,
       "drawCardsPerTurn": 0,
       "removeClothing": 0,
@@ -803,7 +803,7 @@
       "piCost": 0,
       "isEnchantment": false,
       "maxPerDeck": null,
-      "imageUrl": "assets/images/cards/green/008.png",
+      "imageUrl": "images/cards/green/008.png",
       "drawCards": 0,
       "drawCardsPerTurn": 0,
       "removeClothing": 0,

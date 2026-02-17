@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/enums/card_color.dart';
+import '../../domain/models/deck_configuration.dart';
 import '../../domain/models/game_card.dart';
 import 'card_service.dart';
 
@@ -73,6 +74,42 @@ class DeckService {
     return deck;
   }
 
+  /// Génère un deck à partir d'une configuration personnalisée
+  /// Respecte les choix du joueur (nombre d'exemplaires par carte)
+  Future<List<String>> generateDeckFromConfig({
+    required DeckConfiguration config,
+  }) async {
+    final List<String> deck = [];
+
+    debugPrint('📦 Génération deck personnalisé: ${config.name}');
+    debugPrint('📦 Total cartes dans config: ${config.totalCards}');
+
+    // Vérifier que la config est valide
+    if (!config.isValid) {
+      throw Exception(
+        'Configuration de deck invalide : ${config.totalCards} cartes '
+        '(25 requises)',
+      );
+    }
+
+    // Construire le deck selon la configuration
+    for (final entry in config.cardCounts.entries) {
+      final cardId = entry.key;
+      final count = entry.value;
+
+      if (count > 0) {
+        // Ajouter le nombre d'exemplaires spécifié
+        for (int i = 0; i < count; i++) {
+          deck.add(cardId);
+        }
+        debugPrint('  ✅ $cardId × $count');
+      }
+    }
+
+    debugPrint('📦 Deck personnalisé généré: ${deck.length} cartes');
+    return deck;
+  }
+
   /// Mélange un deck
   List<String> shuffleDeck(List<String> deck) {
     final shuffled = List<String>.from(deck);
@@ -95,11 +132,20 @@ class DeckService {
 
   /// Génère et mélange un deck, puis pioche la main de départ (6 cartes)
   /// Distribution intelligente : main de départ avec majorité de cartes blanches
+  /// Si une config personnalisée est fournie, elle sera utilisée à la place
   Future<({List<String> hand, List<String> deck})> initializePlayerDeck({
     required List<CardColor> allowedColors,
+    DeckConfiguration? customConfig,
   }) async {
-    // Génération du deck complet avec toutes les couleurs
-    final fullDeck = await generateDeck(allowedColors: allowedColors);
+    // Génération du deck complet
+    final List<String> fullDeck;
+    if (customConfig != null) {
+      // Utiliser la configuration personnalisée
+      fullDeck = await generateDeckFromConfig(config: customConfig);
+    } else {
+      // Utiliser la génération par défaut
+      fullDeck = await generateDeck(allowedColors: allowedColors);
+    }
 
     // Séparer les cartes par couleur pour la main initiale
     final whiteCards = fullDeck.where((id) => id.startsWith('white_')).toList();

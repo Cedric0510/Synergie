@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/game_button.dart';
 import '../../../game/data/services/card_service.dart';
+import '../../../game/data/services/custom_deck_service.dart';
 import '../../../game/data/services/deck_service.dart';
 import '../../../game/data/services/game_session_service.dart';
 import '../../../game/data/services/player_service.dart';
@@ -42,6 +43,7 @@ class _CardDistributionScreenState
     try {
       final deckService = ref.read(deckServiceProvider);
       final playerService = ref.read(playerServiceProvider);
+      final customDeckService = ref.read(customDeckServiceProvider);
 
       // IMPORTANT: Réinitialiser le flag isReady à false pour cette nouvelle phase
       await playerService.setPlayerReady(
@@ -50,8 +52,14 @@ class _CardDistributionScreenState
         false, // Reset à false pour la phase de distribution
       );
 
-      // Génère le deck avec TOUTES les couleurs dès le départ
-      // Le système de niveau ne fait que débloquer ce qu'on peut JOUER
+      // Charger la configuration de deck personnalisée
+      final customConfig = await customDeckService.loadDeckConfiguration();
+
+      debugPrint('🎴 Utilisation du deck: ${customConfig.name}');
+      debugPrint('🎴 Cartes dans le deck: ${customConfig.totalCards}');
+
+      // Génère le deck avec la configuration personnalisée
+      // Si pas de config custom, utilise le deck par défaut
       final result = await deckService.initializePlayerDeck(
         allowedColors: [
           CardColor.white,
@@ -60,6 +68,7 @@ class _CardDistributionScreenState
           CardColor.red,
           CardColor.green, // Cartes de Négociation
         ],
+        customConfig: customConfig,
       );
 
       setState(() {

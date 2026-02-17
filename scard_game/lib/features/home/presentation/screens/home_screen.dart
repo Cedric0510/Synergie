@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import '../../../gallery/presentation/screens/gallery_screen.dart';
+import '../../../game/presentation/screens/deck_builder_screen.dart';
 import '../../../matchmaking/presentation/screens/create_game_screen.dart';
 import '../../../matchmaking/presentation/screens/join_game_screen.dart';
 
@@ -239,6 +240,27 @@ class _HomeScreenState extends State<HomeScreen>
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) => const JoinGameScreen(),
+                            ),
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      _MenuButton(
+                        label: 'Mon Deck',
+                        icon: Icons.style,
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.white.withValues(alpha: 0.75),
+                            Colors.white.withValues(alpha: 0.7),
+                          ],
+                        ),
+                        textColor: Colors.white,
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const DeckBuilderScreen(),
                             ),
                           );
                         },
