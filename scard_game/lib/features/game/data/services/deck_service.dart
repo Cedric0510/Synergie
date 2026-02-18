@@ -5,19 +5,22 @@ import '../../domain/enums/card_color.dart';
 import '../../domain/models/deck_configuration.dart';
 import '../../domain/models/game_card.dart';
 import 'card_service.dart';
+import 'custom_deck_service.dart';
 
 /// Provider pour le service de deck
 final deckServiceProvider = Provider<DeckService>((ref) {
   final cardService = ref.watch(cardServiceProvider);
-  return DeckService(cardService);
+  final customDeckService = ref.watch(customDeckServiceProvider);
+  return DeckService(cardService, customDeckService);
 });
 
 /// Service de gestion des decks de cartes
 class DeckService {
   final CardService _cardService;
+  final CustomDeckService _customDeckService;
   final Random _random = Random();
 
-  DeckService(this._cardService);
+  DeckService(this._cardService, this._customDeckService);
 
   /// Génère un deck complet selon les règles :
   /// - 2 exemplaires par carte (deck de base)
@@ -132,18 +135,30 @@ class DeckService {
 
   /// Génère et mélange un deck, puis pioche la main de départ (6 cartes)
   /// Distribution intelligente : main de départ avec majorité de cartes blanches
-  /// Si une config personnalisée est fournie, elle sera utilisée à la place
+  /// Utilise automatiquement le deck personnalisé s'il existe
   Future<({List<String> hand, List<String> deck})> initializePlayerDeck({
     required List<CardColor> allowedColors,
     DeckConfiguration? customConfig,
   }) async {
     // Génération du deck complet
     final List<String> fullDeck;
-    if (customConfig != null) {
+    
+    // Essayer de charger le deck personnalisé si pas fourni
+    if (customConfig == null) {
+      try {
+        customConfig = await _customDeckService.loadDeckConfiguration();
+      } catch (e) {
+        debugPrint('⚠️ Pas de deck personnalisé trouvé');
+      }
+    }
+    
+    if (customConfig != null && customConfig.isValid) {
       // Utiliser la configuration personnalisée
+      debugPrint('✅ Utilisation du deck personnalisé: ${customConfig.name}');
       fullDeck = await generateDeckFromConfig(config: customConfig);
     } else {
       // Utiliser la génération par défaut
+      debugPrint('📦 Utilisation du deck par défaut');
       fullDeck = await generateDeck(allowedColors: allowedColors);
     }
 
@@ -190,6 +205,29 @@ class DeckService {
     debugPrint('🎴 Deck restant: ${remainingDeck.length} cartes');
 
     return (hand: startingHand, deck: remainingDeck);
+  }
+
+  /// Génère un deck en utilisant le deck personnalisé s'il existe, sinon le deck par défaut
+  Future<List<String>> generatePlayerDeck({
+    required List<CardColor> allowedColors,
+  }) async {
+    debugPrint('📦 Chargement deck joueur...');
+    
+    try {
+      // Essayer de charger le deck personnalisé
+      final customConfig = await _customDeckService.loadDeckConfiguration();
+      
+      if (customConfig.isValid && customConfig.cardCounts.isNotEmpty) {
+        debugPrint('✅ Deck personnalisé trouvé: ${customConfig.name}');
+        return await generateDeckFromConfig(config: customConfig);
+      }
+    } catch (e) {
+      debugPrint('⚠️ Pas de deck personnalisé, utilisation du deck par défaut');
+    }
+    
+    // Sinon, utiliser le deck par défaut
+    debugPrint('📦 Utilisation du deck par défaut');
+    return await generateDeck(allowedColors: allowedColors);
   }
 
   /// Pioche une seule carte

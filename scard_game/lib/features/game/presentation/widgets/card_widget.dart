@@ -169,7 +169,16 @@ class CardWidget extends StatelessWidget {
                     ),
                     child:
                         card.imageUrl != null
-                            ? Image.asset(card.imageUrl!, fit: BoxFit.cover)
+                            ? Image.asset(
+                              _normalizeAssetPath(card.imageUrl)!,
+                              fit: BoxFit.cover,
+                              errorBuilder:
+                                  (_, __, ___) => const Icon(
+                                    Icons.image_not_supported,
+                                    size: 30,
+                                    color: Colors.grey,
+                                  ),
+                            )
                             : const Icon(
                               Icons.image_not_supported,
                               size: 30,
@@ -332,7 +341,8 @@ class CardWidget extends StatelessWidget {
   Widget _buildTierBubble(_TierEffect effect) {
     final isEnabled = _isTierEnabled(effect.label);
     final isWhiteTier = effect.label.trim().toLowerCase() == 'blanc';
-    final border = isEnabled ? effect.color : Colors.grey.withValues(alpha: 0.85);
+    final border =
+        isEnabled ? effect.color : Colors.grey.withValues(alpha: 0.85);
     final background =
         isEnabled
             ? (isWhiteTier
@@ -486,7 +496,15 @@ class CardWidget extends StatelessWidget {
   String? _resolveImageUrl() {
     // Temporairement simplifié : toujours utiliser l'image de base (blanc)
     // TODO: Réactiver les images par tier quand les nouvelles images seront prêtes
-    return card.imageUrl;
+    return _normalizeAssetPath(card.imageUrl);
+  }
+
+  /// Normalise un chemin d'asset en ajoutant le préfixe 'assets/' si absent.
+  /// Sur Chrome Image.asset est tolérant, mais sur Android le chemin doit être exact.
+  static String? _normalizeAssetPath(String? path) {
+    if (path == null) return null;
+    if (path.startsWith('assets/')) return path;
+    return 'assets/$path';
   }
 
   int _levelRank(CardLevel level) {

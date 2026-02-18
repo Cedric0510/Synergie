@@ -10,12 +10,14 @@ class DeckBuilderState {
   final List<GameCard> allCards;
   final bool isLoading;
   final String? errorMessage;
+  final bool hasUnsavedChanges;
 
   DeckBuilderState({
     required this.config,
     required this.allCards,
     this.isLoading = false,
     this.errorMessage,
+    this.hasUnsavedChanges = false,
   });
 
   DeckBuilderState copyWith({
@@ -23,12 +25,14 @@ class DeckBuilderState {
     List<GameCard>? allCards,
     bool? isLoading,
     String? errorMessage,
+    bool? hasUnsavedChanges,
   }) {
     return DeckBuilderState(
       config: config ?? this.config,
       allCards: allCards ?? this.allCards,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
+      hasUnsavedChanges: hasUnsavedChanges ?? this.hasUnsavedChanges,
     );
   }
 
@@ -45,11 +49,11 @@ class DeckBuilderState {
 /// Provider pour le deck builder
 final deckBuilderProvider =
     StateNotifierProvider<DeckBuilderNotifier, DeckBuilderState>((ref) {
-  return DeckBuilderNotifier(
-    ref.watch(cardServiceProvider),
-    ref.watch(customDeckServiceProvider),
-  );
-});
+      return DeckBuilderNotifier(
+        ref.watch(cardServiceProvider),
+        ref.watch(customDeckServiceProvider),
+      );
+    });
 
 /// Notifier pour gérer le deck builder
 class DeckBuilderNotifier extends StateNotifier<DeckBuilderState> {
@@ -57,11 +61,13 @@ class DeckBuilderNotifier extends StateNotifier<DeckBuilderState> {
   final CustomDeckService _customDeckService;
 
   DeckBuilderNotifier(this._cardService, this._customDeckService)
-      : super(DeckBuilderState(
+    : super(
+        DeckBuilderState(
           config: DeckConfiguration.defaultDeck(),
           allCards: [],
           isLoading: true,
-        )) {
+        ),
+      ) {
     _initialize();
   }
 
@@ -102,9 +108,7 @@ class DeckBuilderNotifier extends StateNotifier<DeckBuilderState> {
 
     // Vérifier la limite totale (25 cartes)
     if (state.totalCards >= 25) {
-      state = state.copyWith(
-        errorMessage: 'Deck complet (25 cartes maximum)',
-      );
+      state = state.copyWith(errorMessage: 'Deck complet (25 cartes maximum)');
       return;
     }
 
@@ -118,6 +122,7 @@ class DeckBuilderNotifier extends StateNotifier<DeckBuilderState> {
         lastModified: DateTime.now(),
       ),
       errorMessage: null,
+      hasUnsavedChanges: true,
     );
   }
 
@@ -145,6 +150,7 @@ class DeckBuilderNotifier extends StateNotifier<DeckBuilderState> {
         lastModified: DateTime.now(),
       ),
       errorMessage: null,
+      hasUnsavedChanges: true,
     );
   }
 
@@ -161,7 +167,7 @@ class DeckBuilderNotifier extends StateNotifier<DeckBuilderState> {
 
     try {
       await _customDeckService.saveDeckConfiguration(state.config);
-      state = state.copyWith(errorMessage: null);
+      state = state.copyWith(errorMessage: null, hasUnsavedChanges: false);
     } catch (e) {
       state = state.copyWith(errorMessage: 'Erreur de sauvegarde: $e');
     }
@@ -173,6 +179,7 @@ class DeckBuilderNotifier extends StateNotifier<DeckBuilderState> {
     state = state.copyWith(
       config: defaultConfig,
       errorMessage: null,
+      hasUnsavedChanges: false,
     );
     await _customDeckService.saveDeckConfiguration(defaultConfig);
   }

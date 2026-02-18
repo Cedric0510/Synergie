@@ -1,16 +1,102 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/models/game_card.dart';
+import '../../domain/enums/card_type.dart';
 import '../providers/deck_builder_provider.dart';
-import '../widgets/simple_card_widget.dart';
+import '../widgets/card_widget.dart';
+
+// Couleurs identiques à la galerie
+const _kGradientColors = [
+  Color(0xFF6DD5FA),
+  Color(0xFF2980B9),
+  Color(0xFF8E44AD),
+];
+const _kAppBarColor = Color(0xFF2980B9);
+const _kColorRitual = Color(0xFF5B9BD5); // Bleu clair – Rituels
+const _kColorEnchantment = Color(0xFF8E44AD); // Violet – Enchantements
+const _kColorNegociation = Color(0xFF4CAF50); // Vert – Négociation
 
 /// Écran de construction de deck personnalisé
-/// Permet aux joueurs de modifier leur deck (0-4 exemplaires par carte)
-class DeckBuilderScreen extends ConsumerWidget {
+class DeckBuilderScreen extends ConsumerStatefulWidget {
   const DeckBuilderScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DeckBuilderScreen> createState() => _DeckBuilderScreenState();
+}
+
+class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
+  /// Gère la tentative de sortie avec modifications non sauvegardées
+  Future<bool> _onWillPop() async {
+    final state = ref.read(deckBuilderProvider);
+
+    if (!state.hasUnsavedChanges) {
+      return true; // Pas de modifications, on peut sortir
+    }
+
+    // Afficher le dialogue de confirmation
+    final result = await showDialog<String>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Modifications non sauvegardées'),
+            content: const Text(
+              'Vous avez des modifications non sauvegardées. '
+              'Voulez-vous les sauvegarder avant de quitter ?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop('discard'),
+                child: const Text('Quitter sans sauvegarder'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop('cancel'),
+                child: const Text('Annuler'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop('save'),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                child: const Text('Sauvegarder'),
+              ),
+            ],
+          ),
+    );
+
+    if (result == 'save') {
+      // Sauvegarder puis quitter
+      if (state.isValid) {
+        await ref.read(deckBuilderProvider.notifier).saveConfiguration();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Deck sauvegardé !'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+        return true;
+      } else {
+        // Deck invalide, ne pas quitter
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Impossible de sauvegarder : ${state.totalCards}/25 cartes',
+              ),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return false;
+      }
+    } else if (result == 'discard') {
+      return true; // Quitter sans sauvegarder
+    }
+
+    return false; // Annulé, rester sur l'écran
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(deckBuilderProvider);
 
     if (state.isLoading) {
@@ -20,80 +106,101 @@ class DeckBuilderScreen extends ConsumerWidget {
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mon Deck'),
-        actions: [
-          // Bouton de réinitialisation
-          IconButton(
-            icon: const Icon(Icons.restore),
-            tooltip: 'Réinitialiser au deck par défaut',
-            onPressed: () => _showResetDialog(context, ref),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final canPop = await _onWillPop();
+        if (canPop && mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Mon Deck'),
+          backgroundColor: _kAppBarColor,
+          foregroundColor: Colors.white,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.restore),
+              tooltip: 'Réinitialiser au deck par défaut',
+              onPressed: () => _showResetDialog(context),
+            ),
+          ],
+        ),
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: _kGradientColors,
+              stops: [0.0, 0.6, 1.0],
+            ),
           ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // En-tête avec compteur total
-          _buildHeader(context, state),
-
-          // Message d'erreur si présent
-          if (state.errorMessage != null) _buildErrorBanner(context, state),
-
-          // Grille de cartes
-          Expanded(
-            child: _buildCardGrid(context, ref, state),
+          child: Column(
+            children: [
+              _buildHeader(context, state),
+              if (state.errorMessage != null) _buildErrorBanner(context, state),
+              Expanded(child: _buildCardGrid(context, state)),
+              _buildSaveButton(context, state),
+            ],
           ),
-
-          // Bouton de sauvegarde
-          _buildSaveButton(context, ref, state),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildHeader(BuildContext context, DeckBuilderState state) {
     final isValid = state.isValid;
-    final color = isValid ? Colors.green : Colors.orange;
+    final color = isValid ? Colors.green.shade400 : Colors.orange.shade400;
 
     return Container(
-      padding: const EdgeInsets.all(16),
-      color: color.withOpacity(0.1),
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color, width: 2),
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          Icon(Icons.style, color: color, size: 26),
+          const SizedBox(width: 10),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'Cartes dans le deck',
-                style: Theme.of(context).textTheme.titleMedium,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-              const SizedBox(height: 4),
               Text(
                 '${state.totalCards} / 25',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: TextStyle(
+                  color: color,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
-          if (!isValid)
-            Chip(
-              label: Text(
-                'Ajustez pour avoir 25 cartes',
-                style: TextStyle(color: color),
+          const Spacer(),
+          Chip(
+            label: Text(
+              isValid ? 'Deck valide ✓' : 'Ajustez à 25 cartes',
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
               ),
-              backgroundColor: Colors.transparent,
-              side: BorderSide(color: color),
             ),
-          if (isValid)
-            Chip(
-              label: const Text('Deck valide'),
-              backgroundColor: color.withOpacity(0.2),
-              avatar: Icon(Icons.check_circle, color: color, size: 20),
-            ),
+            backgroundColor: color.withValues(alpha: 0.15),
+            side: BorderSide(color: color),
+            padding: EdgeInsets.zero,
+          ),
         ],
       ),
     );
@@ -101,39 +208,35 @@ class DeckBuilderScreen extends ConsumerWidget {
 
   Widget _buildErrorBanner(BuildContext context, DeckBuilderState state) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: Colors.red.shade100,
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.red.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.red.shade300),
+      ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: Colors.red),
+          const Icon(Icons.error_outline, color: Colors.redAccent),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               state.errorMessage!,
-              style: const TextStyle(color: Colors.red),
+              style: const TextStyle(color: Colors.white),
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.close, color: Colors.red),
-            onPressed: () {
-              // Utiliser ref.read dans un callback
-              // On ne peut pas utiliser ref dans un ConsumerWidget build
-              // mais on passera la ref via un callback
-            },
+            icon: const Icon(Icons.close, color: Colors.redAccent),
+            onPressed: () {},
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCardGrid(
-    BuildContext context,
-    WidgetRef ref,
-    DeckBuilderState state,
-  ) {
-    // Grouper les cartes par type
+  Widget _buildCardGrid(BuildContext context, DeckBuilderState state) {
     final ritualCards =
-        state.allCards.where((c) => c.type == 'ritual').toList();
+        state.allCards.where((c) => c.type == CardType.ritual).toList();
     final enchantmentCards =
         state.allCards.where((c) => c.isEnchantment).toList();
     final greenCards =
@@ -142,49 +245,112 @@ class DeckBuilderScreen extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _buildCardSection(context, ref, state, 'Cartes Rituelles', ritualCards),
-        const SizedBox(height: 24),
-        _buildCardSection(
-          context,
-          ref,
-          state,
-          'Enchantements',
-          enchantmentCards,
-        ),
-        const SizedBox(height: 24),
-        _buildCardSection(
-          context,
-          ref,
-          state,
-          'Cartes de Négociation',
-          greenCards,
-        ),
+        if (ritualCards.isNotEmpty) ...[
+          _buildCardSection(
+            context,
+            state,
+            'Cartes Rituelles',
+            Icons.auto_fix_high,
+            ritualCards,
+            _kColorRitual,
+          ),
+          const SizedBox(height: 24),
+        ],
+        if (enchantmentCards.isNotEmpty) ...[
+          _buildCardSection(
+            context,
+            state,
+            'Enchantements',
+            Icons.brightness_5,
+            enchantmentCards,
+            _kColorEnchantment,
+          ),
+          const SizedBox(height: 24),
+        ],
+        if (greenCards.isNotEmpty) ...[
+          _buildCardSection(
+            context,
+            state,
+            'Négociations',
+            Icons.handshake,
+            greenCards,
+            _kColorNegociation,
+          ),
+          const SizedBox(height: 16),
+        ],
+        if (state.allCards.isEmpty)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Text(
+                'Aucune carte chargée',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(color: Colors.white70),
+              ),
+            ),
+          ),
       ],
     );
   }
 
   Widget _buildCardSection(
     BuildContext context,
-    WidgetRef ref,
     DeckBuilderState state,
     String title,
+    IconData icon,
     List<GameCard> cards,
+    Color color,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
+        // Header style galerie
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.20),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: color, width: 2),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: color, size: 22),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
+              const Spacer(),
+              Text(
+                '${cards.length} cartes',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children:
-              cards.map((card) => _buildCardItem(context, ref, state, card)).toList(),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            childAspectRatio: 0.52,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+          ),
+          itemCount: cards.length,
+          itemBuilder:
+              (context, index) =>
+                  _buildCardItem(context, state, color, cards[index]),
         ),
       ],
     );
@@ -192,103 +358,112 @@ class DeckBuilderScreen extends ConsumerWidget {
 
   Widget _buildCardItem(
     BuildContext context,
-    WidgetRef ref,
     DeckBuilderState state,
+    Color sectionColor,
     GameCard card,
   ) {
     final count = state.getCardCount(card.id);
     final maxPerCard = card.maxPerDeck ?? 4;
     final canIncrement = count < maxPerCard && state.totalCards < 25;
     final canDecrement = count > 0;
+    final activeColor = count > 0 ? sectionColor : Colors.white60;
 
     return Container(
-      width: 140,
       decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
         border: Border.all(
-          color: count > 0 ? Colors.blue : Colors.grey.shade300,
+          color: count > 0 ? sectionColor : Colors.white30,
           width: count > 0 ? 2 : 1,
         ),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
         children: [
-          // Aperçu de la carte
-          Container(
-            height: 100,
-            padding: const EdgeInsets.all(8),
-            child: SimpleCardWidget(card: card),
-          ),
-
-          // Nom de la carte
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(
-              card.name,
-              style: Theme.of(context).textTheme.bodySmall,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+          // Carte complète avec détails
+          Expanded(
+            child: GestureDetector(
+              onTap: () => _showCardPreview(context, card),
+              child: Padding(
+                padding: const EdgeInsets.all(3),
+                child: CardWidget(
+                  card: card,
+                  width: double.infinity,
+                  height: double.infinity,
+                ),
+              ),
             ),
           ),
+          const SizedBox(height: 2),
 
-          const SizedBox(height: 8),
-
-          // Contrôles +/-
+          // Barre +/-
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
             decoration: BoxDecoration(
-              color: count > 0 ? Colors.blue.shade50 : Colors.grey.shade100,
+              color:
+                  count > 0
+                      ? sectionColor.withValues(alpha: 0.20)
+                      : Colors.white.withValues(alpha: 0.08),
               borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(8),
-                bottomRight: Radius.circular(8),
+                bottomLeft: Radius.circular(6),
+                bottomRight: Radius.circular(6),
               ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Bouton -
-                IconButton(
-                  icon: const Icon(Icons.remove),
-                  onPressed: canDecrement
-                      ? () => ref
-                          .read(deckBuilderProvider.notifier)
-                          .decrementCard(card.id)
-                      : null,
-                  iconSize: 20,
-                  constraints: const BoxConstraints(
-                    minWidth: 32,
-                    minHeight: 32,
+                Expanded(
+                  child: InkWell(
+                    onTap:
+                        canDecrement
+                            ? () => ref
+                                .read(deckBuilderProvider.notifier)
+                                .decrementCard(card.id)
+                            : null,
+                    borderRadius: BorderRadius.circular(4),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Icon(
+                        Icons.remove,
+                        size: 16,
+                        color: canDecrement ? activeColor : Colors.white24,
+                      ),
+                    ),
                   ),
-                  padding: EdgeInsets.zero,
                 ),
 
                 // Compteur
-                Container(
-                  width: 40,
-                  alignment: Alignment.center,
+                Expanded(
                   child: Text(
                     '$count',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: count > 0 ? Colors.blue : Colors.grey,
-                        ),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
 
                 // Bouton +
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: canIncrement
-                      ? () => ref
-                          .read(deckBuilderProvider.notifier)
-                          .incrementCard(card.id)
-                      : null,
-                  iconSize: 20,
-                  constraints: const BoxConstraints(
-                    minWidth: 32,
-                    minHeight: 32,
+                Expanded(
+                  child: InkWell(
+                    onTap:
+                        canIncrement
+                            ? () => ref
+                                .read(deckBuilderProvider.notifier)
+                                .incrementCard(card.id)
+                            : null,
+                    borderRadius: BorderRadius.circular(4),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Icon(
+                        Icons.add,
+                        size: 16,
+                        color: canIncrement ? activeColor : Colors.white24,
+                      ),
+                    ),
                   ),
-                  padding: EdgeInsets.zero,
                 ),
               ],
             ),
@@ -297,13 +472,15 @@ class DeckBuilderScreen extends ConsumerWidget {
           // Indicateur de limite
           if (maxPerCard < 4)
             Padding(
-              padding: const EdgeInsets.only(bottom: 4),
+              padding: const EdgeInsets.only(bottom: 3),
               child: Text(
                 'Max: $maxPerCard',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.orange,
-                      fontWeight: FontWeight.bold,
-                    ),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 9,
+                  color: Colors.orangeAccent,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
         ],
@@ -311,52 +488,94 @@ class DeckBuilderScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSaveButton(
-    BuildContext context,
-    WidgetRef ref,
-    DeckBuilderState state,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, -2),
+  /// Affiche la carte en plein écran dans un dialog
+  void _showCardPreview(BuildContext context, GameCard card) {
+    showDialog(
+      context: context,
+      builder:
+          (ctx) => Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 40,
+            ),
+            child: Stack(
+              alignment: Alignment.topRight,
+              children: [
+                Center(
+                  child: CardWidget(
+                    card: card,
+                    width: MediaQuery.of(ctx).size.width - 48,
+                    height: (MediaQuery.of(ctx).size.width - 48) * 1.55,
+                  ),
+                ),
+                // Bouton fermer
+                Material(
+                  color: Colors.black54,
+                  shape: const CircleBorder(),
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: () => Navigator.of(ctx).pop(),
+                    child: const Padding(
+                      padding: EdgeInsets.all(6),
+                      child: Icon(Icons.close, color: Colors.white, size: 20),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ],
+    );
+  }
+
+  Widget _buildSaveButton(BuildContext context, DeckBuilderState state) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.25),
+        border: Border(
+          top: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
+        ),
       ),
       child: SafeArea(
         child: SizedBox(
           width: double.infinity,
-          child: ElevatedButton(
-            onPressed: state.isValid
-                ? () async {
-                    await ref.read(deckBuilderProvider.notifier).saveConfiguration();
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Deck sauvegardé !'),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                      Navigator.of(context).pop();
-                    }
-                  }
-                : null,
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              backgroundColor: Colors.blue,
-              disabledBackgroundColor: Colors.grey.shade300,
+          child: ElevatedButton.icon(
+            icon: Icon(
+              state.isValid ? Icons.save : Icons.warning_amber_rounded,
+              size: 20,
             ),
-            child: Text(
-              state.isValid ? 'Sauvegarder le Deck' : 'Deck incomplet',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+            label: Text(
+              state.isValid
+                  ? 'Sauvegarder le Deck'
+                  : 'Deck incomplet (${state.totalCards}/25)',
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            ),
+            onPressed:
+                state.isValid
+                    ? () async {
+                      await ref
+                          .read(deckBuilderProvider.notifier)
+                          .saveConfiguration();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Deck sauvegardé !'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                        Navigator.of(context).pop();
+                      }
+                    }
+                    : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _kAppBarColor,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: Colors.white24,
+              disabledForegroundColor: Colors.white54,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
           ),
@@ -365,27 +584,28 @@ class DeckBuilderScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _showResetDialog(BuildContext context, WidgetRef ref) async {
+  Future<void> _showResetDialog(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Réinitialiser le deck ?'),
-        content: const Text(
-          'Voulez-vous réinitialiser votre deck à la configuration par défaut ? '
-          'Toutes vos modifications seront perdues.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Annuler'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Réinitialiser le deck ?'),
+            content: const Text(
+              'Voulez-vous réinitialiser votre deck à la configuration par défaut ? '
+              'Toutes vos modifications seront perdues.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Annuler'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                child: const Text('Réinitialiser'),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-            child: const Text('Réinitialiser'),
-          ),
-        ],
-      ),
     );
 
     if (confirmed == true && context.mounted) {

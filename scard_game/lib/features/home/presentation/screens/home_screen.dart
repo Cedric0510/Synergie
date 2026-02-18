@@ -173,29 +173,6 @@ class _HomeScreenState extends State<HomeScreen>
               children: [
                 const Spacer(),
 
-                // Tagline
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: Text(
-                    'Un jeu sensuel pour pimenter vos soirées',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontStyle: FontStyle.italic,
-                      letterSpacing: 0.5,
-                      height: 1.3,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black.withValues(alpha: 0.8),
-                          offset: const Offset(0, 2),
-                          blurRadius: 8,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
                 const SizedBox(height: 40),
 
                 // Boutons
