@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/services/card_service.dart';
-import '../../../data/services/firebase_service.dart';
 import '../../../data/services/game_session_service.dart';
+import '../../../data/services/session_state_service.dart';
 import '../../../data/services/turn_service.dart';
 import '../../../domain/enums/response_effect.dart';
 import '../../../domain/models/game_session.dart';
@@ -27,7 +27,7 @@ mixin GameResponseEffectsMixin<T extends ConsumerStatefulWidget>
 
   /// Affiche le dialogue de sélection d'effet de réponse
   Future<void> showResponseEffectDialog() async {
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final sessionStateService = ref.read(sessionStateServiceProvider);
 
     if (!mounted) return;
 
@@ -104,7 +104,7 @@ mixin GameResponseEffectsMixin<T extends ConsumerStatefulWidget>
 
     if (selectedEffect != null) {
       // Sauvegarder l'effet choisi dans la session
-      await firebaseService.setResponseEffect(sessionId, selectedEffect);
+      await sessionStateService.setResponseEffect(sessionId, selectedEffect);
 
       // Traiter selon l'effet
       await handleResponseEffect(selectedEffect);
@@ -138,15 +138,15 @@ mixin GameResponseEffectsMixin<T extends ConsumerStatefulWidget>
 
   /// Gère l'annulation (Contre)
   Future<void> handleCancelEffect() async {
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final sessionStateService = ref.read(sessionStateServiceProvider);
     final turnService = ref.read(turnServiceProvider);
 
     try {
       // Effacer les actions pendantes (le sort est contré, ne pas les exécuter)
-      await firebaseService.clearPendingActions(sessionId);
+      await sessionStateService.clearPendingActions(sessionId);
 
       // Vider la pile de résolution
-      await firebaseService.clearResolutionStack(sessionId);
+      await sessionStateService.clearResolutionStack(sessionId);
 
       // Passer directement en fin de tour
       await turnService.nextPhase(sessionId); // Resolution → End

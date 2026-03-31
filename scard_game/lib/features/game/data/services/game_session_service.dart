@@ -15,9 +15,8 @@ final gameSessionServiceProvider = Provider<IGameSessionService>((ref) {
   return GameSessionService(authService);
 });
 
-/// Service de gestion des sessions de jeu (création, rejoindre, CRUD)
-/// Extrait de FirebaseService pour respecter le principe S (Single Responsibility)
-/// Implémente IGameSessionService pour permettre le mocking dans les tests
+/// Service de gestion des sessions de jeu (création, rejoindre, CRUD).
+/// Implémente IGameSessionService pour permettre le mocking dans les tests.
 class GameSessionService implements IGameSessionService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final IAuthService _authService;

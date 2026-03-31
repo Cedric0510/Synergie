@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/services/game_timer_notifier.dart';
 import '../../../../../core/models/timer_state.dart';
 import '../../../data/services/card_service.dart';
-import '../../../data/services/firebase_service.dart';
 import '../../../data/services/game_session_service.dart';
 import '../../../data/services/player_service.dart';
 import '../../../data/services/turn_service.dart';
 import '../../../data/services/card_effect_service.dart';
+import '../../../data/services/session_state_service.dart';
 import '../../../domain/models/game_card.dart';
 import '../../../domain/models/game_session.dart';
 import '../../../domain/enums/card_type.dart';
@@ -71,208 +71,212 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
       // Boucle de validation avec support du timer
       dynamic actionCompleted;
       do {
+        if (!mounted) return;
         // Validation simple
         actionCompleted = await showDialog<dynamic>(
           context: context,
           barrierDismissible: false,
           builder:
-            (context) => Dialog(
-              backgroundColor: Colors.transparent,
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 400),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [const Color(0xFF2d4263), const Color(0xFF1a2332)],
-                  ),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: const Color(0xFF8E44AD).withValues(alpha: 0.5),
-                    width: 2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF8E44AD).withValues(alpha: 0.3),
-                      blurRadius: 30,
-                      spreadRadius: 0,
+              (context) => Dialog(
+                backgroundColor: Colors.transparent,
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 400),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        const Color(0xFF2d4263),
+                        const Color(0xFF1a2332),
+                      ],
                     ),
-                  ],
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // En-tête avec icône
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              const Color(0xFF8E44AD).withValues(alpha: 0.3),
-                              const Color(0xFF8E44AD).withValues(alpha: 0.1),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: const Color(
-                                  0xFF8E44AD,
-                                ).withValues(alpha: 0.2),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.check_circle_outline,
-                                color: Color(0xFF8E44AD),
-                                size: 28,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            const Expanded(
-                              child: Text(
-                                'Validation de l\'action',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      // Contenu
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.1),
-                            width: 1,
-                          ),
-                        ),
-                        child: Column(
-                          children: [
-                            const Text(
-                              'L\'adversaire a-t-il effectué l\'action suivante ?',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white70,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 12),
-                            // Afficher le titre du tier si disponible
-                            if (tierTitle != null) ...[
-                              Text(
-                                tierTitle,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: _getTierColor(selectedTierKey),
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 8),
-                            ],
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: const Color(
-                                  0xFF8E44AD,
-                                ).withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                '"$effectText"',
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  color: Colors.white,
-                                  fontStyle: FontStyle.italic,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      
-                      // Raccourcis timer
-                      Text(
-                        '⏱️ Démarrer un timer',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.7),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _buildTimerShortcut(context, ref, 0.5, '30s'),
-                          _buildTimerShortcut(context, ref, 1, '1min'),
-                          _buildTimerShortcut(context, ref, 2, '2min'),
-                          _buildTimerShortcut(context, ref, 3, '3min'),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      
-                      // Boutons
-                      _buildGlassButton(
-                        label: '✅ Action effectuée',
-                        color: Colors.green,
-                        onPressed: () => Navigator.pop(context, true),
-                      ),
-                      const SizedBox(height: 12),
-                      _buildGlassButton(
-                        label: '❌ Action refusée',
-                        color: Colors.red,
-                        onPressed: () => Navigator.pop(context, false),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: const Color(0xFF8E44AD).withValues(alpha: 0.5),
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF8E44AD).withValues(alpha: 0.3),
+                        blurRadius: 30,
+                        spreadRadius: 0,
                       ),
                     ],
                   ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // En-tête avec icône
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                const Color(0xFF8E44AD).withValues(alpha: 0.3),
+                                const Color(0xFF8E44AD).withValues(alpha: 0.1),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(
+                                    0xFF8E44AD,
+                                  ).withValues(alpha: 0.2),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.check_circle_outline,
+                                  color: Color(0xFF8E44AD),
+                                  size: 28,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Text(
+                                  'Validation de l\'action',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        // Contenu
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.1),
+                              width: 1,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              const Text(
+                                'L\'adversaire a-t-il effectué l\'action suivante ?',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white70,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 12),
+                              // Afficher le titre du tier si disponible
+                              if (tierTitle != null) ...[
+                                Text(
+                                  tierTitle,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: _getTierColor(selectedTierKey),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 8),
+                              ],
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: const Color(
+                                    0xFF8E44AD,
+                                  ).withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  '"$effectText"',
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.white,
+                                    fontStyle: FontStyle.italic,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Raccourcis timer
+                        Text(
+                          '⏱️ Démarrer un timer',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.7),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildTimerShortcut(context, ref, 0.5, '30s'),
+                            _buildTimerShortcut(context, ref, 1, '1min'),
+                            _buildTimerShortcut(context, ref, 2, '2min'),
+                            _buildTimerShortcut(context, ref, 3, '3min'),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Boutons
+                        _buildGlassButton(
+                          label: '✅ Action effectuée',
+                          color: Colors.green,
+                          onPressed: () => Navigator.pop(context, true),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildGlassButton(
+                          label: '❌ Action refusée',
+                          color: Colors.red,
+                          onPressed: () => Navigator.pop(context, false),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            ),
         );
-        
+
         // Si un timer a été démarré, afficher le popup de décompte
         if (actionCompleted == 'timer') {
           if (!mounted) return;
-          
+
           // Afficher le dialog de décompte
           showDialog(
             context: context,
             barrierDismissible: false,
             builder: (context) => const TimerCountdownDialog(),
           );
-          
+
           // Écouter l'état du timer jusqu'à ce qu'il soit terminé
           await Future.doWhile(() async {
             final timerState = ref.read(gameTimerProvider);
-            if (timerState.status == TimerStatus.finished || 
+            if (timerState.status == TimerStatus.finished ||
                 timerState.status == TimerStatus.idle) {
               return false; // Timer terminé, sortir de la boucle
             }
             await Future.delayed(const Duration(milliseconds: 500));
             return true; // Continuer à attendre
           });
-          
+
           // Attendre un petit délai pour que l'utilisateur voit le timer terminé
           await Future.delayed(const Duration(seconds: 1));
-          
+
           // Fermer le dialog de décompte
           if (mounted) {
             Navigator.of(context).pop();
@@ -357,225 +361,227 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
         // Boucle de validation avec support du timer
         dynamic actionCompleted;
         do {
+          if (!mounted) return;
           actionCompleted = await showDialog<dynamic>(
             context: context,
             barrierDismissible: false,
             builder:
-              (context) => Dialog(
-                backgroundColor: Colors.transparent,
-                child: Container(
-                  constraints: const BoxConstraints(maxWidth: 400),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        const Color(0xFF2d4263),
-                        const Color(0xFF1a2332),
+                (context) => Dialog(
+                  backgroundColor: Colors.transparent,
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 400),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          const Color(0xFF2d4263),
+                          const Color(0xFF1a2332),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: const Color(0xFF6DD5FA).withValues(alpha: 0.5),
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF6DD5FA).withValues(alpha: 0.3),
+                          blurRadius: 30,
+                          spreadRadius: 0,
+                        ),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: const Color(0xFF6DD5FA).withValues(alpha: 0.5),
-                      width: 2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF6DD5FA).withValues(alpha: 0.3),
-                        blurRadius: 30,
-                        spreadRadius: 0,
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Header avec brillance crystal
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              const Color(0xFF6DD5FA).withValues(alpha: 0.3),
-                              const Color(0xFF6DD5FA).withValues(alpha: 0.1),
-                            ],
-                          ),
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(22),
-                            topRight: Radius.circular(22),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: const Color(
-                                  0xFF6DD5FA,
-                                ).withValues(alpha: 0.2),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.check_circle_outline,
-                                color: Color(0xFF6DD5FA),
-                                size: 28,
-                              ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Header avec brillance crystal
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                const Color(0xFF6DD5FA).withValues(alpha: 0.3),
+                                const Color(0xFF6DD5FA).withValues(alpha: 0.1),
+                              ],
                             ),
-                            const SizedBox(width: 12),
-                            const Text(
-                              'Validation de l\'action',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                              ),
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(22),
+                              topRight: Radius.circular(22),
                             ),
-                          ],
-                        ),
-                      ),
-
-                      // Contenu avec couleur tapis de jeu
-                      Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF1a2332),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
                                   color: const Color(
                                     0xFF6DD5FA,
                                   ).withValues(alpha: 0.2),
-                                  width: 1,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.check_circle_outline,
+                                  color: Color(0xFF6DD5FA),
+                                  size: 28,
                                 ),
                               ),
-                              child: Column(
-                                children: [
-                                  const Text(
-                                    'L\'adversaire a-t-il effectué l\'action suivante ?',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      color: Color(0xFFB0B0B0),
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    textAlign: TextAlign.center,
+                              const SizedBox(width: 12),
+                              const Text(
+                                'Validation de l\'action',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Contenu avec couleur tapis de jeu
+                        Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1a2332),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: const Color(
+                                      0xFF6DD5FA,
+                                    ).withValues(alpha: 0.2),
+                                    width: 1,
                                   ),
-                                  const SizedBox(height: 12),
-                                  // Afficher le titre du tier si disponible
-                                  if (tierTitle != null) ...[
-                                    Text(
-                                      tierTitle,
+                                ),
+                                child: Column(
+                                  children: [
+                                    const Text(
+                                      'L\'adversaire a-t-il effectué l\'action suivante ?',
                                       style: TextStyle(
-                                        fontSize: 17,
-                                        color: _getTierColor(selectedTierKey),
-                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15,
+                                        color: Color(0xFFB0B0B0),
+                                        fontWeight: FontWeight.w500,
                                       ),
                                       textAlign: TextAlign.center,
                                     ),
-                                    const SizedBox(height: 10),
-                                  ],
-                                  Container(
-                                    padding: const EdgeInsets.all(14),
-                                    decoration: BoxDecoration(
-                                      color: const Color(
-                                        0xFF6DD5FA,
-                                      ).withValues(alpha: 0.08),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
+                                    const SizedBox(height: 12),
+                                    // Afficher le titre du tier si disponible
+                                    if (tierTitle != null) ...[
+                                      Text(
+                                        tierTitle,
+                                        style: TextStyle(
+                                          fontSize: 17,
+                                          color: _getTierColor(selectedTierKey),
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 10),
+                                    ],
+                                    Container(
+                                      padding: const EdgeInsets.all(14),
+                                      decoration: BoxDecoration(
                                         color: const Color(
                                           0xFF6DD5FA,
-                                        ).withValues(alpha: 0.15),
-                                        width: 1,
+                                        ).withValues(alpha: 0.08),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: const Color(
+                                            0xFF6DD5FA,
+                                          ).withValues(alpha: 0.15),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        '"$effectText"',
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          color: Color(0xFFE0E0E0),
+                                          fontStyle: FontStyle.italic,
+                                          fontWeight: FontWeight.w600,
+                                          height: 1.4,
+                                        ),
+                                        textAlign: TextAlign.center,
                                       ),
                                     ),
-                                    child: Text(
-                                      '"$effectText"',
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        color: Color(0xFFE0E0E0),
-                                        fontStyle: FontStyle.italic,
-                                        fontWeight: FontWeight.w600,
-                                        height: 1.4,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+
+                              // Raccourcis timer
+                              Text(
+                                '⏱️ Démarrer un timer',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.7),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  _buildTimerShortcut(context, ref, 0.5, '30s'),
+                                  _buildTimerShortcut(context, ref, 1, '1min'),
+                                  _buildTimerShortcut(context, ref, 2, '2min'),
+                                  _buildTimerShortcut(context, ref, 3, '3min'),
                                 ],
                               ),
-                            ),
-                            const SizedBox(height: 20),
-                            
-                            // Raccourcis timer
-                            Text(
-                              '⏱️ Démarrer un timer',
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.7),
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
+                              const SizedBox(height: 20),
+
+                              // Boutons crystal en relief
+                              _buildGlassButton(
+                                label: '✅ Action effectuée',
+                                color: Colors.green,
+                                onPressed: () => Navigator.pop(context, true),
                               ),
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                _buildTimerShortcut(context, ref, 0.5, '30s'),
-                                _buildTimerShortcut(context, ref, 1, '1min'),
-                                _buildTimerShortcut(context, ref, 2, '2min'),
-                                _buildTimerShortcut(context, ref, 3, '3min'),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                            
-                            // Boutons crystal en relief
-                            _buildGlassButton(
-                              label: '✅ Action effectuée',
-                              color: Colors.green,
-                              onPressed: () => Navigator.pop(context, true),
-                            ),
-                            const SizedBox(height: 12),
-                            _buildGlassButton(
-                              label: '❌ Action refusée',
-                              color: Colors.red,
-                              onPressed: () => Navigator.pop(context, false),
-                            ),
-                          ],
+                              const SizedBox(height: 12),
+                              _buildGlassButton(
+                                label: '❌ Action refusée',
+                                color: Colors.red,
+                                onPressed: () => Navigator.pop(context, false),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
           );
-          
+
           // Si un timer a été démarré, afficher le popup de décompte
           if (actionCompleted == 'timer') {
             if (!mounted) return;
-            
+
             // Afficher le dialog de décompte
             showDialog(
               context: context,
               barrierDismissible: false,
               builder: (context) => const TimerCountdownDialog(),
             );
-            
+
             // Écouter l'état du timer jusqu'à ce qu'il soit terminé
             await Future.doWhile(() async {
               final timerState = ref.read(gameTimerProvider);
-              if (timerState.status == TimerStatus.finished || 
+              if (timerState.status == TimerStatus.finished ||
                   timerState.status == TimerStatus.idle) {
                 return false; // Timer terminé, sortir de la boucle
               }
               await Future.delayed(const Duration(milliseconds: 500));
               return true; // Continuer à attendre
             });
-            
+
             // Attendre un petit délai pour que l'utilisateur voit le timer terminé
             await Future.delayed(const Duration(seconds: 1));
-            
+
             // Fermer le dialog de décompte
             if (mounted) {
               Navigator.of(context).pop();
@@ -625,7 +631,7 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
 
   /// Résoudre les effets sans validation
   Future<void> resolveEffectsWithoutValidation() async {
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final sessionStateService = ref.read(sessionStateServiceProvider);
     final turnService = ref.read(turnServiceProvider);
     final cardEffectService = ref.read(cardEffectServiceProvider);
     final gameSessionService = ref.read(gameSessionServiceProvider);
@@ -654,7 +660,7 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
       }
 
       // Nettoyer le plateau (supprimer cartes sauf enchantements)
-      await firebaseService.clearPlayedCards(sessionId);
+      await sessionStateService.clearPlayedCards(sessionId);
 
       // Auto-transition: Résolution → Fin de tour
       await turnService.nextPhase(sessionId);
@@ -689,7 +695,7 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
     bool actionCompleted,
     int damageIfRefused,
   ) async {
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final sessionStateService = ref.read(sessionStateServiceProvider);
     final turnService = ref.read(turnServiceProvider);
     final playerService = ref.read(playerServiceProvider);
     final cardEffectService = ref.read(cardEffectServiceProvider);
@@ -725,7 +731,7 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
       }
 
       // Nettoyer le plateau (supprimer cartes sauf enchantements)
-      await firebaseService.clearPlayedCards(sessionId);
+      await sessionStateService.clearPlayedCards(sessionId);
 
       // Auto-transition: Résolution → Fin de tour
       await turnService.nextPhase(sessionId);
@@ -765,7 +771,7 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
     bool player2Completed,
     int damageIfRefused,
   ) async {
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final sessionStateService = ref.read(sessionStateServiceProvider);
     final turnService = ref.read(turnServiceProvider);
     final playerService = ref.read(playerServiceProvider);
     final cardEffectService = ref.read(cardEffectServiceProvider);
@@ -803,7 +809,7 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
       }
 
       // Nettoyer le plateau
-      await firebaseService.clearPlayedCards(sessionId);
+      await sessionStateService.clearPlayedCards(sessionId);
 
       // Auto-transition
       await turnService.nextPhase(sessionId);
@@ -966,7 +972,10 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
             child: InkWell(
               onTap: () {
                 ref.read(gameTimerProvider.notifier).start(minutes);
-                Navigator.pop(context, 'timer'); // Fermer le popup et signaler timer
+                Navigator.pop(
+                  context,
+                  'timer',
+                ); // Fermer le popup et signaler timer
               },
               borderRadius: BorderRadius.circular(10),
               splashColor: crystalColor.withValues(alpha: 0.3),

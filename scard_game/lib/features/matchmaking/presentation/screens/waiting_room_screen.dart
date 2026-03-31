@@ -270,7 +270,9 @@ class _WaitingRoomScreenState extends ConsumerState<WaitingRoomScreen> {
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.25),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.25,
+                                      ),
                                       blurRadius: 15,
                                       offset: const Offset(0, 6),
                                     ),
@@ -294,7 +296,9 @@ class _WaitingRoomScreenState extends ConsumerState<WaitingRoomScreen> {
                                             begin: Alignment.topCenter,
                                             end: Alignment.bottomCenter,
                                             colors: [
-                                              Colors.white.withValues(alpha: 0.5),
+                                              Colors.white.withValues(
+                                                alpha: 0.5,
+                                              ),
                                               Colors.white.withValues(alpha: 0),
                                             ],
                                           ),
@@ -358,6 +362,7 @@ class _WaitingRoomScreenState extends ConsumerState<WaitingRoomScreen> {
                               widget.sessionId,
                             );
 
+                            if (!context.mounted) return;
                             if (mounted) {
                               Navigator.pushReplacement(
                                 context,

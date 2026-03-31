@@ -111,7 +111,7 @@ class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
         final canPop = await _onWillPop();
-        if (canPop && mounted) {
+        if (canPop && context.mounted) {
           Navigator.of(context).pop();
         }
       },

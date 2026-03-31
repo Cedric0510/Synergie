@@ -40,7 +40,7 @@ class DeckConfiguration with _$DeckConfiguration {
         'white_003': 2,
         'white_004': 2,
         'white_005': 2,
-        // Rituels bleus (2 × 2 = 4)
+        // IDs legacy conserves pour compatibilite (cartes de couleur white)
         'blue_005': 2,
         'blue_006': 2,
         // Enchantements (3 × 2 + Ultima = 7)
