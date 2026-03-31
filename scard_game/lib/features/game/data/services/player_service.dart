@@ -1,43 +1,44 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/interfaces/i_game_session_service.dart';
 import '../../domain/models/game_session.dart';
 import '../../domain/models/player_data.dart';
 import '../../domain/enums/player_gender.dart';
 import '../../domain/enums/game_status.dart';
+import 'game_session_service.dart';
 
 /// Provider pour le service de gestion des joueurs
 final playerServiceProvider = Provider<PlayerService>((ref) {
-  return PlayerService();
+  final gameSessionService = ref.watch(gameSessionServiceProvider);
+  return PlayerService(gameSessionService);
 });
 
-/// Service de gestion des joueurs (activité, prêt, cartes)
-/// Extrait de FirebaseService pour respecter le principe S (Single Responsibility)
+/// Service de gestion des joueurs (activité, prêt, cartes).
 class PlayerService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final IGameSessionService _gameSessionService;
 
-  static const String _collection = 'game_sessions';
+  PlayerService(this._gameSessionService);
 
   /// Met à jour l'activité du joueur (heartbeat)
   Future<void> updatePlayerActivity(String sessionId, String playerId) async {
-    final docRef = _firestore.collection(_collection).doc(sessionId);
-    final doc = await docRef.get();
-
-    if (!doc.exists) return;
-
-    final session = GameSession.fromJson(doc.data()!);
+    final session = await _gameSessionService.getSession(sessionId);
     final now = DateTime.now();
 
+    GameSession updatedSession;
     if (session.player1Id == playerId) {
-      await docRef.update({
-        'player1Data.lastActivityAt': now.toIso8601String(),
-        'updatedAt': now.toIso8601String(),
-      });
+      updatedSession = session.copyWith(
+        player1Data: session.player1Data.copyWith(lastActivityAt: now),
+        updatedAt: now,
+      );
     } else if (session.player2Id == playerId) {
-      await docRef.update({
-        'player2Data.lastActivityAt': now.toIso8601String(),
-        'updatedAt': now.toIso8601String(),
-      });
+      updatedSession = session.copyWith(
+        player2Data: session.player2Data?.copyWith(lastActivityAt: now),
+        updatedAt: now,
+      );
+    } else {
+      return;
     }
+
+    await _gameSessionService.updateSession(sessionId, updatedSession);
   }
 
   /// Marque le joueur comme prêt
@@ -46,13 +47,7 @@ class PlayerService {
     String playerId,
     bool ready,
   ) async {
-    final docRef = _firestore.collection(_collection).doc(sessionId);
-    final doc = await docRef.get();
-
-    if (!doc.exists) return;
-
-    final session = GameSession.fromJson(doc.data()!);
-    final isPlayer1 = session.player1Id == playerId;
+    final session = await _gameSessionService.getSession(sessionId);
     final now = DateTime.now();
     GameSession updatedSession;
 
@@ -69,19 +64,7 @@ class PlayerService {
     } else {
       return; // Joueur inconnu
     }
-
-    // Conversion manuelle
-    if (isPlayer1) {
-      await docRef.update({
-        'player1Data': updatedSession.player1Data.toJson(),
-        'updatedAt': now.toIso8601String(),
-      });
-    } else {
-      await docRef.update({
-        'player2Data': updatedSession.player2Data!.toJson(),
-        'updatedAt': now.toIso8601String(),
-      });
-    }
+    await _gameSessionService.updateSession(sessionId, updatedSession);
   }
 
   /// Marque le joueur comme ayant vu ses cartes de départ et prêt à jouer
@@ -91,12 +74,7 @@ class PlayerService {
 
   /// Détermine quel joueur commence
   Future<void> determineStartingPlayer(String sessionId) async {
-    final docRef = _firestore.collection(_collection).doc(sessionId);
-    final doc = await docRef.get();
-
-    if (!doc.exists) return;
-
-    final session = GameSession.fromJson(doc.data()!);
+    final session = await _gameSessionService.getSession(sessionId);
 
     // Vérifier que player2 est connecté
     if (session.player2Data == null) return;
@@ -124,12 +102,14 @@ class PlayerService {
               : session.player2Id!;
     }
 
-    await docRef.update({
-      'currentPlayerId': startingPlayerId,
-      'status': GameStatus.playing.name,
-      'startedAt': DateTime.now().toIso8601String(),
-      'updatedAt': DateTime.now().toIso8601String(),
-    });
+    final now = DateTime.now();
+    final updatedSession = session.copyWith(
+      currentPlayerId: startingPlayerId,
+      status: GameStatus.playing,
+      startedAt: now,
+      updatedAt: now,
+    );
+    await _gameSessionService.updateSession(sessionId, updatedSession);
   }
 
   /// Sauvegarde les cartes du joueur (main et deck)
@@ -139,13 +119,7 @@ class PlayerService {
     required List<String> handCardIds,
     required List<String> deckCardIds,
   }) async {
-    final docRef = _firestore.collection(_collection).doc(sessionId);
-    final doc = await docRef.get();
-
-    if (!doc.exists) return;
-
-    final session = GameSession.fromJson(doc.data()!);
-    final isPlayer1 = session.player1Id == playerId;
+    final session = await _gameSessionService.getSession(sessionId);
     final now = DateTime.now();
     GameSession updatedSession;
 
@@ -168,19 +142,7 @@ class PlayerService {
     } else {
       return; // Joueur inconnu
     }
-
-    // Conversion manuelle
-    if (isPlayer1) {
-      await docRef.update({
-        'player1Data': updatedSession.player1Data.toJson(),
-        'updatedAt': now.toIso8601String(),
-      });
-    } else {
-      await docRef.update({
-        'player2Data': updatedSession.player2Data!.toJson(),
-        'updatedAt': now.toIso8601String(),
-      });
-    }
+    await _gameSessionService.updateSession(sessionId, updatedSession);
   }
 
   /// Ajoute ou retire des PI d'un joueur
@@ -189,12 +151,7 @@ class PlayerService {
     String playerId,
     int delta,
   ) async {
-    final docRef = _firestore.collection(_collection).doc(sessionId);
-    final snapshot = await docRef.get();
-
-    if (!snapshot.exists) throw Exception('Session non trouvée');
-
-    final session = GameSession.fromJson(snapshot.data()!);
+    final session = await _gameSessionService.getSession(sessionId);
     final isPlayer1 = session.player1Id == playerId;
     final playerData = isPlayer1 ? session.player1Data : session.player2Data!;
 
@@ -209,16 +166,15 @@ class PlayerService {
     if (isPlayer1) {
       updatedSession = session.copyWith(
         player1Data: session.player1Data.copyWith(inhibitionPoints: newPI),
+        updatedAt: DateTime.now(),
       );
-      await docRef.update({'player1Data': updatedSession.player1Data.toJson()});
     } else {
       updatedSession = session.copyWith(
         player2Data: session.player2Data!.copyWith(inhibitionPoints: newPI),
+        updatedAt: DateTime.now(),
       );
-      await docRef.update({
-        'player2Data': updatedSession.player2Data!.toJson(),
-      });
     }
+    await _gameSessionService.updateSession(sessionId, updatedSession);
   }
 
   /// Met à jour la tension d'un joueur
@@ -227,12 +183,7 @@ class PlayerService {
     String playerId,
     double delta,
   ) async {
-    final docRef = _firestore.collection(_collection).doc(sessionId);
-    final snapshot = await docRef.get();
-
-    if (!snapshot.exists) throw Exception('Session non trouvée');
-
-    final session = GameSession.fromJson(snapshot.data()!);
+    final session = await _gameSessionService.getSession(sessionId);
     final isPlayer1 = session.player1Id == playerId;
     final playerData = isPlayer1 ? session.player1Data : session.player2Data!;
 
@@ -247,25 +198,28 @@ class PlayerService {
     if (isPlayer1) {
       updatedSession = session.copyWith(
         player1Data: session.player1Data.copyWith(tension: newTension),
+        updatedAt: DateTime.now(),
       );
-      await docRef.update({'player1Data': updatedSession.player1Data.toJson()});
     } else {
       updatedSession = session.copyWith(
         player2Data: session.player2Data!.copyWith(tension: newTension),
+        updatedAt: DateTime.now(),
       );
-      await docRef.update({
-        'player2Data': updatedSession.player2Data!.toJson(),
-      });
     }
+    await _gameSessionService.updateSession(sessionId, updatedSession);
   }
 
   /// Vérifie si les PI sont verrouillés par un enchantement
   bool _isPiLocked(PlayerData playerData) {
-    return playerData.activeStatusModifiers.containsKey('lockPI');
+    final modifiers = playerData.activeStatusModifiers;
+    return (modifiers['pi_locked']?.isNotEmpty ?? false) ||
+        (modifiers['lockPI']?.isNotEmpty ?? false);
   }
 
   /// Vérifie si la tension est verrouillée par un enchantement
   bool _isTensionLocked(PlayerData playerData) {
-    return playerData.activeStatusModifiers.containsKey('lockTension');
+    final modifiers = playerData.activeStatusModifiers;
+    return (modifiers['tension_locked']?.isNotEmpty ?? false) ||
+        (modifiers['lockTension']?.isNotEmpty ?? false);
   }
 }

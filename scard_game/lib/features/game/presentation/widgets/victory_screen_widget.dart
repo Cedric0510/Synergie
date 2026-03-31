@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../../../core/constants/game_constants.dart';
 import '../../domain/models/game_session.dart';
 
 /// Widget d'écran de victoire Ultima avec vidéo aléatoire
@@ -196,8 +197,8 @@ class _VictoryScreenWidgetState extends State<VictoryScreenWidget> {
                       const SizedBox(height: 12),
                       Text(
                         isWinner
-                            ? 'Vous avez conservé Ultima pendant 3 tours !'
-                            : 'Votre adversaire a conservé Ultima pendant 3 tours',
+                            ? 'Vous avez conservé Ultima pendant ${GameConstants.ultimaMaxCount} tours !'
+                            : 'Votre adversaire a conservé Ultima pendant ${GameConstants.ultimaMaxCount} tours',
                         style: const TextStyle(
                           fontSize: 18,
                           color: Colors.white,

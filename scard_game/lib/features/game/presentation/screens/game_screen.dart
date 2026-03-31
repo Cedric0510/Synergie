@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/game_constants.dart';
-import '../../data/services/firebase_service.dart';
+import '../../data/services/gameplay_action_service.dart';
 import '../../data/services/game_session_service.dart';
 import '../../data/services/player_service.dart';
 import '../../data/services/turn_service.dart';
@@ -729,7 +729,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
     final turnService = ref.read(turnServiceProvider);
     final gameSessionService = ref.read(gameSessionServiceProvider);
     final cardService = ref.read(cardServiceProvider);
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final gameplayActionService = ref.read(gameplayActionServiceProvider);
     final playerService = ref.read(playerServiceProvider);
 
     try {
@@ -787,7 +787,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
             if (effectType == 'draw' && value is int && value > 0) {
               for (int i = 0; i < value; i++) {
-                await firebaseService.drawCard(sessionId, targetPlayerId);
+                await gameplayActionService.drawCard(sessionId, targetPlayerId);
               }
             } else if (effectType == 'pi_change' && value is int) {
               await playerService.updatePlayerPI(
@@ -914,13 +914,13 @@ class _GameScreenState extends ConsumerState<GameScreen>
   }
 
   Future<void> _autoDrawAtTurnStart() async {
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final gameplayActionService = ref.read(gameplayActionServiceProvider);
     final turnService = ref.read(turnServiceProvider);
 
     try {
       // Marquer d'abord pour ?viter les doubles d?clenchements
       await turnService.setDrawDoneThisTurn(sessionId, true);
-      await firebaseService.drawCard(sessionId, playerId);
+      await gameplayActionService.drawCard(sessionId, playerId);
     } catch (e) {
       await turnService.setDrawDoneThisTurn(sessionId, true);
       if (mounted) {

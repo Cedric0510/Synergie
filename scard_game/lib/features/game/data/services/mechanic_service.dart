@@ -7,23 +7,26 @@ import '../../domain/models/card_mechanic.dart';
 import '../../domain/enums/mechanic_type.dart';
 import '../../domain/enums/target_type.dart';
 import '../../presentation/widgets/card_widget.dart';
-import 'firebase_service.dart';
+import 'gameplay_action_service.dart';
 import 'game_session_service.dart';
 import 'card_service.dart';
+import 'session_state_service.dart';
 
-/// Service pour traiter les mécaniques spéciales des cartes
+/// Service pour traiter les mÃ©caniques spÃ©ciales des cartes
 class MechanicService {
-  final FirebaseService _firebaseService;
+  final GameplayActionService _gameplayActionService;
+  final SessionStateService _sessionStateService;
   final IGameSessionService _gameSessionService;
   final CardService _cardService;
 
   MechanicService(
-    this._firebaseService,
+    this._gameplayActionService,
+    this._sessionStateService,
     this._gameSessionService,
     this._cardService,
   );
 
-  /// Exécute les actions pendantes d'un sort (appelé en phase Resolution si le sort n'est pas contré)
+  /// ExÃ©cute les actions pendantes d'un sort (appelÃ© en phase Resolution si le sort n'est pas contrÃ©)
   Future<void> executePendingActions({
     required String sessionId,
     required List<PendingAction> actions,
@@ -32,7 +35,7 @@ class MechanicService {
       switch (action.type) {
         case PendingActionType.destroyEnchantment:
           if (action.targetPlayerId != null && action.targetCardId != null) {
-            await _firebaseService.removeEnchantment(
+            await _sessionStateService.removeEnchantment(
               sessionId,
               action.targetPlayerId!,
               action.targetCardId!,
@@ -44,21 +47,21 @@ class MechanicService {
           final playerId = action.targetPlayerId;
           if (playerId != null && count is int && count > 0) {
             for (int i = 0; i < count; i++) {
-              await _firebaseService.drawCard(sessionId, playerId);
+              await _gameplayActionService.drawCard(sessionId, playerId);
             }
           }
           break;
         case PendingActionType.replaceEnchantment:
-          // TODO: Implémenter le remplacement
+          // TODO: ImplÃ©menter le remplacement
           break;
         case PendingActionType.destroyAllEnchantments:
-          // Géré par des actions individuelles destroyEnchantment
+          // GÃ©rÃ© par des actions individuelles destroyEnchantment
           break;
       }
     }
   }
 
-  /// Traite toutes les mécaniques d'une carte
+  /// Traite toutes les mÃ©caniques d'une carte
   Future<MechanicResult> processMechanics({
     required BuildContext context,
     required String sessionId,
@@ -92,14 +95,14 @@ class MechanicService {
         return mechanicResult;
       }
 
-      // Accumuler les résultats
+      // Accumuler les rÃ©sultats
       result = result.merge(mechanicResult);
     }
 
     return result;
   }
 
-  /// Traite une mécanique spécifique
+  /// Traite une mÃ©canique spÃ©cifique
   Future<MechanicResult> _processMechanic({
     required BuildContext context,
     required String sessionId,
@@ -207,7 +210,7 @@ class MechanicService {
         return MechanicResult(
           success: true,
           message:
-              'Mécanique ${mechanic.type.displayName} pas encore implémentée',
+              'MÃ©canique ${mechanic.type.displayName} pas encore implÃ©mentÃ©e',
         );
     }
   }
@@ -227,7 +230,7 @@ class MechanicService {
     return false;
   }
 
-  // === HANDLERS POUR CHAQUE MÉCANIQUE ===
+  // === HANDLERS POUR CHAQUE MÃ‰CANIQUE ===
 
   Future<MechanicResult> _handleSacrificeCard({
     required BuildContext context,
@@ -236,7 +239,7 @@ class MechanicService {
     required String playerId,
     required List<String> handCardIds,
   }) async {
-    // Afficher un dialog pour sélectionner une carte de la main
+    // Afficher un dialog pour sÃ©lectionner une carte de la main
     final selectedCardId = await _showCardSelectionDialog(
       context: context,
       title: 'Sacrifier une carte',
@@ -245,15 +248,15 @@ class MechanicService {
     );
 
     if (selectedCardId == null) {
-      return MechanicResult(success: false, message: 'Sacrifice annulé');
+      return MechanicResult(success: false, message: 'Sacrifice annulÃ©');
     }
 
-    // Récupérer la carte sacrifiée
+    // RÃ©cupÃ©rer la carte sacrifiÃ©e
     final allCards = await _cardService.loadAllCards();
     final sacrificedCard = allCards.firstWhere((c) => c.id == selectedCardId);
 
     // Retirer la carte de la main
-    await _firebaseService.removeCardFromHand(
+    await _gameplayActionService.removeCardFromHand(
       sessionId,
       playerId,
       selectedCardId,
@@ -262,7 +265,7 @@ class MechanicService {
     return MechanicResult(
       success: true,
       sacrificedCard: sacrificedCard,
-      message: '${sacrificedCard.name} a été sacrifiée',
+      message: '${sacrificedCard.name} a Ã©tÃ© sacrifiÃ©e',
     );
   }
 
@@ -273,20 +276,20 @@ class MechanicService {
     required String playerId,
     required List<String> handCardIds,
   }) async {
-    // Même logique que sacrifice mais sans effet de remplacement
+    // MÃªme logique que sacrifice mais sans effet de remplacement
     final selectedCardId = await _showCardSelectionDialog(
       context: context,
-      title: 'Se défausser d\'une carte',
+      title: 'Se dÃ©fausser d\'une carte',
       cardIds: handCardIds,
       filter: mechanic.filter,
     );
 
     if (selectedCardId == null) {
-      return MechanicResult(success: false, message: 'Défausse annulée');
+      return MechanicResult(success: false, message: 'DÃ©fausse annulÃ©e');
     }
 
-    // Retirer la carte de la main (même effet que sacrifice)
-    await _firebaseService.removeCardFromHand(
+    // Retirer la carte de la main (mÃªme effet que sacrifice)
+    await _gameplayActionService.removeCardFromHand(
       sessionId,
       playerId,
       selectedCardId,
@@ -295,7 +298,7 @@ class MechanicService {
     return MechanicResult(
       success: true,
       discardedCardId: selectedCardId,
-      message: 'Carte défaussée',
+      message: 'Carte dÃ©faussÃ©e',
     );
   }
 
@@ -307,7 +310,7 @@ class MechanicService {
     required List<String> activeEnchantmentIds,
     required List<String> opponentEnchantmentIds,
   }) async {
-    // Déterminer quelle liste utiliser selon le target
+    // DÃ©terminer quelle liste utiliser selon le target
     List<String> targetEnchantments;
     String targetPlayerId;
 
@@ -318,7 +321,7 @@ class MechanicService {
         break;
       case TargetType.opponentEnchantment:
         targetEnchantments = opponentEnchantmentIds;
-        // Récupérer l'ID de l'adversaire
+        // RÃ©cupÃ©rer l'ID de l'adversaire
         final session = await _gameSessionService.getSession(sessionId);
         targetPlayerId =
             session.player1Id == playerId
@@ -332,7 +335,7 @@ class MechanicService {
           ...activeEnchantmentIds,
           ...opponentEnchantmentIds,
         ];
-        targetPlayerId = playerId; // Sera déterminé après sélection
+        targetPlayerId = playerId; // Sera dÃ©terminÃ© aprÃ¨s sÃ©lection
         break;
     }
 
@@ -343,19 +346,23 @@ class MechanicService {
       );
     }
 
-    // Sélectionner un enchantement à détruire
+    // SÃ©lectionner un enchantement Ã  dÃ©truire
+    if (!context.mounted) {
+      return MechanicResult(success: false, message: 'Contexte invalide');
+    }
+
     final selectedEnchantmentId = await _showCardSelectionDialog(
       context: context,
-      title: 'Détruire un enchantement',
+      title: 'DÃ©truire un enchantement',
       cardIds: targetEnchantments,
       filter: mechanic.filter,
     );
 
     if (selectedEnchantmentId == null) {
-      return MechanicResult(success: false, message: 'Destruction annulée');
+      return MechanicResult(success: false, message: 'Destruction annulÃ©e');
     }
 
-    // Si anyEnchantment, déterminer le propriétaire
+    // Si anyEnchantment, dÃ©terminer le propriÃ©taire
     if (mechanic.target == TargetType.anyEnchantment) {
       if (opponentEnchantmentIds.contains(selectedEnchantmentId)) {
         final session = await _gameSessionService.getSession(sessionId);
@@ -366,12 +373,12 @@ class MechanicService {
       }
     }
 
-    // NE PAS détruire immédiatement - créer une action pendante
-    // La destruction se fera en phase Resolution si le sort n'est pas contré
+    // NE PAS dÃ©truire immÃ©diatement - crÃ©er une action pendante
+    // La destruction se fera en phase Resolution si le sort n'est pas contrÃ©
     return MechanicResult(
       success: true,
       destroyedEnchantmentId: selectedEnchantmentId,
-      message: 'Enchantement sélectionné pour destruction',
+      message: 'Enchantement sÃ©lectionnÃ© pour destruction',
       pendingActions: [
         PendingAction(
           type: PendingActionType.destroyEnchantment,
@@ -390,7 +397,7 @@ class MechanicService {
     required List<String> activeEnchantmentIds,
     required List<String> opponentEnchantmentIds,
   }) async {
-    // Déterminer quelle liste utiliser selon le target
+    // DÃ©terminer quelle liste utiliser selon le target
     List<String> targetEnchantments;
 
     switch (mechanic.target) {
@@ -416,7 +423,11 @@ class MechanicService {
       );
     }
 
-    // Sélectionner un enchantement à remplacer
+    // SÃ©lectionner un enchantement Ã  remplacer
+    if (!context.mounted) {
+      return MechanicResult(success: false, message: 'Contexte invalide');
+    }
+
     final selectedEnchantmentId = await _showCardSelectionDialog(
       context: context,
       title: 'Remplacer un enchantement',
@@ -425,13 +436,13 @@ class MechanicService {
     );
 
     if (selectedEnchantmentId == null) {
-      return MechanicResult(success: false, message: 'Remplacement annulé');
+      return MechanicResult(success: false, message: 'Remplacement annulÃ©');
     }
 
     return MechanicResult(
       success: true,
       replacedEnchantmentId: selectedEnchantmentId,
-      message: 'Enchantement remplacé',
+      message: 'Enchantement remplacÃ©',
     );
   }
 
@@ -445,22 +456,26 @@ class MechanicService {
     final allCards = await _cardService.loadAllCards();
     final session = await _gameSessionService.getSession(sessionId);
 
-    // Déterminer le deck du joueur
+    // DÃ©terminer le deck du joueur
     final playerData = session.getPlayerData(playerId);
 
-    // Piocher jusqu'à trouver une carte correspondant au filtre
+    // Piocher jusqu'Ã  trouver une carte correspondant au filtre
     for (final cardId in playerData.deckCardIds) {
       final card = allCards.firstWhere((c) => c.id == cardId);
       drawnCards.add(card);
 
-      // Ajouter à la main
-      await _firebaseService.drawSpecificCard(sessionId, playerId, cardId);
+      // Ajouter Ã  la main
+      await _gameplayActionService.drawSpecificCard(
+        sessionId,
+        playerId,
+        cardId,
+      );
 
-      // Vérifier si la carte correspond au filtre
+      // VÃ©rifier si la carte correspond au filtre
       if (mechanic.filter != null) {
         final filtered = _applyFilter([card], mechanic.filter!);
         if (filtered.isNotEmpty) {
-          break; // Carte trouvée
+          break; // Carte trouvÃ©e
         }
       }
     }
@@ -479,24 +494,25 @@ class MechanicService {
     required CardMechanic mechanic,
     required String playerId,
   }) async {
-    // Récupérer la session et les données du joueur
+    // RÃ©cupÃ©rer la session et les donnÃ©es du joueur
     final session = await _gameSessionService.getSession(sessionId);
     final playerData = session.getPlayerData(playerId);
     final handSize = playerData.handCardIds.length;
 
-    // Mélanger la main dans le deck
-    await _firebaseService.shuffleHandIntoDeck(sessionId, playerId);
+    // MÃ©langer la main dans le deck
+    await _gameplayActionService.shuffleHandIntoDeck(sessionId, playerId);
 
-    // Piocher le même nombre de cartes si spécifié
+    // Piocher le mÃªme nombre de cartes si spÃ©cifiÃ©
     if (mechanic.additionalActions?['drawCount'] == 'handSize') {
       for (int i = 0; i < handSize; i++) {
-        await _firebaseService.drawCard(sessionId, playerId);
+        await _gameplayActionService.drawCard(sessionId, playerId);
       }
     }
 
     return MechanicResult(
       success: true,
-      message: 'Main mélangée dans le deck et $handSize carte(s) repiochée(s)',
+      message:
+          'Main mÃ©langÃ©e dans le deck et $handSize carte(s) repiochÃ©e(s)',
     );
   }
 
@@ -509,9 +525,9 @@ class MechanicService {
     // Initialiser un enchantement avec des charges
     int counterValue = mechanic.initialCounterValue ?? 0;
 
-    // Si counterSource est défini, calculer la valeur
+    // Si counterSource est dÃ©fini, calculer la valeur
     if (mechanic.counterSource == 'clothingCount') {
-      // TODO: Implémenter clothingCount dans PlayerData
+      // TODO: ImplÃ©menter clothingCount dans PlayerData
       // final session = await _gameSessionService.getSession(sessionId);
       // final playerData = session.getPlayerData(playerId);
       // counterValue = playerData.clothingCount ?? 1;
@@ -537,7 +553,7 @@ class MechanicService {
     return MechanicResult(
       success: true,
       counterValue: turns,
-      message: 'Compteur initialisé à $turns tours',
+      message: 'Compteur initialisÃ© Ã  $turns tours',
     );
   }
 
@@ -548,7 +564,7 @@ class MechanicService {
     required String playerId,
   }) async {
     // Afficher un dialog avec des choix
-    // TODO: Implémenter le dialog de choix
+    // TODO: ImplÃ©menter le dialog de choix
 
     return MechanicResult(success: true, message: 'Choix du joueur');
   }
@@ -561,7 +577,7 @@ class MechanicService {
     required List<String> activeEnchantmentIds,
     required List<String> opponentEnchantmentIds,
   }) async {
-    // Déterminer quelle liste utiliser selon le target
+    // DÃ©terminer quelle liste utiliser selon le target
     List<String> targetEnchantments;
     String targetPlayerId;
 
@@ -572,7 +588,7 @@ class MechanicService {
         break;
       case TargetType.opponentEnchantment:
         targetEnchantments = opponentEnchantmentIds;
-        // Récupérer l'ID de l'adversaire
+        // RÃ©cupÃ©rer l'ID de l'adversaire
         final session = await _gameSessionService.getSession(sessionId);
         targetPlayerId =
             session.player1Id == playerId
@@ -581,7 +597,7 @@ class MechanicService {
         break;
       case TargetType.anyEnchantment:
       default:
-        // Pour destroyAll avec anyEnchantment, créer des actions pendantes pour les deux joueurs
+        // Pour destroyAll avec anyEnchantment, crÃ©er des actions pendantes pour les deux joueurs
         final session = await _gameSessionService.getSession(sessionId);
         final opponentId =
             session.player1Id == playerId
@@ -616,13 +632,13 @@ class MechanicService {
             activeEnchantmentIds.length + opponentEnchantmentIds.length;
         return MechanicResult(
           success: true,
-          message: '$totalCount enchantements sélectionnés pour destruction',
+          message: '$totalCount enchantements sÃ©lectionnÃ©s pour destruction',
           additionalData: {'destroyedCount': totalCount},
           pendingActions: pendingActions,
         );
     }
 
-    // Créer des actions pendantes pour tous les enchantements de la liste ciblée
+    // CrÃ©er des actions pendantes pour tous les enchantements de la liste ciblÃ©e
     final pendingActions = <PendingAction>[];
     for (final enchantmentId in targetEnchantments) {
       pendingActions.add(
@@ -637,7 +653,7 @@ class MechanicService {
     return MechanicResult(
       success: true,
       message:
-          '${targetEnchantments.length} enchantements sélectionnés pour destruction',
+          '${targetEnchantments.length} enchantements sÃ©lectionnÃ©s pour destruction',
       additionalData: {'destroyedCount': targetEnchantments.length},
       pendingActions: pendingActions,
     );
@@ -655,7 +671,7 @@ class MechanicService {
     List<GameCard> availableCards =
         allCards.where((card) => cardIds.contains(card.id)).toList();
 
-    // Appliquer le filtre si présent
+    // Appliquer le filtre si prÃ©sent
     if (filter != null) {
       availableCards = _applyFilter(availableCards, filter);
     }
@@ -720,7 +736,7 @@ class MechanicService {
     );
   }
 
-  /// Construit une prévisualisation de carte pour le tooltip
+  /// Construit une prÃ©visualisation de carte pour le tooltip
   Widget _buildCardPreview(GameCard card) {
     return CardWidget(card: card, width: 280, height: 440, compact: false);
   }
@@ -740,7 +756,7 @@ class MechanicService {
   }
 }
 
-/// Résultat du traitement d'une mécanique
+/// RÃ©sultat du traitement d'une mÃ©canique
 class MechanicResult {
   final bool success;
   final String? message;
@@ -752,7 +768,7 @@ class MechanicResult {
   final int? counterValue;
   final Map<String, dynamic>? additionalData;
 
-  /// Actions à exécuter APRÈS la phase de réponse (si le sort n'est pas contré)
+  /// Actions Ã  exÃ©cuter APRÃˆS la phase de rÃ©ponse (si le sort n'est pas contrÃ©)
   final List<PendingAction>? pendingActions;
 
   MechanicResult({
@@ -786,7 +802,7 @@ class MechanicResult {
   }
 }
 
-/// Action à exécuter après la phase de réponse
+/// Action Ã  exÃ©cuter aprÃ¨s la phase de rÃ©ponse
 class PendingAction {
   final PendingActionType type;
   final String? targetPlayerId;
@@ -824,10 +840,16 @@ enum PendingActionType {
   destroyAllEnchantments,
 }
 
-/// Provider pour le service de mécaniques
+/// Provider pour le service de mÃ©caniques
 final mechanicServiceProvider = Provider<MechanicService>((ref) {
-  final firebaseService = ref.watch(firebaseServiceProvider);
+  final gameplayActionService = ref.watch(gameplayActionServiceProvider);
+  final sessionStateService = ref.watch(sessionStateServiceProvider);
   final gameSessionService = ref.watch(gameSessionServiceProvider);
   final cardService = ref.watch(cardServiceProvider);
-  return MechanicService(firebaseService, gameSessionService, cardService);
+  return MechanicService(
+    gameplayActionService,
+    sessionStateService,
+    gameSessionService,
+    cardService,
+  );
 });

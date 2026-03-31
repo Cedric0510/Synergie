@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:scard_game/features/game/data/services/deck_service.dart';
 import 'package:scard_game/features/game/data/services/card_service.dart';
+import 'package:scard_game/features/game/data/services/custom_deck_service.dart';
 import 'package:scard_game/features/game/domain/enums/card_color.dart';
 import 'package:scard_game/features/game/domain/models/game_card.dart';
 
@@ -18,7 +19,7 @@ void main() {
     late DeckService deckService;
 
     setUp(() {
-      deckService = DeckService(MockCardService());
+      deckService = DeckService(MockCardService(), CustomDeckService());
     });
 
     test('shuffleDeck returns same cards in different order', () {
@@ -93,7 +94,7 @@ void main() {
     late DeckService deckService;
 
     setUp(() {
-      deckService = DeckService(MockCardService());
+      deckService = DeckService(MockCardService(), CustomDeckService());
     });
 
     test('drawCards returns correct number of cards', () {
@@ -157,7 +158,7 @@ void main() {
     late DeckService deckService;
 
     setUp(() {
-      deckService = DeckService(MockCardService());
+      deckService = DeckService(MockCardService(), CustomDeckService());
     });
 
     test('drawSingleCard returns first card', () async {

@@ -12,6 +12,7 @@ import '../../../../../core/widgets/game_button.dart';
 import '../../../../../core/widgets/game_timer_widget.dart';
 import '../dialogs/rules_dialog.dart';
 import 'player_zone_widget.dart';
+import '../../../../../core/constants/game_constants.dart';
 
 /// Widget de la zone de jeu centrale affichant les cartes jouées ce tour
 /// Gère l'affichage des cartes en résolution, compteurs Ultima et Deck
@@ -84,14 +85,14 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
 
               // === COMPTEUR ULTIMA ===
               if (widget.session.ultimaOwnerId != null &&
-                  widget.session.ultimaTurnCount < 3)
+                  widget.session.ultimaTurnCount < GameConstants.ultimaMaxCount)
                 UltimaCounterWidget(
                   session: widget.session,
                   playerId: widget.playerId,
                 ),
 
               if (widget.session.ultimaOwnerId != null &&
-                  widget.session.ultimaTurnCount < 3)
+                  widget.session.ultimaTurnCount < GameConstants.ultimaMaxCount)
                 SizedBox(height: isSmallMobile ? 4 : 8),
 
               // === COMPTEUR DE DECK ===

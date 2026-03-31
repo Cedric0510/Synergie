@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../domain/models/game_card.dart';
+import '../../domain/enums/card_type.dart';
 
 /// Widget simple pour afficher une carte dans le deck builder
 /// Affiche l'illustration de la carte pour une reconnaissance visuelle rapide
 class SimpleCardWidget extends StatelessWidget {
   final GameCard card;
 
-  const SimpleCardWidget({
-    super.key,
-    required this.card,
-  });
+  const SimpleCardWidget({super.key, required this.card});
 
   @override
   Widget build(BuildContext context) {
@@ -21,16 +19,17 @@ class SimpleCardWidget extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(2),
-        child: card.imageUrl != null
-            ? Image.asset(
-                card.imageUrl!,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  // En cas d'erreur de chargement, afficher une icône
-                  return _buildFallbackIcon();
-                },
-              )
-            : _buildFallbackIcon(),
+        child:
+            card.imageUrl != null
+                ? Image.asset(
+                  card.imageUrl!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    // En cas d'erreur de chargement, afficher une icône
+                    return _buildFallbackIcon();
+                  },
+                )
+                : _buildFallbackIcon(),
       ),
     );
   }
@@ -41,11 +40,7 @@ class SimpleCardWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            _getCardIcon(),
-            color: Colors.white,
-            size: 32,
-          ),
+          Icon(_getCardIcon(), color: Colors.white, size: 32),
           const SizedBox(height: 4),
           Padding(
             padding: const EdgeInsets.all(4.0),
@@ -105,11 +100,11 @@ class SimpleCardWidget extends StatelessWidget {
       return Icons.auto_awesome;
     }
     switch (card.type) {
-      case 'ritual':
+      case CardType.ritual:
         return Icons.favorite;
-      case 'instant':
+      case CardType.instant:
         return Icons.flash_on;
-      default:
+      case CardType.enchantment:
         return Icons.style;
     }
   }

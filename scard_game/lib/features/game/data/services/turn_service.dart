@@ -1,31 +1,26 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/game_constants.dart';
-import '../../domain/models/game_session.dart';
+import '../../../../core/interfaces/i_game_session_service.dart';
 import '../../domain/models/player_data.dart';
 import '../../domain/enums/game_phase.dart';
 import '../../domain/enums/game_status.dart';
+import 'game_session_service.dart';
 
 /// Provider pour le service de gestion des tours
 final turnServiceProvider = Provider<TurnService>((ref) {
-  return TurnService();
+  final gameSessionService = ref.watch(gameSessionServiceProvider);
+  return TurnService(gameSessionService);
 });
 
-/// Service de gestion des phases et tours de jeu
-/// Extrait de FirebaseService pour respecter le principe S (Single Responsibility)
+/// Service de gestion des phases et tours de jeu.
 class TurnService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final IGameSessionService _gameSessionService;
 
-  static const String _collection = 'game_sessions';
+  TurnService(this._gameSessionService);
 
   /// Passer à la phase suivante du jeu
   Future<void> nextPhase(String sessionId) async {
-    final docRef = _firestore.collection(_collection).doc(sessionId);
-    final snapshot = await docRef.get();
-
-    if (!snapshot.exists) throw Exception('Session non trouvée');
-
-    final session = GameSession.fromJson(snapshot.data()!);
+    final session = await _gameSessionService.getSession(sessionId);
     GamePhase nextPhase;
     String? nextPlayerId;
 
@@ -92,7 +87,7 @@ class TurnService {
           newUltimaTurnCount = session.ultimaTurnCount + 1;
 
           // Vérifier si le compteur atteint 3
-          if (newUltimaTurnCount >= 3) {
+          if (newUltimaTurnCount >= GameConstants.ultimaMaxCount) {
             newWinnerId = session.ultimaOwnerId;
             newStatus = GameStatus.finished;
           }
@@ -100,29 +95,28 @@ class TurnService {
       }
     }
 
-    await docRef.update({
-      'currentPhase': nextPhase.name,
-      'currentPlayerId': nextPlayerId,
-      'ultimaTurnCount': newUltimaTurnCount,
-      'winnerId': newWinnerId,
-      'status': newStatus.name,
-      if (nextPhase == GamePhase.draw) 'drawDoneThisTurn': false,
-      if (nextPhase == GamePhase.draw) 'enchantmentEffectsDoneThisTurn': false,
-      if (updatedPlayer1Data != null)
-        'player1Data': updatedPlayer1Data.toJson(),
-      if (updatedPlayer2Data != null)
-        'player2Data': updatedPlayer2Data.toJson(),
-    });
+    final updatedSession = session.copyWith(
+      currentPhase: nextPhase,
+      currentPlayerId: nextPlayerId,
+      ultimaTurnCount: newUltimaTurnCount,
+      winnerId: newWinnerId,
+      status: newStatus,
+      drawDoneThisTurn:
+          nextPhase == GamePhase.draw ? false : session.drawDoneThisTurn,
+      enchantmentEffectsDoneThisTurn:
+          nextPhase == GamePhase.draw
+              ? false
+              : session.enchantmentEffectsDoneThisTurn,
+      player1Data: updatedPlayer1Data ?? session.player1Data,
+      player2Data: updatedPlayer2Data ?? session.player2Data,
+      updatedAt: DateTime.now(),
+    );
+    await _gameSessionService.updateSession(sessionId, updatedSession);
   }
 
   /// Termine le tour du joueur actuel et passe au joueur suivant
   Future<void> endTurn(String sessionId) async {
-    final docRef = _firestore.collection(_collection).doc(sessionId);
-    final snapshot = await docRef.get();
-
-    if (!snapshot.exists) throw Exception('Session non trouvée');
-
-    final session = GameSession.fromJson(snapshot.data()!);
+    final session = await _gameSessionService.getSession(sessionId);
 
     // Passer au joueur suivant
     final nextPlayerId =
@@ -131,18 +125,24 @@ class TurnService {
             : session.player1Id;
 
     // Réinitialiser à la phase de pioche pour le prochain tour
-    await docRef.update({
-      'currentPlayerId': nextPlayerId,
-      'currentPhase': GamePhase.draw.name,
-      'drawDoneThisTurn': false,
-      'enchantmentEffectsDoneThisTurn': false,
-    });
+    final updatedSession = session.copyWith(
+      currentPlayerId: nextPlayerId,
+      currentPhase: GamePhase.draw,
+      drawDoneThisTurn: false,
+      enchantmentEffectsDoneThisTurn: false,
+      updatedAt: DateTime.now(),
+    );
+    await _gameSessionService.updateSession(sessionId, updatedSession);
   }
 
   /// Marque la pioche automatique comme effectuée pour ce tour
   Future<void> setDrawDoneThisTurn(String sessionId, bool value) async {
-    final docRef = _firestore.collection(_collection).doc(sessionId);
-    await docRef.update({'drawDoneThisTurn': value});
+    final session = await _gameSessionService.getSession(sessionId);
+    final updatedSession = session.copyWith(
+      drawDoneThisTurn: value,
+      updatedAt: DateTime.now(),
+    );
+    await _gameSessionService.updateSession(sessionId, updatedSession);
   }
 
   /// Marque les effets d'enchantements comme appliqués pour ce tour
@@ -150,18 +150,24 @@ class TurnService {
     String sessionId,
     bool value,
   ) async {
-    final docRef = _firestore.collection(_collection).doc(sessionId);
-    await docRef.update({'enchantmentEffectsDoneThisTurn': value});
+    final session = await _gameSessionService.getSession(sessionId);
+    final updatedSession = session.copyWith(
+      enchantmentEffectsDoneThisTurn: value,
+      updatedAt: DateTime.now(),
+    );
+    await _gameSessionService.updateSession(sessionId, updatedSession);
   }
 
   /// Force le tour à un joueur spécifique (pour certains effets)
   Future<void> forceTurnToPlayer(String sessionId, String playerId) async {
-    final docRef = _firestore.collection(_collection).doc(sessionId);
-    await docRef.update({
-      'currentPlayerId': playerId,
-      'currentPhase': GamePhase.draw.name,
-      'drawDoneThisTurn': false,
-      'enchantmentEffectsDoneThisTurn': false,
-    });
+    final session = await _gameSessionService.getSession(sessionId);
+    final updatedSession = session.copyWith(
+      currentPlayerId: playerId,
+      currentPhase: GamePhase.draw,
+      drawDoneThisTurn: false,
+      enchantmentEffectsDoneThisTurn: false,
+      updatedAt: DateTime.now(),
+    );
+    await _gameSessionService.updateSession(sessionId, updatedSession);
   }
 }

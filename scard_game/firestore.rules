@@ -1,29 +1,73 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Sessions de jeu - accessible uniquement aux joueurs de la session
+
+    // Game sessions
     match /game_sessions/{sessionId} {
-      // Lecture: joueur authentifié qui fait partie de la session
-      allow read: if request.auth != null && 
-        (resource.data.player1Id == request.auth.uid || 
-         resource.data.player2Id == request.auth.uid);
-      
-      // Création: joueur authentifié
-      allow create: if request.auth != null && 
+      function isSessionPlayer() {
+        return resource.data.player1Id == request.auth.uid ||
+          resource.data.player2Id == request.auth.uid;
+      }
+
+      function isOpenSessionJoinUpdate() {
+        return resource.data.player2Id == null &&
+          request.resource.data.player2Id == request.auth.uid &&
+          request.resource.data.player2Data is map &&
+          request.resource.data.player2Data.playerId == request.auth.uid &&
+          request.resource.data.player2Data.name is string &&
+          request.resource.data.player2Data.name.size() > 0 &&
+          (
+            request.resource.data.player2Data.gender == 'male' ||
+            request.resource.data.player2Data.gender == 'female' ||
+            request.resource.data.player2Data.gender == 'other'
+          ) &&
+          request.resource.data.player2Data.isReady == false &&
+          request.resource.data.player1Id == resource.data.player1Id &&
+          request.resource.data.sessionId == resource.data.sessionId &&
+          request.resource.data.status == 'waiting' &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'player2Id',
+            'player2Data',
+            'status',
+            'updatedAt',
+          ]);
+      }
+
+      // Read:
+      // - player already in the session
+      // - OR open session (player2Id == null) to allow join by code
+      allow read: if request.auth != null &&
+        (
+          isSessionPlayer() ||
+          resource.data.player2Id == null
+        );
+
+      // Create: authenticated creator must be player1
+      allow create: if request.auth != null &&
         request.resource.data.player1Id == request.auth.uid;
-      
-      // Mise à jour: joueur authentifié qui fait partie de la session
-      allow update: if request.auth != null && 
-        (resource.data.player1Id == request.auth.uid || 
-         resource.data.player2Id == request.auth.uid);
-      
-      // Suppression: uniquement le créateur (player1)
-      allow delete: if request.auth != null && 
+
+      // Update:
+      // - existing player can update
+      // - OR authenticated user can join an open session as player2
+      allow update: if request.auth != null &&
+        (
+          isSessionPlayer() ||
+          isOpenSessionJoinUpdate()
+        );
+
+      // Delete: creator only
+      allow delete: if request.auth != null &&
         resource.data.player1Id == request.auth.uid;
     }
-    
-    // Règle par défaut: refuser tout accès
+
+    // Cards collection: read-only for authenticated users
+    // (legacy compatibility with code paths still querying /cards)
+    match /cards/{cardId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Default deny-all
     match /{document=**} {
       allow read, write: if false;
     }

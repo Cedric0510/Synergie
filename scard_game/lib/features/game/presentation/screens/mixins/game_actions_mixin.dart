@@ -4,11 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/constants/game_constants.dart';
 import '../../../../../core/extensions/game_session_extensions.dart';
 import '../../../data/services/card_service.dart';
-import '../../../data/services/firebase_service.dart';
 import '../../../data/services/game_session_service.dart';
+import '../../../data/services/gameplay_action_service.dart';
 import '../../../data/services/player_service.dart';
 import '../../../data/services/turn_service.dart';
 import '../../../data/services/mechanic_service.dart';
+import '../../../data/services/session_state_service.dart';
 import '../../../data/services/tension_service.dart';
 import '../../../domain/enums/card_color.dart';
 import '../../../domain/enums/card_level.dart';
@@ -46,7 +47,6 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   Future<void> discardSelectedCard() async {
     if (selectedCardIndex == null) return;
 
-    final firebaseService = ref.read(firebaseServiceProvider);
     final gameSessionService = ref.read(gameSessionServiceProvider);
 
     try {
@@ -63,18 +63,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
         updatedPlayerData,
       );
 
-      // Mettre à jour Firebase
-      final docRef = firebaseService.firestore
-          .collection('game_sessions')
-          .doc(sessionId);
-
-      final sessionJson = updatedSession.toJson();
-      sessionJson['player1Data'] = updatedSession.player1Data.toJson();
-      if (updatedSession.player2Data != null) {
-        sessionJson['player2Data'] = updatedSession.player2Data!.toJson();
-      }
-
-      await docRef.update(sessionJson);
+      await gameSessionService.updateSession(sessionId, updatedSession);
 
       setState(() {
         selectedCardIndex = null;
@@ -150,7 +139,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
 
   /// Piocher une carte manuellement
   Future<void> manualDrawCard() async {
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final gameplayActionService = ref.read(gameplayActionServiceProvider);
     final gameSessionService = ref.read(gameSessionServiceProvider);
 
     // Vérifier la limite de main (7 cartes max)
@@ -177,7 +166,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
     }
 
     try {
-      await firebaseService.drawCard(sessionId, playerId);
+      await gameplayActionService.drawCard(sessionId, playerId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -213,7 +202,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   Future<bool> _playCardInternal() async {
     if (selectedCardIndex == null) return false;
 
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final gameplayActionService = ref.read(gameplayActionServiceProvider);
     final gameSessionService = ref.read(gameSessionServiceProvider);
     final cardService = ref.read(cardServiceProvider);
     final tensionService = ref.read(tensionServiceProvider);
@@ -280,10 +269,10 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
         }
       }
 
-      final cost = firebaseService.parseLauncherCost(card.launcherCost);
+      final cost = gameplayActionService.parseLauncherCost(card.launcherCost);
       if (cost > 0) {
         try {
-          await firebaseService.payCost(sessionId, playerId, cost);
+          await gameplayActionService.payCost(sessionId, playerId, cost);
         } catch (e) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -298,14 +287,14 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
           selectedTier != null
               ? _tierKeyFromColor(selectedTier)
               : (card.isEnchantment ? _tierKeyFromColor(card.color) : null);
-      await firebaseService.playCard(
+      await gameplayActionService.playCard(
         sessionId,
         playerId,
         selectedCardIndex!,
         // Toujours passer le tierKey pour afficher le bon énoncé sur la carte jouée
         enchantmentTierKey: tierKey,
       );
-      
+
       setState(() {
         selectedCardIndex = null;
       });
@@ -376,7 +365,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
     PlayerData myData,
     String cardId,
   ) async {
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final gameSessionService = ref.read(gameSessionServiceProvider);
 
     try {
       final updatedHand = List<String>.from(myData.handCardIds);
@@ -396,16 +385,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
                 resolutionStack: updatedResolutionStack,
               );
 
-      final docRef = firebaseService.firestore
-          .collection('game_sessions')
-          .doc(sessionId);
-      final sessionJson = updatedSession.toJson();
-      sessionJson['player1Data'] = updatedSession.player1Data.toJson();
-      if (updatedSession.player2Data != null) {
-        sessionJson['player2Data'] = updatedSession.player2Data!.toJson();
-      }
-
-      await docRef.update(sessionJson);
+      await gameSessionService.updateSession(sessionId, updatedSession);
 
       setState(() {
         selectedCardIndex = null;
@@ -537,7 +517,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
     final count = _getDrawCountForTier(card, tier);
     if (count <= 0) return;
 
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final sessionStateService = ref.read(sessionStateServiceProvider);
     final gameSessionService = ref.read(gameSessionServiceProvider);
     final session = await gameSessionService.getSession(sessionId);
 
@@ -556,7 +536,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       ),
     );
 
-    await firebaseService.storePendingActions(sessionId, pendingActions);
+    await sessionStateService.storePendingActions(sessionId, pendingActions);
   }
 
   String _tierKeyFromColor(CardColor tier) {
@@ -600,7 +580,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
     if (card.mechanics.isEmpty) return;
 
     final mechanicService = ref.read(mechanicServiceProvider);
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final sessionStateService = ref.read(sessionStateServiceProvider);
     final gameSessionService = ref.read(gameSessionServiceProvider);
 
     final updatedSession = await gameSessionService.getSession(sessionId);
@@ -637,7 +617,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
     // Stocker les actions pendantes
     if (mechanicResult.pendingActions != null &&
         mechanicResult.pendingActions!.isNotEmpty) {
-      await firebaseService.storePendingActions(
+      await sessionStateService.storePendingActions(
         sessionId,
         mechanicResult.pendingActions!,
       );
@@ -650,14 +630,14 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       );
 
       if (isMyEnchantment) {
-        await firebaseService.removeEnchantment(
+        await sessionStateService.removeEnchantment(
           sessionId,
           playerId,
           mechanicResult.replacedEnchantmentId!,
         );
       } else {
         final opponentId = isPlayer1 ? session.player2Id! : session.player1Id;
-        await firebaseService.removeEnchantment(
+        await sessionStateService.removeEnchantment(
           sessionId,
           opponentId,
           mechanicResult.replacedEnchantmentId!,
@@ -681,24 +661,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
     final tensionService = ref.read(tensionServiceProvider);
     final gameSessionService = ref.read(gameSessionServiceProvider);
 
-    double tensionAmount = 0;
-    switch (card.color) {
-      case CardColor.white:
-        tensionAmount = 5.0;
-        break;
-      case CardColor.blue:
-        tensionAmount = 8.0;
-        break;
-      case CardColor.yellow:
-        tensionAmount = 12.0;
-        break;
-      case CardColor.red:
-        tensionAmount = 15.0;
-        break;
-      case CardColor.green:
-        tensionAmount = 0.0;
-        break;
-    }
+    final tensionAmount = tensionService.getTensionIncrease(card.color);
 
     if (tensionAmount > 0) {
       final levelChanged = await tensionService.increaseTension(
@@ -802,7 +765,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
 
   /// Annuler la carte jouée
   Future<void> cancelPlayedCard() async {
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final sessionStateService = ref.read(sessionStateServiceProvider);
     final gameSessionService = ref.read(gameSessionServiceProvider);
 
     try {
@@ -837,18 +800,8 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
               playedCardTiers: updatedPlayedTiers,
             );
 
-        final docRef = firebaseService.firestore
-            .collection('game_sessions')
-            .doc(sessionId);
-
-        final sessionJson = updatedSession.toJson();
-        sessionJson['player1Data'] = updatedSession.player1Data.toJson();
-        if (updatedSession.player2Data != null) {
-          sessionJson['player2Data'] = updatedSession.player2Data!.toJson();
-        }
-
-        await docRef.update(sessionJson);
-        await firebaseService.clearPendingActions(sessionId);
+        await gameSessionService.updateSession(sessionId, updatedSession);
+        await sessionStateService.clearPendingActions(sessionId);
 
         setState(() {
           pendingCardValidation = false;
@@ -881,10 +834,10 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   Future<void> sacrificeCard() async {
     if (selectedCardIndex == null) return;
 
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final gameplayActionService = ref.read(gameplayActionServiceProvider);
     try {
       // sacrificeCard() gère tout : retrait carte, +2% tension, pioche, fin de tour
-      await firebaseService.sacrificeCard(
+      await gameplayActionService.sacrificeCard(
         sessionId,
         playerId,
         selectedCardIndex!,
@@ -916,51 +869,14 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
 
   /// Supprimer un enchantement
   Future<void> deleteEnchantment(String enchantmentId) async {
-    final firebaseService = ref.read(firebaseServiceProvider);
-    final gameSessionService = ref.read(gameSessionServiceProvider);
+    final sessionStateService = ref.read(sessionStateServiceProvider);
 
     try {
-      final session = await gameSessionService.getSession(sessionId);
-      final isPlayer1 = session.player1Id == playerId;
-      final myData = isPlayer1 ? session.player1Data : session.player2Data!;
-
-      final updatedEnchantments = List<String>.from(
-        myData.activeEnchantmentIds,
+      await sessionStateService.removeEnchantment(
+        sessionId,
+        playerId,
+        enchantmentId,
       );
-      updatedEnchantments.remove(enchantmentId);
-      final updatedEnchantmentTiers = Map<String, String>.from(
-        myData.activeEnchantmentTiers,
-      );
-      updatedEnchantmentTiers.remove(enchantmentId);
-
-      // Logique spéciale pour Ultima
-      final updatedHand = List<String>.from(myData.handCardIds);
-      if (enchantmentId.contains(GameConstants.ultimaCardId)) {
-        updatedHand.add(enchantmentId);
-      }
-
-      final updatedMyData = myData.copyWith(
-        activeEnchantmentIds: updatedEnchantments,
-        activeEnchantmentTiers: updatedEnchantmentTiers,
-        handCardIds: updatedHand,
-      );
-
-      final updatedSession =
-          isPlayer1
-              ? session.copyWith(player1Data: updatedMyData)
-              : session.copyWith(player2Data: updatedMyData);
-
-      final docRef = firebaseService.firestore
-          .collection('game_sessions')
-          .doc(sessionId);
-
-      final sessionJson = updatedSession.toJson();
-      sessionJson['player1Data'] = updatedSession.player1Data.toJson();
-      if (updatedSession.player2Data != null) {
-        sessionJson['player2Data'] = updatedSession.player2Data!.toJson();
-      }
-
-      await docRef.update(sessionJson);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -983,7 +899,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   /// Exécute les actions pendantes du sort en phase Resolution
   Future<void> executePendingActions(GameSession session) async {
     final mechanicService = ref.read(mechanicServiceProvider);
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final sessionStateService = ref.read(sessionStateServiceProvider);
 
     try {
       final pendingActions =
@@ -999,7 +915,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
         actions: pendingActions,
       );
 
-      await firebaseService.clearPendingActions(sessionId);
+      await sessionStateService.clearPendingActions(sessionId);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1023,7 +939,6 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   /// - Accord trouvé : sort contré, carte négociation défaussée (perdue)
   /// - Pas d'accord : sort joué normalement, carte négociation remélangée dans le deck
   Future<void> resolveNegotiation(bool agreement) async {
-    final firebaseService = ref.read(firebaseServiceProvider);
     final gameSessionService = ref.read(gameSessionServiceProvider);
     final turnService = ref.read(turnServiceProvider);
 
@@ -1108,7 +1023,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
                 );
       }
 
-      await firebaseService.updateSession(sessionId, updatedSession);
+      await gameSessionService.updateSession(sessionId, updatedSession);
       await turnService.nextPhase(sessionId);
 
       if (mounted) {

@@ -13,7 +13,7 @@ class GameConstants {
   static const int minHandSizeBeforeDraw = 3;
 
   // === Points d'Intimité (PI) ===
-  static const int initialPI = 5;
+  static const int initialPI = 20;
   static const int maxPI = 99;
   static const int minPI = 0;
 
@@ -24,9 +24,9 @@ class GameConstants {
   // Montants de tension par couleur de carte
   static const Map<String, double> tensionByCardColor = {
     'white': 5.0,
-    'blue': 10.0,
-    'yellow': 15.0,
-    'red': 20.0,
+    'blue': 8.0,
+    'yellow': 12.0,
+    'red': 15.0,
     'green': 0.0, // Cartes de négociation
   };
 
@@ -36,11 +36,11 @@ class GameConstants {
   static const double tensionThresholdRed = 75.0;
 
   // === Compteur ULTIMA ===
-  static const int ultimaMaxCount = 5;
+  static const int ultimaMaxCount = 3;
   static const int ultimaInitialCount = 0;
 
   // === Deck ===
-  static const int deckSize = 30;
+  static const int deckSize = 25;
 
   // === UI Timings (en millisecondes) ===
   static const int dragDropDelay = 100;

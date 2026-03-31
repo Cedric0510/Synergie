@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/constants/game_constants.dart';
-import '../../../data/services/firebase_service.dart';
 import '../../../data/services/game_session_service.dart';
-import '../../../data/services/turn_service.dart';
 import '../../../data/services/mechanic_service.dart';
+import '../../../data/services/session_state_service.dart';
+import '../../../data/services/turn_service.dart';
 import '../../../domain/models/game_session.dart';
 
 /// Mixin contenant les méthodes utilitaires pour la gestion du jeu
@@ -76,7 +76,7 @@ mixin GameUtilsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   /// Exécute les actions pendantes du sort en phase Resolution
   Future<void> executePendingActions(GameSession session) async {
     final mechanicService = ref.read(mechanicServiceProvider);
-    final firebaseService = ref.read(firebaseServiceProvider);
+    final sessionStateService = ref.read(sessionStateServiceProvider);
 
     try {
       // Convertir les Map en PendingAction
@@ -95,7 +95,7 @@ mixin GameUtilsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       );
 
       // Effacer les actions pendantes
-      await firebaseService.clearPendingActions(sessionId);
+      await sessionStateService.clearPendingActions(sessionId);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -137,7 +137,6 @@ mixin GameUtilsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
 
   /// Donner la carte Ultima au joueur quand il atteint 100% de tension
   Future<void> giveUltimaCard() async {
-    final firebaseService = ref.read(firebaseServiceProvider);
     final gameSessionService = ref.read(gameSessionServiceProvider);
 
     try {
@@ -156,18 +155,7 @@ mixin GameUtilsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
               ? session.copyWith(player1Data: updatedPlayerData)
               : session.copyWith(player2Data: updatedPlayerData);
 
-      // Mettre à jour dans Firebase
-      final docRef = firebaseService.firestore
-          .collection('game_sessions')
-          .doc(sessionId);
-
-      final sessionJson = updatedSession.toJson();
-      sessionJson['player1Data'] = updatedSession.player1Data.toJson();
-      if (updatedSession.player2Data != null) {
-        sessionJson['player2Data'] = updatedSession.player2Data!.toJson();
-      }
-
-      await docRef.update(sessionJson);
+      await gameSessionService.updateSession(sessionId, updatedSession);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

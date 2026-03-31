@@ -29,7 +29,7 @@ void main() {
 
   group('GameConstants - Points d\'Intimité (PI)', () {
     test('PI limits are valid', () {
-      expect(GameConstants.initialPI, 5);
+      expect(GameConstants.initialPI, 20);
       expect(GameConstants.maxPI, 99);
       expect(GameConstants.minPI, 0);
 
@@ -61,9 +61,9 @@ void main() {
       final green = GameConstants.tensionByCardColor['green']!;
 
       expect(white, 5.0);
-      expect(blue, 10.0);
-      expect(yellow, 15.0);
-      expect(red, 20.0);
+      expect(blue, 8.0);
+      expect(yellow, 12.0);
+      expect(red, 15.0);
       expect(green, 0.0); // Négociation cards don't increase tension
 
       // Increasing order
@@ -95,7 +95,7 @@ void main() {
 
   group('GameConstants - Compteur ULTIMA', () {
     test('ULTIMA counter limits are valid', () {
-      expect(GameConstants.ultimaMaxCount, 5);
+      expect(GameConstants.ultimaMaxCount, 3);
       expect(GameConstants.ultimaInitialCount, 0);
 
       expect(
@@ -107,7 +107,7 @@ void main() {
 
   group('GameConstants - Deck', () {
     test('deck size is reasonable', () {
-      expect(GameConstants.deckSize, 30);
+      expect(GameConstants.deckSize, 25);
       expect(GameConstants.deckSize, greaterThan(GameConstants.maxHandSize));
     });
   });

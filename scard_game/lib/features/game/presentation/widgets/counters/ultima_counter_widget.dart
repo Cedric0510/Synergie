@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../../../core/constants/game_constants.dart';
 import '../../../domain/models/game_session.dart';
 
-/// Widget affichant le compteur Ultima (3 tours max)
+/// Widget affichant le compteur Ultima.
 /// Indique qui possède Ultima et le nombre de tours restants
 class UltimaCounterWidget extends StatelessWidget {
   final GameSession session;
@@ -88,7 +89,9 @@ class UltimaCounterWidget extends StatelessWidget {
               ),
               SizedBox(height: isSmallMobile ? 1 : 2),
               Text(
-                isSmallMobile ? '$turnCount/3' : 'Tour $turnCount/3',
+                isSmallMobile
+                    ? '$turnCount/${GameConstants.ultimaMaxCount}'
+                    : 'Tour $turnCount/${GameConstants.ultimaMaxCount}',
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.9),
                   fontSize: isSmallMobile ? 10 : (isMobile ? 13 : 15),
