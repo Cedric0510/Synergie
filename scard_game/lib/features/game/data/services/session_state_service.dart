@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/interfaces/i_game_session_service.dart';
@@ -61,7 +63,7 @@ class SessionStateService {
     final ownerData = isPlayer1 ? session.player1Data : session.player2Data;
     if (ownerData == null) return;
 
-    final currentEnchantments = List<String>.from(
+    final currentEnchantments = LinkedHashSet<String>.from(
       ownerData.activeEnchantmentIds,
     )..addAll(enchantments);
     final currentEnchantmentTiers = Map<String, String>.from(
@@ -75,7 +77,7 @@ class SessionStateService {
       opponentData?.activeStatusModifiers ?? const <String, List<String>>{},
     );
 
-    for (final enchantmentId in enchantments) {
+    for (final enchantmentId in LinkedHashSet<String>.from(enchantments)) {
       final card = cardsById[enchantmentId];
       final tierKey =
           session.playedCardTiers[enchantmentId] ?? card?.color.name ?? 'white';
@@ -109,7 +111,7 @@ class SessionStateService {
         isPlayer1
             ? session.copyWith(
               player1Data: session.player1Data.copyWith(
-                activeEnchantmentIds: currentEnchantments,
+                activeEnchantmentIds: currentEnchantments.toList(),
                 activeEnchantmentTiers: currentEnchantmentTiers,
                 activeStatusModifiers: currentStatusModifiers,
               ),
@@ -125,7 +127,7 @@ class SessionStateService {
             )
             : session.copyWith(
               player2Data: session.player2Data!.copyWith(
-                activeEnchantmentIds: currentEnchantments,
+                activeEnchantmentIds: currentEnchantments.toList(),
                 activeEnchantmentTiers: currentEnchantmentTiers,
                 activeStatusModifiers: currentStatusModifiers,
               ),
@@ -177,7 +179,7 @@ class SessionStateService {
 
     final updatedEnchantments = List<String>.from(
       playerData.activeEnchantmentIds,
-    )..remove(enchantmentId);
+    )..removeWhere((id) => id == enchantmentId);
     final updatedEnchantmentTiers = Map<String, String>.from(
       playerData.activeEnchantmentTiers,
     )..remove(enchantmentId);

@@ -10,6 +10,7 @@ import '../../../domain/enums/game_phase.dart';
 import '../../../domain/enums/card_type.dart';
 import '../../../domain/enums/card_level.dart';
 import '../card_widget.dart';
+import '../counters/deck_counter_widget.dart';
 import '../counters/tension_bar_widget.dart';
 import '../enchantments/compact_enchantments_widget.dart';
 
@@ -35,6 +36,9 @@ class PlayerZoneWidget extends ConsumerStatefulWidget {
   final int? selectedCardIndex;
   final bool isDiscardMode;
   final Function(int) onSelectCard;
+  final int remainingDeckCards;
+  final VoidCallback onEndTurn;
+  final bool canEndTurn;
   final VoidCallback onIncrementPI;
   final VoidCallback onDecrementPI;
   final VoidCallback onManualDrawCard;
@@ -57,6 +61,9 @@ class PlayerZoneWidget extends ConsumerStatefulWidget {
     required this.selectedCardIndex,
     required this.isDiscardMode,
     required this.onSelectCard,
+    required this.remainingDeckCards,
+    required this.onEndTurn,
+    required this.canEndTurn,
     required this.onIncrementPI,
     required this.onDecrementPI,
     required this.onManualDrawCard,
@@ -72,6 +79,8 @@ class PlayerZoneWidget extends ConsumerStatefulWidget {
 
 class _PlayerZoneWidgetState extends ConsumerState<PlayerZoneWidget> {
   bool _isDragOverHand = false;
+  int? _hoveredCardIndex;
+  int? _pressedCardIndex;
 
   @override
   Widget build(BuildContext context) {
@@ -111,6 +120,8 @@ class _PlayerZoneWidgetState extends ConsumerState<PlayerZoneWidget> {
           // Infos compactes + barre de tension (collées en bas)
           _buildCompactStatus(context),
           SizedBox(height: isSmallMobile ? 2 : 4),
+          _buildDeckAndTurnControls(isSmallMobile),
+          SizedBox(height: isSmallMobile ? 2 : 4),
           TensionBarWidget(tension: widget.myData.tension),
         ],
       ),
@@ -121,36 +132,31 @@ class _PlayerZoneWidgetState extends ConsumerState<PlayerZoneWidget> {
   Widget _buildHandCards(BuildContext context, CardService cardService) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Calcul de la taille des cartes avec ratio fixe
         final screenWidth = MediaQuery.of(context).size.width;
         final isMobile = screenWidth < 600;
         final isSmallMobile = screenWidth < 380;
-
-        // Ratio fixe des cartes (1:1.55)
         final cardRatio = 1.55;
-
-        // Largeur de carte basée sur l'écran
+        // Cartes volontairement plus grandes; le chevauchement compense la place.
         final baseCardWidth =
             isSmallMobile
-                ? (screenWidth / 6.0)
+                ? (screenWidth / 4.9)
                 : isMobile
-                ? (screenWidth / 6.5)
-                : (screenWidth / 8.0);
+                ? (screenWidth / 5.4)
+                : (screenWidth / 7.0);
         final cardWidth = baseCardWidth.clamp(
-          isSmallMobile ? 38.0 : 45.0,
-          isSmallMobile ? 55.0 : 80.0,
+          isSmallMobile ? 48.0 : 64.0,
+          isSmallMobile ? 72.0 : 105.0,
         );
         final cardHeight = cardWidth * cardRatio;
-
-        // Hauteur du conteneur légèrement plus grande pour l'effet hover
-        final containerHeight = cardHeight + (isSmallMobile ? 15 : 30);
-
-        // Accepter le retour de carte depuis la zone de jeu (cardIndex == -1)
+        final containerHeight = cardHeight + (isSmallMobile ? 26 : 42);
         final canAcceptReturn = widget.onCardReturnedFromPlayZone != null;
+        final visibleIndexes = <int>[
+          for (int i = 0; i < widget.myData.handCardIds.length; i++)
+            if (widget.pendingCardIndex != i) i,
+        ];
 
         return DragTarget<DraggedCardData>(
           onWillAcceptWithDetails: (details) {
-            // Accepter seulement les cartes venant de la zone de jeu (index -1)
             if (canAcceptReturn && details.data.cardIndex == -1) {
               setState(() => _isDragOverHand = true);
               return true;
@@ -181,7 +187,7 @@ class _PlayerZoneWidgetState extends ConsumerState<PlayerZoneWidget> {
                         : Colors.transparent,
               ),
               child:
-                  widget.myData.handCardIds.isEmpty
+                  visibleIndexes.isEmpty
                       ? Center(
                         child: Text(
                           'Aucune carte en main',
@@ -191,21 +197,23 @@ class _PlayerZoneWidgetState extends ConsumerState<PlayerZoneWidget> {
                           ),
                         ),
                       )
-                      : ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: widget.myData.handCardIds.length,
-                        itemBuilder: (context, index) {
-                          // Masquer la carte qui est en pending (en cours de drag vers la zone de jeu)
-                          if (widget.pendingCardIndex == index) {
-                            return const SizedBox.shrink();
+                      : FutureBuilder<List<GameCard>>(
+                        future: cardService.loadAllCards(),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
                           }
-                          return _buildHandCard(
-                            context,
-                            cardService,
-                            index,
-                            cardWidth,
-                            cardHeight,
-                            isMobile,
+
+                          return _buildOverlappedHand(
+                            context: context,
+                            cardService: cardService,
+                            allCards: snapshot.data!,
+                            visibleIndexes: visibleIndexes,
+                            cardWidth: cardWidth,
+                            cardHeight: cardHeight,
+                            maxWidth: constraints.maxWidth,
                           );
                         },
                       ),
@@ -216,15 +224,84 @@ class _PlayerZoneWidgetState extends ConsumerState<PlayerZoneWidget> {
     );
   }
 
+  Widget _buildOverlappedHand({
+    required BuildContext context,
+    required CardService cardService,
+    required List<GameCard> allCards,
+    required List<int> visibleIndexes,
+    required double cardWidth,
+    required double cardHeight,
+    required double maxWidth,
+  }) {
+    final cardsById = {for (final c in allCards) c.id: c};
+    final displayPosByIndex = <int, int>{
+      for (int i = 0; i < visibleIndexes.length; i++) visibleIndexes[i]: i,
+    };
+
+    final count = visibleIndexes.length;
+    final minSpacing = cardWidth * 0.34;
+    final maxSpacing = cardWidth * 0.86;
+    final availableWidth = (maxWidth - 6).clamp(cardWidth, double.infinity);
+    final spacing =
+        count <= 1
+            ? cardWidth
+            : ((availableWidth - cardWidth) / (count - 1)).clamp(
+              minSpacing,
+              maxSpacing,
+            );
+    final totalWidth =
+        count <= 1 ? cardWidth : cardWidth + (count - 1) * spacing;
+
+    final stackedIndexes = List<int>.from(visibleIndexes)..sort((a, b) {
+      final priorityDiff = _interactionPriority(a) - _interactionPriority(b);
+      if (priorityDiff != 0) return priorityDiff;
+      return displayPosByIndex[a]!.compareTo(displayPosByIndex[b]!);
+    });
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: SizedBox(
+        width: totalWidth + (cardWidth * 0.25),
+        height: cardHeight + 28,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            for (final index in stackedIndexes)
+              AnimatedPositioned(
+                key: ValueKey('hand_card_$index'),
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOutCubic,
+                left: displayPosByIndex[index]! * spacing,
+                top: _verticalOffsetFor(index),
+                child: AnimatedScale(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOutCubic,
+                  scale: _scaleFor(index),
+                  child: _buildHandCard(
+                    context: context,
+                    cardService: cardService,
+                    index: index,
+                    card: cardsById[widget.myData.handCardIds[index]],
+                    cardWidth: cardWidth,
+                    cardHeight: cardHeight,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// Construction d'une carte individuelle de la main
-  Widget _buildHandCard(
-    BuildContext context,
-    CardService cardService,
-    int index,
-    double cardWidth,
-    double cardHeight,
-    bool isMobile,
-  ) {
+  Widget _buildHandCard({
+    required BuildContext context,
+    required CardService cardService,
+    required int index,
+    required GameCard? card,
+    required double cardWidth,
+    required double cardHeight,
+  }) {
     final cardId = widget.myData.handCardIds[index];
     final isSelected = widget.selectedCardIndex == index;
 
@@ -240,136 +317,144 @@ class _PlayerZoneWidgetState extends ConsumerState<PlayerZoneWidget> {
     // Permettre le drag uniquement si on peut jouer (pas en mode défausse)
     final canDrag =
         canSelect && !widget.isDiscardMode && widget.onCardDragged != null;
+    final resolvedCard = card;
+    if (resolvedCard == null) {
+      return Container(
+        width: cardWidth,
+        height: cardHeight,
+        decoration: BoxDecoration(
+          color: const Color(0xFF2d4263),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    }
 
-    return FutureBuilder<List<GameCard>>(
-      future: cardService.loadAllCards(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return Container(
-            width: cardWidth,
-            height: cardHeight,
-            margin: const EdgeInsets.only(right: 8, top: 20),
-            decoration: BoxDecoration(
-              color: const Color(0xFF2d4263),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Center(child: CircularProgressIndicator()),
-          );
-        }
+    // En phase response, vérifier si la carte est jouable
+    final isPlayableInResponse =
+        widget.session.currentPhase == GamePhase.response &&
+        !widget.isMyTurn &&
+        resolvedCard.type != CardType.instant;
 
-        final allCards = snapshot.data!;
-        final card = allCards.firstWhere(
-          (c) => c.id == cardId,
-          orElse: () => allCards.first,
-        );
+    final tensionService = ref.read(tensionServiceProvider);
+    final effectiveLevel = _effectiveLevelFromTension(widget.myData.tension);
+    final isLocked =
+        !tensionService.canPlayCard(resolvedCard.color, effectiveLevel);
+    final isDraggable = canDrag && !isLocked && !isPlayableInResponse;
 
-        // En phase response, vérifier si la carte est jouable
-        final isPlayableInResponse =
-            widget.session.currentPhase == GamePhase.response &&
-            !widget.isMyTurn &&
-            card.type != CardType.instant;
-
-        // Vérifier si la carte est verrouillée par le niveau
-        final tensionService = ref.read(tensionServiceProvider);
-
-        // Calculer le niveau actuel basé sur la tension
-        CardLevel effectiveLevel = widget.myData.currentLevel;
-        if (widget.myData.tension >= 75) {
-          effectiveLevel = CardLevel.red;
-        } else if (widget.myData.tension >= 50) {
-          effectiveLevel = CardLevel.yellow;
-        } else if (widget.myData.tension >= 25) {
-          effectiveLevel = CardLevel.blue;
-        } else {
-          effectiveLevel = CardLevel.white;
-        }
-
-        final isLocked =
-            !tensionService.canPlayCard(card.color, effectiveLevel);
-
-        // La carte peut être draguée si elle n'est pas verrouillée et pas en response invalide
-        final isDraggable = canDrag && !isLocked && !isPlayableInResponse;
-
-        // Widget de la carte
-        final cardWidget = _buildCardContent(
-          card: card,
-          cardWidth: cardWidth,
-          cardHeight: cardHeight,
-          isSelected: isSelected,
-          isPlayableInResponse: isPlayableInResponse,
-          isLocked: isLocked,
-          effectiveLevel: effectiveLevel,
-        );
-
-        // Si draggable, wrapper dans LongPressDraggable
-        if (isDraggable) {
-          return LongPressDraggable<DraggedCardData>(
-            data: DraggedCardData(cardIndex: index, cardId: cardId, card: card),
-            delay: const Duration(milliseconds: 150),
-            hapticFeedbackOnStart: true,
-            // Feedback : carte agrandie qui suit le doigt
-            feedback: Transform.scale(
-              scale: 1.2,
-              child: Material(
-                color: Colors.transparent,
-                elevation: 8,
-                borderRadius: BorderRadius.circular(12),
-                child: CardWidget(
-                  card: card,
-                  width: cardWidth * 1.3,
-                  compact: true,
-                  currentLevel: effectiveLevel,
-                ),
-              ),
-            ),
-            // Carte grisée quand on drag
-            childWhenDragging: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              margin: EdgeInsets.only(right: 8, top: isSelected ? 0 : 20),
-              child: Opacity(opacity: 0.3, child: cardWidget),
-            ),
-            onDragStarted: () {
-              HapticFeedback.mediumImpact();
-            },
-            child: GestureDetector(
-              onTap: canSelect ? () => widget.onSelectCard(index) : null,
-              onDoubleTap:
-                  () => _showCardPreviewDialog(context, cardService, cardId),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: EdgeInsets.only(right: 8, top: isSelected ? 0 : 20),
-                transform: Matrix4.diagonal3Values(
-                  isSelected ? 1.1 : 1.0,
-                  isSelected ? 1.1 : 1.0,
-                  1.0,
-                ),
-                child: Opacity(
-                  opacity: canSelect ? 1.0 : 0.5,
-                  child: cardWidget,
-                ),
-              ),
-            ),
-          );
-        }
-
-        // Sinon, juste le GestureDetector comme avant
-        return GestureDetector(
-          onTap: canSelect ? () => widget.onSelectCard(index) : null,
-          onDoubleTap:
-              () => _showCardPreviewDialog(context, cardService, cardId),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            margin: EdgeInsets.only(right: 8, top: isSelected ? 0 : 20),
-            transform: Matrix4.diagonal3Values(
-              isSelected ? 1.1 : 1.0,
-              isSelected ? 1.1 : 1.0,
-              1.0,
-            ),
-            child: Opacity(opacity: canSelect ? 1.0 : 0.5, child: cardWidget),
-          ),
-        );
-      },
+    final cardWidget = _buildCardContent(
+      card: resolvedCard,
+      cardWidth: cardWidth,
+      cardHeight: cardHeight,
+      isSelected: isSelected,
+      isPlayableInResponse: isPlayableInResponse,
+      isLocked: isLocked,
+      effectiveLevel: effectiveLevel,
     );
+
+    final interactiveChild = MouseRegion(
+      onEnter: (_) {
+        if (_hoveredCardIndex != index) {
+          setState(() => _hoveredCardIndex = index);
+        }
+      },
+      onExit: (_) {
+        if (_hoveredCardIndex == index) {
+          setState(() => _hoveredCardIndex = null);
+        }
+      },
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: (_) {
+          if (_pressedCardIndex != index) {
+            setState(() => _pressedCardIndex = index);
+          }
+        },
+        onTapUp: (_) {
+          if (_pressedCardIndex == index) {
+            setState(() => _pressedCardIndex = null);
+          }
+        },
+        onTapCancel: () {
+          if (_pressedCardIndex == index) {
+            setState(() => _pressedCardIndex = null);
+          }
+        },
+        onTap:
+            canSelect
+                ? () {
+                  final isNewSelection = widget.selectedCardIndex != index;
+                  widget.onSelectCard(index);
+                  if (isNewSelection) {
+                    _showCardPreviewDialog(context, cardService, cardId);
+                  }
+                }
+                : null,
+        onDoubleTap: () => _showCardPreviewDialog(context, cardService, cardId),
+        child: Opacity(opacity: canSelect ? 1.0 : 0.5, child: cardWidget),
+      ),
+    );
+
+    if (!isDraggable) {
+      return interactiveChild;
+    }
+
+    return LongPressDraggable<DraggedCardData>(
+      data: DraggedCardData(
+        cardIndex: index,
+        cardId: cardId,
+        card: resolvedCard,
+      ),
+      delay: const Duration(milliseconds: 150),
+      hapticFeedbackOnStart: true,
+      feedback: Transform.scale(
+        scale: 1.2,
+        child: Material(
+          color: Colors.transparent,
+          elevation: 8,
+          borderRadius: BorderRadius.circular(12),
+          child: CardWidget(
+            card: resolvedCard,
+            width: cardWidth * 1.3,
+            compact: true,
+            currentLevel: effectiveLevel,
+          ),
+        ),
+      ),
+      childWhenDragging: Opacity(opacity: 0.28, child: cardWidget),
+      onDragStarted: () {
+        HapticFeedback.mediumImpact();
+        if (_pressedCardIndex == index) {
+          setState(() => _pressedCardIndex = null);
+        }
+      },
+      child: interactiveChild,
+    );
+  }
+
+  CardLevel _effectiveLevelFromTension(double tension) {
+    if (tension >= 75) return CardLevel.red;
+    if (tension >= 50) return CardLevel.yellow;
+    if (tension >= 25) return CardLevel.blue;
+    return CardLevel.white;
+  }
+
+  int _interactionPriority(int index) {
+    if (widget.selectedCardIndex == index) return 2;
+    if (_hoveredCardIndex == index || _pressedCardIndex == index) return 1;
+    return 0;
+  }
+
+  double _verticalOffsetFor(int index) {
+    if (widget.selectedCardIndex == index) return 0;
+    if (_hoveredCardIndex == index || _pressedCardIndex == index) return 6;
+    return 16;
+  }
+
+  double _scaleFor(int index) {
+    if (widget.selectedCardIndex == index) return 1.16;
+    if (_hoveredCardIndex == index || _pressedCardIndex == index) return 1.09;
+    return 1.0;
   }
 
   /// Construit le contenu visuel de la carte
@@ -483,6 +568,88 @@ class _PlayerZoneWidgetState extends ConsumerState<PlayerZoneWidget> {
         if (widget.myData.handCardIds.length >= 7)
           _buildFullHandIndicator(isSmallMobile: isSmallMobile),
       ],
+    );
+  }
+
+  /// Ligne deck + fin de tour en bas pour éviter d'encombrer la zone centrale
+  Widget _buildDeckAndTurnControls(bool isSmallMobile) {
+    return Row(
+      children: [
+        DeckCounterWidget(remainingCards: widget.remainingDeckCards),
+        const Spacer(),
+        if (widget.isMyTurn) _buildEndTurnButton(isSmallMobile),
+      ],
+    );
+  }
+
+  Widget _buildEndTurnButton(bool isSmallMobile) {
+    final enabled = widget.canEndTurn;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: enabled ? widget.onEndTurn : null,
+        borderRadius: BorderRadius.circular(14),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: EdgeInsets.symmetric(
+            horizontal: isSmallMobile ? 8 : 10,
+            vertical: isSmallMobile ? 4 : 6,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors:
+                  enabled
+                      ? [
+                        const Color(0xFF6DD5FA).withValues(alpha: 0.36),
+                        const Color(0xFF6DD5FA).withValues(alpha: 0.20),
+                      ]
+                      : [
+                        Colors.white.withValues(alpha: 0.20),
+                        Colors.white.withValues(alpha: 0.10),
+                      ],
+            ),
+            border: Border.all(
+              color:
+                  enabled
+                      ? const Color(0xFF6DD5FA).withValues(alpha: 0.6)
+                      : Colors.white.withValues(alpha: 0.30),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color:
+                    enabled
+                        ? const Color(0xFF6DD5FA).withValues(alpha: 0.35)
+                        : Colors.black.withValues(alpha: 0.16),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.skip_next_rounded,
+                size: isSmallMobile ? 14 : 16,
+                color: enabled ? Colors.white : Colors.white54,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Passer',
+                style: TextStyle(
+                  color: enabled ? Colors.white : Colors.white54,
+                  fontSize: isSmallMobile ? 10 : 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

@@ -314,23 +314,8 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       // Augmenter la tension
       await _handleTensionIncrease(card);
 
-      // Activer l'état de validation en attente
-      setState(() {
-        pendingCardValidation = true;
-        selectedCardIndex = null;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              '✅ Carte jouée ! Cliquez sur "Valider" pour confirmer ou "Retour" pour annuler',
-            ),
-            backgroundColor: Colors.blue,
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
+      // Validation automatique : carte posée = carte jouée.
+      await validatePlayedCard();
       return true; // Card played successfully
     } catch (e) {
       if (mounted) {
@@ -825,43 +810,6 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
             content: Text('❌ Erreur lors de l\'annulation: $e'),
             backgroundColor: Colors.red,
           ),
-        );
-      }
-    }
-  }
-
-  /// Sacrifier une carte
-  Future<void> sacrificeCard() async {
-    if (selectedCardIndex == null) return;
-
-    final gameplayActionService = ref.read(gameplayActionServiceProvider);
-    try {
-      // sacrificeCard() gère tout : retrait carte, +2% tension, pioche, fin de tour
-      await gameplayActionService.sacrificeCard(
-        sessionId,
-        playerId,
-        selectedCardIndex!,
-      );
-
-      setState(() {
-        selectedCardIndex = null;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              '✅ Carte sacrifiée (+2% Tension, +1 carte piochée) - Tour terminé',
-            ),
-            backgroundColor: Colors.orange,
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ Erreur: $e'), backgroundColor: Colors.red),
         );
       }
     }

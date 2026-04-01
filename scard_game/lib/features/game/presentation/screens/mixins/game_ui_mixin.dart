@@ -20,7 +20,6 @@ mixin GameUIMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   Future<void> validatePlayedCard();
   Future<void> cancelPlayedCard();
   Future<void> playCard();
-  Future<void> sacrificeCard();
   Future<void> deleteEnchantment(String enchantmentId);
   Future<void> incrementPI();
   Future<void> decrementPI();
@@ -32,75 +31,22 @@ mixin GameUIMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       runSpacing: 4,
       alignment: WrapAlignment.center,
       children: [
-        // Phase Draw est maintenant automatisée - pas de boutons
-        // Le joueur passe directement en phase Main après la pioche et les enchantements
-
-        // Passer mon tour
-        if (isMyTurn &&
-            session.currentPhase == GamePhase.main &&
-            selectedCardIndex == null)
-          buildCrystalButton(
-            label: 'Passer',
-            icon: Icons.skip_next,
-            onPressed: skipTurn,
-            gradientColors: [
-              Colors.grey.withValues(alpha: 0.45),
-              Colors.grey.withValues(alpha: 0.30),
-            ],
-          ),
-
-        // Valider/Retour si carte jouée en attente, sinon Jouer/Sacrifier
-        if (pendingCardValidation) ...[
-          // Boutons de validation après avoir joué une carte
-          buildCrystalButton(
-            label: 'Valider',
-            icon: Icons.check,
-            onPressed: validatePlayedCard,
-            gradientColors: [
-              Colors.blue.withValues(alpha: 0.45),
-              Colors.blue.withValues(alpha: 0.30),
-            ],
-          ),
-          buildCrystalButton(
-            label: 'Retour',
-            icon: Icons.undo,
-            onPressed: cancelPlayedCard,
-            gradientColors: [
-              Colors.orange.withValues(alpha: 0.45),
-              Colors.orange.withValues(alpha: 0.30),
-            ],
-          ),
-        ] else if (selectedCardIndex != null) ...[
+        // Avec validation auto, on ne garde ici que le bouton "Jouer"
+        // pour les joueurs qui préfèrent tap + bouton plutôt que drag & drop.
+        if (selectedCardIndex != null) ...[
           Builder(
             builder: (context) {
               final canPlay =
                   (isMyTurn && session.currentPhase == GamePhase.main) ||
                   (!isMyTurn && session.currentPhase == GamePhase.response);
-              final canSacrifice =
-                  isMyTurn && session.currentPhase == GamePhase.main;
 
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  buildCrystalButton(
-                    label: 'Jouer',
-                    icon: Icons.play_arrow,
-                    onPressed: canPlay ? playCard : null,
-                    gradientColors: [
-                      Colors.green.withValues(alpha: 0.45),
-                      Colors.green.withValues(alpha: 0.30),
-                    ],
-                  ),
-                  const SizedBox(width: 4),
-                  buildCrystalButton(
-                    label: 'Sacrifier',
-                    icon: Icons.delete_outline,
-                    onPressed: canSacrifice ? sacrificeCard : null,
-                    gradientColors: [
-                      Colors.red.withValues(alpha: 0.45),
-                      Colors.red.withValues(alpha: 0.30),
-                    ],
-                  ),
+              return buildCrystalButton(
+                label: 'Jouer',
+                icon: Icons.play_arrow,
+                onPressed: canPlay ? playCard : null,
+                gradientColors: [
+                  Colors.green.withValues(alpha: 0.45),
+                  Colors.green.withValues(alpha: 0.30),
                 ],
               );
             },

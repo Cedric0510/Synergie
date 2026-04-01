@@ -79,8 +79,15 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
           builder:
               (context) => Dialog(
                 backgroundColor: Colors.transparent,
+                insetPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 16,
+                ),
                 child: Container(
-                  constraints: const BoxConstraints(maxWidth: 400),
+                  constraints: BoxConstraints(
+                    maxWidth: 400,
+                    maxHeight: MediaQuery.of(context).size.height * 0.82,
+                  ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
@@ -103,7 +110,7 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
                       ),
                     ],
                   ),
-                  child: Padding(
+                  child: SingleChildScrollView(
                     padding: const EdgeInsets.all(24),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -222,8 +229,10 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
                           ),
                         ),
                         const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 8,
+                          runSpacing: 8,
                           children: [
                             _buildTimerShortcut(context, ref, 0.5, '30s'),
                             _buildTimerShortcut(context, ref, 1, '1min'),
@@ -235,13 +244,13 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
 
                         // Boutons
                         _buildGlassButton(
-                          label: '✅ Action effectuée',
+                          label: 'Action effectuée',
                           color: Colors.green,
                           onPressed: () => Navigator.pop(context, true),
                         ),
                         const SizedBox(height: 12),
                         _buildGlassButton(
-                          label: '❌ Action refusée',
+                          label: 'Action refusée',
                           color: Colors.red,
                           onPressed: () => Navigator.pop(context, false),
                         ),
@@ -368,8 +377,15 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
             builder:
                 (context) => Dialog(
                   backgroundColor: Colors.transparent,
+                  insetPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 16,
+                  ),
                   child: Container(
-                    constraints: const BoxConstraints(maxWidth: 400),
+                    constraints: BoxConstraints(
+                      maxWidth: 400,
+                      maxHeight: MediaQuery.of(context).size.height * 0.82,
+                    ),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
@@ -392,166 +408,201 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
                         ),
                       ],
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Header avec brillance crystal
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                const Color(0xFF6DD5FA).withValues(alpha: 0.3),
-                                const Color(0xFF6DD5FA).withValues(alpha: 0.1),
-                              ],
-                            ),
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(22),
-                              topRight: Radius.circular(22),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: const Color(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Header avec brillance crystal
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  const Color(
                                     0xFF6DD5FA,
-                                  ).withValues(alpha: 0.2),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.check_circle_outline,
-                                  color: Color(0xFF6DD5FA),
-                                  size: 28,
-                                ),
+                                  ).withValues(alpha: 0.3),
+                                  const Color(
+                                    0xFF6DD5FA,
+                                  ).withValues(alpha: 0.1),
+                                ],
                               ),
-                              const SizedBox(width: 12),
-                              const Text(
-                                'Validation de l\'action',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.5,
-                                ),
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(22),
+                                topRight: Radius.circular(22),
                               ),
-                            ],
-                          ),
-                        ),
-
-                        // Contenu avec couleur tapis de jeu
-                        Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF1a2332),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
                                     color: const Color(
                                       0xFF6DD5FA,
                                     ).withValues(alpha: 0.2),
-                                    width: 1,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.check_circle_outline,
+                                    color: Color(0xFF6DD5FA),
+                                    size: 28,
                                   ),
                                 ),
-                                child: Column(
-                                  children: [
-                                    const Text(
-                                      'L\'adversaire a-t-il effectué l\'action suivante ?',
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        color: Color(0xFFB0B0B0),
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      textAlign: TextAlign.center,
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Text(
+                                    'Validation de l\'action',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.5,
                                     ),
-                                    const SizedBox(height: 12),
-                                    // Afficher le titre du tier si disponible
-                                    if (tierTitle != null) ...[
-                                      Text(
-                                        tierTitle,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Contenu avec couleur tapis de jeu
+                          Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF1a2332),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: const Color(
+                                        0xFF6DD5FA,
+                                      ).withValues(alpha: 0.2),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      const Text(
+                                        'L\'adversaire a-t-il effectué l\'action suivante ?',
                                         style: TextStyle(
-                                          fontSize: 17,
-                                          color: _getTierColor(selectedTierKey),
-                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
+                                          color: Color(0xFFB0B0B0),
+                                          fontWeight: FontWeight.w500,
                                         ),
                                         textAlign: TextAlign.center,
                                       ),
-                                      const SizedBox(height: 10),
-                                    ],
-                                    Container(
-                                      padding: const EdgeInsets.all(14),
-                                      decoration: BoxDecoration(
-                                        color: const Color(
-                                          0xFF6DD5FA,
-                                        ).withValues(alpha: 0.08),
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
+                                      const SizedBox(height: 12),
+                                      // Afficher le titre du tier si disponible
+                                      if (tierTitle != null) ...[
+                                        Text(
+                                          tierTitle,
+                                          style: TextStyle(
+                                            fontSize: 17,
+                                            color: _getTierColor(
+                                              selectedTierKey,
+                                            ),
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        const SizedBox(height: 10),
+                                      ],
+                                      Container(
+                                        padding: const EdgeInsets.all(14),
+                                        decoration: BoxDecoration(
                                           color: const Color(
                                             0xFF6DD5FA,
-                                          ).withValues(alpha: 0.15),
-                                          width: 1,
+                                          ).withValues(alpha: 0.08),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          border: Border.all(
+                                            color: const Color(
+                                              0xFF6DD5FA,
+                                            ).withValues(alpha: 0.15),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          '"$effectText"',
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            color: Color(0xFFE0E0E0),
+                                            fontStyle: FontStyle.italic,
+                                            fontWeight: FontWeight.w600,
+                                            height: 1.4,
+                                          ),
+                                          textAlign: TextAlign.center,
                                         ),
                                       ),
-                                      child: Text(
-                                        '"$effectText"',
-                                        style: const TextStyle(
-                                          fontSize: 15,
-                                          color: Color(0xFFE0E0E0),
-                                          fontStyle: FontStyle.italic,
-                                          fontWeight: FontWeight.w600,
-                                          height: 1.4,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+
+                                // Raccourcis timer
+                                Text(
+                                  '⏱️ Démarrer un timer',
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.7),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Wrap(
+                                  alignment: WrapAlignment.center,
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    _buildTimerShortcut(
+                                      context,
+                                      ref,
+                                      0.5,
+                                      '30s',
+                                    ),
+                                    _buildTimerShortcut(
+                                      context,
+                                      ref,
+                                      1,
+                                      '1min',
+                                    ),
+                                    _buildTimerShortcut(
+                                      context,
+                                      ref,
+                                      2,
+                                      '2min',
+                                    ),
+                                    _buildTimerShortcut(
+                                      context,
+                                      ref,
+                                      3,
+                                      '3min',
                                     ),
                                   ],
                                 ),
-                              ),
-                              const SizedBox(height: 20),
+                                const SizedBox(height: 20),
 
-                              // Raccourcis timer
-                              Text(
-                                '⏱️ Démarrer un timer',
-                                style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.7),
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
+                                // Boutons crystal en relief
+                                _buildGlassButton(
+                                  label: 'Action effectuée',
+                                  color: Colors.green,
+                                  onPressed: () => Navigator.pop(context, true),
                                 ),
-                              ),
-                              const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  _buildTimerShortcut(context, ref, 0.5, '30s'),
-                                  _buildTimerShortcut(context, ref, 1, '1min'),
-                                  _buildTimerShortcut(context, ref, 2, '2min'),
-                                  _buildTimerShortcut(context, ref, 3, '3min'),
-                                ],
-                              ),
-                              const SizedBox(height: 20),
-
-                              // Boutons crystal en relief
-                              _buildGlassButton(
-                                label: '✅ Action effectuée',
-                                color: Colors.green,
-                                onPressed: () => Navigator.pop(context, true),
-                              ),
-                              const SizedBox(height: 12),
-                              _buildGlassButton(
-                                label: '❌ Action refusée',
-                                color: Colors.red,
-                                onPressed: () => Navigator.pop(context, false),
-                              ),
-                            ],
+                                const SizedBox(height: 12),
+                                _buildGlassButton(
+                                  label: 'Action refusée',
+                                  color: Colors.red,
+                                  onPressed:
+                                      () => Navigator.pop(context, false),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -947,47 +998,43 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
   ) {
     const crystalColor = Color(0xFF6DD5FA);
 
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Container(
-          height: 36,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                crystalColor.withValues(alpha: 0.15),
-                crystalColor.withValues(alpha: 0.08),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: crystalColor.withValues(alpha: 0.3),
-              width: 1,
-            ),
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () {
-                ref.read(gameTimerProvider.notifier).start(minutes);
-                Navigator.pop(
-                  context,
-                  'timer',
-                ); // Fermer le popup et signaler timer
-              },
-              borderRadius: BorderRadius.circular(10),
-              splashColor: crystalColor.withValues(alpha: 0.3),
-              child: Center(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: crystalColor,
-                  ),
-                ),
+    return Container(
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            crystalColor.withValues(alpha: 0.15),
+            crystalColor.withValues(alpha: 0.08),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: crystalColor.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            ref.read(gameTimerProvider.notifier).start(minutes);
+            Navigator.pop(
+              context,
+              'timer',
+            ); // Fermer le popup et signaler timer
+          },
+          borderRadius: BorderRadius.circular(10),
+          splashColor: crystalColor.withValues(alpha: 0.3),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: crystalColor,
               ),
             ),
           ),

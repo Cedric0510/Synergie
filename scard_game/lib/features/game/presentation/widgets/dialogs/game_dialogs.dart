@@ -1,206 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/models/game_card.dart';
-import '../../../domain/enums/response_effect.dart';
 
-/// Widget de gestion centralisée des dialogues du jeu
+/// Widget de gestion centralisee des dialogues du jeu.
 class GameDialogs {
-  /// Affiche le dialogue de sélection d'effet de réponse
-  static Future<ResponseEffect?> showResponseEffectDialog(
-    BuildContext context,
-  ) async {
-    return showDialog<ResponseEffect>(
-      context: context,
-      barrierDismissible: false,
-      builder:
-          (context) => AlertDialog(
-            backgroundColor: const Color(0xFF2d4263),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: const BorderSide(color: Color(0xFF6DD5FA), width: 2),
-            ),
-            title: Row(
-              children: [
-                Icon(Icons.reply, color: Color(0xFF6DD5FA), size: 28),
-                const SizedBox(width: 12),
-                const Text(
-                  'Carte de réponse jouée',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Votre adversaire a joué une réponse.\nQue se passe-t-il ?',
-                  style: TextStyle(fontSize: 16, color: Colors.white70),
-                ),
-                const SizedBox(height: 20),
-                DropdownButtonFormField<ResponseEffect>(
-                  dropdownColor: const Color(0xFF2d4263),
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    labelText: 'Effet de la réponse',
-                    labelStyle: const TextStyle(color: Color(0xFF6DD5FA)),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFF6DD5FA)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: Color(0xFF6DD5FA).withValues(alpha: 0.5),
-                      ),
-                    ),
-                  ),
-                  items:
-                      ResponseEffect.values.map((effect) {
-                        return DropdownMenuItem(
-                          value: effect,
-                          child: Text(
-                            effect.displayName,
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        );
-                      }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      Navigator.pop(context, value);
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
-    );
-  }
-
-  /// Affiche le dialogue de validation d'action avec double checkbox (effet Copie)
-  static Future<Map<String, bool>?> showCopyValidationDialog(
-    BuildContext context,
-    GameCard card,
-  ) async {
-    bool? player1Completed;
-    bool? player2Completed;
-
-    return showDialog<Map<String, bool>>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              backgroundColor: const Color(0xFF2d4263),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: const BorderSide(color: Color(0xFF8E44AD), width: 2),
-              ),
-              title: Row(
-                children: [
-                  Icon(Icons.content_copy, color: Color(0xFF8E44AD), size: 28),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Text(
-                      'Validation double (Copie)',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Color(0xFF8E44AD).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'L\'effet est copié - validation pour CHAQUE joueur :\n\n'
-                      '"${card.targetEffect ?? card.gameEffect}"',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.white70,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  CheckboxListTile(
-                    value: player1Completed ?? false,
-                    onChanged: (val) {
-                      setState(() {
-                        player1Completed = val;
-                      });
-                    },
-                    title: const Text(
-                      'Joueur actif a effectué l\'action',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    activeColor: Colors.green,
-                  ),
-                  CheckboxListTile(
-                    value: player2Completed ?? false,
-                    onChanged: (val) {
-                      setState(() {
-                        player2Completed = val;
-                      });
-                    },
-                    title: const Text(
-                      'Joueur adverse a effectué l\'action',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    activeColor: Colors.green,
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    if (player1Completed != null && player2Completed != null) {
-                      Navigator.pop(context, {
-                        'player1': player1Completed!,
-                        'player2': player2Completed!,
-                      });
-                    }
-                  },
-                  style: TextButton.styleFrom(
-                    backgroundColor: Colors.green.withValues(alpha: 0.2),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
-                    ),
-                  ),
-                  child: const Text(
-                    'Valider',
-                    style: TextStyle(
-                      color: Colors.green,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  /// Affiche le dialogue de négociation (cartes vertes)
+  /// Affiche le dialogue de negociation (cartes vertes).
   static Future<bool?> showNegotiationDialog(BuildContext context) async {
     return showDialog<bool>(
       context: context,
@@ -214,10 +18,10 @@ class GameDialogs {
           ),
           title: Row(
             children: [
-              Icon(Icons.handshake, color: Color(0xFF4CAF50), size: 28),
+              const Icon(Icons.handshake, color: Color(0xFF4CAF50), size: 28),
               const SizedBox(width: 12),
               const Text(
-                'Négociations',
+                'Negociations',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 22,
@@ -239,7 +43,7 @@ class GameDialogs {
                   ),
                 ),
                 child: const Text(
-                  '💬 Le joueur contré peut demander ce qu\'il veut en échange de son sort contré.\n\nÀ vous de négocier !',
+                  'Le joueur contre peut demander ce qu\'il veut en echange de son sort contre.\n\nA vous de negocier !',
                   style: TextStyle(color: Colors.white70, fontSize: 16),
                   textAlign: TextAlign.center,
                 ),
@@ -252,7 +56,7 @@ class GameDialogs {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(
-                  'Une entente est trouvée ?',
+                  'Une entente est trouvee ?',
                   style: TextStyle(
                     color: Colors.orange,
                     fontSize: 20,
@@ -307,115 +111,7 @@ class GameDialogs {
     );
   }
 
-  /// Affiche le dialogue de confirmation de jouer une carte
-  static Future<bool?> showPlayConfirmationDialog(
-    BuildContext context,
-    GameCard card,
-  ) {
-    return showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder:
-          (context) => AlertDialog(
-            backgroundColor: const Color(0xFF2d4263),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: const BorderSide(color: Color(0xFF6DD5FA), width: 2),
-            ),
-            title: Row(
-              children: [
-                Icon(Icons.help_outline, color: Color(0xFF6DD5FA), size: 28),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    'Confirmer l\'action',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Color(0xFF6DD5FA).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'Voulez-vous valider le lancement de la carte "${card.name}" ?',
-                    style: const TextStyle(fontSize: 14, color: Colors.white70),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Si vous annulez, la carte reviendra dans votre main.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white54,
-                    fontStyle: FontStyle.italic,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-            actions: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.green.withValues(alpha: 0.2),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
-                    ),
-                    child: const Text(
-                      '✅ Oui, valider l\'action',
-                      style: TextStyle(
-                        color: Colors.green,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.orange.withValues(alpha: 0.2),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
-                    ),
-                    child: const Text(
-                      '↩️ Non, annuler',
-                      style: TextStyle(
-                        color: Colors.orange,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-    );
-  }
-
-  /// Affiche le dialogue de confirmation de suppression d'enchantement
+  /// Affiche le dialogue de confirmation de suppression d'enchantement.
   static Future<bool?> showDeleteEnchantmentDialog(
     BuildContext context,
     String enchantmentId,
@@ -433,7 +129,7 @@ class GameDialogs {
             ),
             title: Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.warning_amber_rounded,
                   color: Color(0xFFFF6B9D),
                   size: 28,
@@ -458,7 +154,7 @@ class GameDialogs {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Color(0xFFFF6B9D).withValues(alpha: 0.1),
+                    color: const Color(0xFFFF6B9D).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -480,11 +176,15 @@ class GameDialogs {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, color: Colors.orange, size: 20),
+                      const Icon(
+                        Icons.info_outline,
+                        color: Colors.orange,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Ne peut être détruit que si une carte vous le demande.',
+                          'Ne peut etre detruit que si une carte vous le demande.',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.orange[200],
@@ -496,8 +196,8 @@ class GameDialogs {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  'Cette action est irréversible.',
+                const Text(
+                  'Cette action est irreversible.',
                   style: TextStyle(
                     fontSize: 11,
                     color: Colors.white54,
@@ -522,7 +222,7 @@ class GameDialogs {
                       ),
                     ),
                     child: const Text(
-                      '🗑️ Oui, supprimer',
+                      'Oui, supprimer',
                       style: TextStyle(
                         color: Colors.red,
                         fontSize: 16,
@@ -541,7 +241,7 @@ class GameDialogs {
                       ),
                     ),
                     child: const Text(
-                      '❌ Non, annuler',
+                      'Non, annuler',
                       style: TextStyle(
                         color: Colors.grey,
                         fontSize: 16,

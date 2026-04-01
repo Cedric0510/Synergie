@@ -7,7 +7,6 @@ import '../../../domain/models/game_card.dart';
 import '../../../domain/enums/game_phase.dart';
 import '../card_widget.dart';
 import '../counters/ultima_counter_widget.dart';
-import '../counters/deck_counter_widget.dart';
 import '../../../../../core/widgets/game_button.dart';
 import '../../../../../core/widgets/game_timer_widget.dart';
 import '../dialogs/rules_dialog.dart';
@@ -60,11 +59,6 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
     final isSmallMobile = screenWidth < 380;
     final smallFontSize = isSmallMobile ? 9.0 : (isMobile ? 11.0 : 13.0);
 
-    // Récupérer les données du joueur actuel
-    final isPlayer1 = widget.session.player1Id == widget.playerId;
-    final myData =
-        isPlayer1 ? widget.session.player1Data : widget.session.player2Data!;
-
     return Stack(
       children: [
         // Zone de jeu principale avec slots de cartes
@@ -95,18 +89,8 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
                   widget.session.ultimaTurnCount < GameConstants.ultimaMaxCount)
                 SizedBox(height: isSmallMobile ? 4 : 8),
 
-              // === COMPTEUR DE DECK ===
-              DeckCounterWidget(remainingCards: myData.deckCardIds.length),
-
-              SizedBox(height: isSmallMobile ? 4 : 8),
-
-              // === BOUTON RÈGLES ===
-              _buildRulesButton(isSmallMobile),
-
-              SizedBox(height: isSmallMobile ? 4 : 8),
-
-              // === BOUTON MINUTEUR ===
-              GameTimerWidget(isSmallMobile: isSmallMobile),
+              // === MENU RAPIDE (règles + timer) ===
+              _buildQuickMenuButton(isSmallMobile),
             ],
           ),
         ),
@@ -518,46 +502,44 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
         vertical: isSmallMobile ? 4 : 8,
       ),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(isSmallMobile ? 12 : 20),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withValues(alpha: 0.35),
-            Colors.white.withValues(alpha: 0.20),
-          ],
+        borderRadius: BorderRadius.circular(isSmallMobile ? 10 : 14),
+        color: Colors.black.withValues(alpha: 0.12),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.25),
+          width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
-            blurRadius: isSmallMobile ? 4 : 8,
-            offset: const Offset(0, 3),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.layers_outlined,
+            size: isSmallMobile ? 11 : 14,
+            color: Colors.white70,
+          ),
+          SizedBox(width: isSmallMobile ? 4 : 6),
+          Text(
+            'Phase: ${widget.session.currentPhase.displayName}',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: smallFontSize,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
-      ),
-      child: Text(
-        widget.session.currentPhase.displayName,
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: smallFontSize,
-          fontWeight: FontWeight.bold,
-          shadows: const [
-            Shadow(color: Colors.black38, offset: Offset(0, 1), blurRadius: 3),
-          ],
-        ),
       ),
     );
   }
 
-  /// Bouton "?" pour afficher les règles du jeu
-  Widget _buildRulesButton(bool isSmallMobile) {
+  /// Bouton menu pour accéder aux règles et au timer sans encombrer l'UI
+  Widget _buildQuickMenuButton(bool isSmallMobile) {
     final size = isSmallMobile ? 32.0 : 40.0;
-    final fontSize = isSmallMobile ? 16.0 : 20.0;
+    final iconSize = isSmallMobile ? 16.0 : 20.0;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => RulesDialog.show(context),
+        onTap: _showQuickMenu,
         borderRadius: BorderRadius.circular(size / 2),
         child: Container(
           width: size,
@@ -585,17 +567,67 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
             ],
           ),
           child: Center(
-            child: Text(
-              '?',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: fontSize,
-                fontWeight: FontWeight.bold,
-              ),
+            child: Icon(
+              Icons.menu_rounded,
+              color: Colors.white,
+              size: iconSize,
             ),
           ),
         ),
       ),
+    );
+  }
+
+  void _showQuickMenu() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: false,
+      builder: (sheetContext) {
+        return Container(
+          margin: const EdgeInsets.all(12),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFF2d4263), Color(0xFF1a2332)],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: const Color(0xFF6DD5FA).withValues(alpha: 0.35),
+              width: 1.5,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.menu_book, color: Color(0xFF6DD5FA)),
+                title: const Text(
+                  'Règles du jeu',
+                  style: TextStyle(color: Colors.white),
+                ),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  RulesDialog.show(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.timer_outlined, color: Colors.white),
+                title: const Text(
+                  'Minuteur',
+                  style: TextStyle(color: Colors.white),
+                ),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  showGameTimerDialog(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

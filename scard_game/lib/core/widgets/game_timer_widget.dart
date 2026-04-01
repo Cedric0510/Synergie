@@ -3,14 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/game_timer_notifier.dart';
 import '../models/timer_state.dart';
 
+/// Ouvre le dialog du minuteur depuis n'importe quel écran.
+void showGameTimerDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    barrierDismissible: true,
+    builder: (context) => const _TimerDialog(),
+  );
+}
+
 /// Widget du minuteur de jeu avec design crystal
 class GameTimerWidget extends ConsumerWidget {
   final bool isSmallMobile;
 
-  const GameTimerWidget({
-    super.key,
-    this.isSmallMobile = false,
-  });
+  const GameTimerWidget({super.key, this.isSmallMobile = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -19,7 +25,7 @@ class GameTimerWidget extends ConsumerWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => _showTimerDialog(context, ref, timerState),
+        onTap: () => showGameTimerDialog(context),
         borderRadius: BorderRadius.circular(isSmallMobile ? 16 : 20),
         child: Container(
           width: isSmallMobile ? 32 : 40,
@@ -29,27 +35,30 @@ class GameTimerWidget extends ConsumerWidget {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: timerState.isActive
-                  ? [
-                      const Color(0xFF6DD5FA).withValues(alpha: 0.4),
-                      const Color(0xFF6DD5FA).withValues(alpha: 0.25),
-                    ]
-                  : [
-                      Colors.white.withValues(alpha: 0.25),
-                      Colors.white.withValues(alpha: 0.15),
-                    ],
+              colors:
+                  timerState.isActive
+                      ? [
+                        const Color(0xFF6DD5FA).withValues(alpha: 0.4),
+                        const Color(0xFF6DD5FA).withValues(alpha: 0.25),
+                      ]
+                      : [
+                        Colors.white.withValues(alpha: 0.25),
+                        Colors.white.withValues(alpha: 0.15),
+                      ],
             ),
             border: Border.all(
-              color: timerState.isActive
-                  ? const Color(0xFF6DD5FA).withValues(alpha: 0.6)
-                  : Colors.white.withValues(alpha: 0.4),
+              color:
+                  timerState.isActive
+                      ? const Color(0xFF6DD5FA).withValues(alpha: 0.6)
+                      : Colors.white.withValues(alpha: 0.4),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: timerState.isActive
-                    ? const Color(0xFF6DD5FA).withValues(alpha: 0.3)
-                    : Colors.black.withValues(alpha: 0.2),
+                color:
+                    timerState.isActive
+                        ? const Color(0xFF6DD5FA).withValues(alpha: 0.3)
+                        : Colors.black.withValues(alpha: 0.2),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -60,9 +69,8 @@ class GameTimerWidget extends ConsumerWidget {
               timerState.status == TimerStatus.running
                   ? Icons.timer
                   : Icons.timer_outlined,
-              color: timerState.isActive
-                  ? const Color(0xFF6DD5FA)
-                  : Colors.white,
+              color:
+                  timerState.isActive ? const Color(0xFF6DD5FA) : Colors.white,
               size: isSmallMobile ? 16 : 20,
             ),
           ),
@@ -70,26 +78,11 @@ class GameTimerWidget extends ConsumerWidget {
       ),
     );
   }
-
-  /// Affiche le dialog du minuteur
-  void _showTimerDialog(
-    BuildContext context,
-    WidgetRef ref,
-    TimerState timerState,
-  ) {
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) => _TimerDialog(timerState: timerState),
-    );
-  }
 }
 
 /// Dialog du minuteur avec contrôles
 class _TimerDialog extends ConsumerWidget {
-  final TimerState timerState;
-
-  const _TimerDialog({required this.timerState});
+  const _TimerDialog();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -143,7 +136,8 @@ class _TimerDialog extends ConsumerWidget {
             const SizedBox(height: 24),
 
             // Affichage du temps si actif
-            if (currentState.isActive || currentState.status == TimerStatus.finished)
+            if (currentState.isActive ||
+                currentState.status == TimerStatus.finished)
               _buildTimeDisplay(currentState)
             else
               _buildPresetButtons(ref, context),
@@ -151,7 +145,8 @@ class _TimerDialog extends ConsumerWidget {
             const SizedBox(height: 16),
 
             // Contrôles si timer actif
-            if (currentState.isActive || currentState.status == TimerStatus.finished)
+            if (currentState.isActive ||
+                currentState.status == TimerStatus.finished)
               _buildControls(ref, currentState, context),
           ],
         ),
@@ -167,9 +162,10 @@ class _TimerDialog extends ConsumerWidget {
         Text(
           state.formattedTime,
           style: TextStyle(
-            color: state.status == TimerStatus.finished
-                ? const Color(0xFFFF6B6B)
-                : const Color(0xFF6DD5FA),
+            color:
+                state.status == TimerStatus.finished
+                    ? const Color(0xFFFF6B6B)
+                    : const Color(0xFF6DD5FA),
             fontSize: 48,
             fontWeight: FontWeight.bold,
             fontFeatures: const [FontFeature.tabularFigures()],
@@ -217,9 +213,10 @@ class _TimerDialog extends ConsumerWidget {
       spacing: 12,
       runSpacing: 12,
       alignment: WrapAlignment.center,
-      children: presets
-          .map((minutes) => _buildPresetButton(minutes, ref, context))
-          .toList(),
+      children:
+          presets
+              .map((minutes) => _buildPresetButton(minutes, ref, context))
+              .toList(),
     );
   }
 
@@ -271,9 +268,10 @@ class _TimerDialog extends ConsumerWidget {
         // Pause/Resume
         if (state.status != TimerStatus.finished)
           _buildControlButton(
-            icon: state.status == TimerStatus.running
-                ? Icons.pause
-                : Icons.play_arrow,
+            icon:
+                state.status == TimerStatus.running
+                    ? Icons.pause
+                    : Icons.play_arrow,
             onTap: () {
               if (state.status == TimerStatus.running) {
                 ref.read(gameTimerProvider.notifier).pause();
@@ -325,10 +323,7 @@ class _TimerDialog extends ConsumerWidget {
               ],
             ),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: color.withValues(alpha: 0.5),
-              width: 1.5,
-            ),
+            border: Border.all(color: color.withValues(alpha: 0.5), width: 1.5),
           ),
           child: Icon(icon, color: color, size: 28),
         ),

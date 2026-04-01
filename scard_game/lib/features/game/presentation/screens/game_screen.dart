@@ -22,7 +22,6 @@ import 'mixins/game_actions_mixin.dart';
 import 'mixins/game_validation_mixin.dart';
 import 'mixins/game_response_effects_mixin.dart';
 import 'mixins/game_utils_mixin.dart';
-import 'mixins/game_ui_mixin.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
   final String sessionId;
@@ -43,8 +42,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
         GameActionsMixin,
         GameValidationMixin,
         GameResponseEffectsMixin,
-        GameUtilsMixin,
-        GameUIMixin {
+        GameUtilsMixin {
   int? _selectedCardIndex;
   bool _hasShownValidationDialog = false;
   GamePhase? _lastPhase;
@@ -122,9 +120,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
     Future.delayed(const Duration(milliseconds: 100), () async {
       final success = await playCardFromDrag(cardIndex, card);
       // Si échec (annulation de la sélection de palier, etc.), on nettoie
-      // pour permettre à l'utilisateur de redrag la carte
-      // Si succès, on NE nettoie PAS car la carte est maintenant en mode
-      // "pendingCardValidation" et l'utilisateur peut valider ou annuler
+      // pour permettre à l'utilisateur de redrag la carte.
+      // Si succès, la validation est automatique côté actions.
       if (mounted && !success) {
         setState(() {
           _pendingDroppedCard = null;
@@ -307,15 +304,6 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
                       const SizedBox(height: 8),
 
-                      // BOUTONS D'ACTION (en pleine largeur pour toutes les versions)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        child: buildMobileActionButtons(session, isMyTurn),
-                      ),
-
                       // Ma zone (en bas)
                       PlayerZoneWidget(
                         myData: myData,
@@ -325,6 +313,12 @@ class _GameScreenState extends ConsumerState<GameScreen>
                         isDiscardMode: _isDiscardMode,
                         onSelectCard:
                             (index) => selectCard(index, _selectedCardIndex),
+                        remainingDeckCards: myData.deckCardIds.length,
+                        onEndTurn: skipTurn,
+                        canEndTurn:
+                            isMyTurn &&
+                            session.currentPhase == GamePhase.main &&
+                            _selectedCardIndex == null,
                         onIncrementPI: incrementPI,
                         onDecrementPI: decrementPI,
                         onManualDrawCard: manualDrawCard,

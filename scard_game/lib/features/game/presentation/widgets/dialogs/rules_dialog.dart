@@ -113,7 +113,9 @@ class _RulesDialogState extends State<RulesDialog> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF6DD5FA).withValues(alpha: 0.2),
+                              color: const Color(
+                                0xFF6DD5FA,
+                              ).withValues(alpha: 0.2),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
@@ -187,10 +189,14 @@ class _RulesDialogState extends State<RulesDialog> {
                                     child: Container(
                                       padding: const EdgeInsets.all(16),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withValues(alpha: 0.05),
+                                        color: Colors.white.withValues(
+                                          alpha: 0.05,
+                                        ),
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
-                                          color: Colors.white.withValues(alpha: 0.1),
+                                          color: Colors.white.withValues(
+                                            alpha: 0.1,
+                                          ),
                                           width: 1,
                                         ),
                                       ),
@@ -240,7 +246,7 @@ class _RulesDialogState extends State<RulesDialog> {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
                       child: _buildGlassButton(
-                        label: 'PASSER',
+                        label: 'FERMER',
                         color: const Color(0xFF6DD5FA),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
@@ -277,10 +283,16 @@ class _RulesDialogState extends State<RulesDialog> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [color.withValues(alpha: 0.25), color.withValues(alpha: 0.15)],
+                colors: [
+                  color.withValues(alpha: 0.25),
+                  color.withValues(alpha: 0.15),
+                ],
               ),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: color.withValues(alpha: 0.4), width: 1.5),
+              border: Border.all(
+                color: color.withValues(alpha: 0.4),
+                width: 1.5,
+              ),
             ),
           ),
           // Reflet/brillance en haut

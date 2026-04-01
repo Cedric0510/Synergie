@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/services/card_service.dart';
@@ -25,6 +27,9 @@ class CompactEnchantementsWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (enchantmentIds.isEmpty) return const SizedBox.shrink();
 
+    final uniqueEnchantmentIds =
+        LinkedHashSet<String>.from(enchantmentIds).toList();
+
     final cardService = ref.watch(cardServiceProvider);
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 600;
@@ -36,8 +41,10 @@ class CompactEnchantementsWidget extends ConsumerWidget {
     final baseOverlapOffset = isSmallMobile ? 10.0 : (isMobile ? 12.0 : 15.0);
     final cardWidth = (baseCardWidth * scale).clamp(18.0, baseCardWidth);
     final cardHeight = (baseCardHeight * scale).clamp(24.0, baseCardHeight);
-    final overlapOffset =
-        (baseOverlapOffset * scale).clamp(6.0, baseOverlapOffset);
+    final overlapOffset = (baseOverlapOffset * scale).clamp(
+      6.0,
+      baseOverlapOffset,
+    );
 
     return FutureBuilder(
       future: cardService.loadAllCards(),
@@ -48,7 +55,7 @@ class CompactEnchantementsWidget extends ConsumerWidget {
 
         // Créer une liste d'enchantements en respectant les doublons
         final enchantments =
-            enchantmentIds.map((id) {
+            uniqueEnchantmentIds.map((id) {
               return allCards.firstWhere((card) => card.id == id);
             }).toList();
 
@@ -78,7 +85,7 @@ class CompactEnchantementsWidget extends ConsumerWidget {
                     onTap:
                         isMyEnchantments && onEnchantmentTap != null
                             ? () => onEnchantmentTap!(
-                              enchantmentIds[i],
+                              uniqueEnchantmentIds[i],
                               enchantments[i],
                             )
                             : null,
@@ -99,7 +106,8 @@ class CompactEnchantementsWidget extends ConsumerWidget {
                         height: cardHeight,
                         compact: true,
                         showPreviewOnHover: true,
-                        displayTierKey: enchantmentTiers[enchantmentIds[i]],
+                        displayTierKey:
+                            enchantmentTiers[uniqueEnchantmentIds[i]],
                       ),
                     ),
                   ),

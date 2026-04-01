@@ -2,11 +2,8 @@ import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/constants/game_constants.dart';
 import '../../../../core/extensions/game_session_extensions.dart';
 import '../../../../core/interfaces/i_game_session_service.dart';
-import '../../domain/enums/game_phase.dart';
-import '../../domain/enums/game_status.dart';
 import '../../domain/models/player_data.dart';
 import 'game_session_service.dart';
 
@@ -125,75 +122,6 @@ class GameplayActionService {
           playedCardTiers: updatedPlayedTiers,
           updatedAt: DateTime.now(),
         );
-
-    await _gameSessionService.updateSession(sessionId, updatedSession);
-  }
-
-  /// Sacrifie une carte: bas du deck, +2 tension, pioche 1, fin de tour.
-  Future<void> sacrificeCard(
-    String sessionId,
-    String playerId,
-    int handIndex,
-  ) async {
-    final session = await _gameSessionService.getSession(sessionId);
-    final isPlayer1 = session.isPlayer1(playerId);
-    final playerData = session.getPlayerData(playerId);
-
-    if (playerData.hasSacrificedThisTurn) {
-      throw Exception('Vous avez déjà sacrifié une carte ce tour !');
-    }
-
-    final hand = List<String>.from(playerData.handCardIds);
-    if (handIndex < 0 || handIndex >= hand.length) {
-      throw Exception('Index de carte invalide');
-    }
-
-    final sacrificedCard = hand.removeAt(handIndex);
-    if (sacrificedCard.contains(GameConstants.ultimaCardId)) {
-      final updatedSession = session.copyWith(
-        winnerId: session.getOpponentId(playerId),
-        status: GameStatus.finished,
-        updatedAt: DateTime.now(),
-      );
-      await _gameSessionService.updateSession(sessionId, updatedSession);
-      throw Exception('❌ ULTIMA SACRIFIÉE ! Vous avez perdu la partie !');
-    }
-
-    final deck = List<String>.from(playerData.deckCardIds)..add(sacrificedCard);
-    final newTension = (playerData.tension + 2.0).clamp(
-      GameConstants.minTension,
-      GameConstants.maxTension,
-    );
-
-    if (deck.isNotEmpty) {
-      final drawnCard = deck.removeAt(0);
-      hand.add(drawnCard);
-    }
-
-    final updatedCurrentPlayer = playerData.copyWith(
-      handCardIds: hand,
-      deckCardIds: deck,
-      tension: newTension,
-      hasSacrificedThisTurn: false,
-    );
-
-    final opponentData = session.getOpponentData(playerId);
-    final updatedOpponent = opponentData?.copyWith(
-      hasSacrificedThisTurn: false,
-    );
-
-    final updatedSession = session.copyWith(
-      player1Data:
-          isPlayer1
-              ? updatedCurrentPlayer
-              : (updatedOpponent ?? session.player1Data),
-      player2Data: isPlayer1 ? updatedOpponent : updatedCurrentPlayer,
-      currentPhase: GamePhase.draw,
-      currentPlayerId: session.getOpponentId(playerId),
-      drawDoneThisTurn: false,
-      enchantmentEffectsDoneThisTurn: false,
-      updatedAt: DateTime.now(),
-    );
 
     await _gameSessionService.updateSession(sessionId, updatedSession);
   }
