@@ -11,98 +11,117 @@ class GameDialogs {
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 16,
+          ),
           backgroundColor: const Color(0xFF2d4263),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
             side: const BorderSide(color: Color(0xFF4CAF50), width: 2),
           ),
           title: Row(
-            children: [
-              const Icon(Icons.handshake, color: Color(0xFF4CAF50), size: 28),
-              const SizedBox(width: 12),
-              const Text(
-                'Negociations',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Colors.green.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: const Text(
-                  'Le joueur contre peut demander ce qu\'il veut en echange de son sort contre.\n\nA vous de negocier !',
-                  style: TextStyle(color: Colors.white70, fontSize: 16),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  'Une entente est trouvee ?',
+            children: const [
+              Icon(Icons.handshake, color: Color(0xFF4CAF50), size: 28),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Negociations',
                   style: TextStyle(
-                    color: Colors.orange,
+                    color: Colors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
-                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.red.withValues(alpha: 0.2),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Colors.green.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: const Text(
+                    'Le joueur contre peut demander ce qu\'il veut en echange de son sort contre.\n\nA vous de negocier !',
+                    style: TextStyle(color: Colors.white70, fontSize: 16),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
-              ),
-              child: const Text(
-                '❌ Non',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                const SizedBox(height: 24),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'Une entente est trouvee ?',
+                    style: TextStyle(
+                      color: Colors.orange,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
-              ),
+              ],
             ),
-            const SizedBox(width: 12),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.green.withValues(alpha: 0.3),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-              ),
-              child: const Text(
-                '✅ Oui',
-                style: TextStyle(
-                  color: Colors.green,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+          ),
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.red.withValues(alpha: 0.2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: const Text(
+                      'Non',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.green.withValues(alpha: 0.3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: const Text(
+                      'Oui',
+                      style: TextStyle(
+                        color: Colors.green,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -120,34 +139,41 @@ class GameDialogs {
     return showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder:
-          (context) => AlertDialog(
-            backgroundColor: const Color(0xFF2d4263),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: const BorderSide(color: Color(0xFFFF6B9D), width: 2),
-            ),
-            title: Row(
-              children: [
-                const Icon(
-                  Icons.warning_amber_rounded,
-                  color: Color(0xFFFF6B9D),
-                  size: 28,
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    'Supprimer l\'enchantement ?',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+      builder: (context) {
+        return AlertDialog(
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 16,
+          ),
+          backgroundColor: const Color(0xFF2d4263),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: Color(0xFFFF6B9D), width: 2),
+          ),
+          title: Row(
+            children: const [
+              Icon(
+                Icons.warning_amber_rounded,
+                color: Color(0xFFFF6B9D),
+                size: 28,
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Supprimer l\'enchantement ?',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ],
-            ),
-            content: Column(
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -207,8 +233,11 @@ class GameDialogs {
                 ),
               ],
             ),
-            actions: [
-              Column(
+          ),
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -251,8 +280,10 @@ class GameDialogs {
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

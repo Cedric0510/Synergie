@@ -266,20 +266,55 @@ class _GameScreenState extends ConsumerState<GameScreen>
           }
 
           return Container(
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
                 colors: [
-                  const Color(0xFF6DD5FA), // Bleu clair
-                  const Color(0xFF2980B9), // Bleu moyen
-                  const Color(0xFF8E44AD).withValues(alpha: 0.7), // Violet doux
+                  Color(0xFF2F87B8),
+                  Color(0xFF2E6EA5),
+                  Color(0xFF2C4D85),
                 ],
-                stops: const [0.0, 0.6, 1.0],
+                stops: [0.0, 0.58, 1.0],
               ),
             ),
             child: Stack(
               children: [
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: RadialGradient(
+                          center: const Alignment(0, -0.2),
+                          radius: 1.05,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.16),
+                            Colors.transparent,
+                          ],
+                          stops: const [0.0, 1.0],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.18),
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.30),
+                          ],
+                          stops: const [0.0, 0.38, 1.0],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
                 SafeArea(
                   child: Column(
                     children: [
@@ -294,7 +329,6 @@ class _GameScreenState extends ConsumerState<GameScreen>
                           session: session,
                           isMyTurn: isMyTurn,
                           playerId: widget.playerId,
-                          onSkipResponse: skipResponse,
                           onCardDropped: _handleCardDropped,
                           onCardReturnedToHand: _handleCardReturnedToHand,
                           pendingCard: _pendingDroppedCard,
@@ -315,10 +349,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
                             (index) => selectCard(index, _selectedCardIndex),
                         remainingDeckCards: myData.deckCardIds.length,
                         onEndTurn: skipTurn,
+                        onAcceptResponse: skipResponse,
                         canEndTurn:
-                            isMyTurn &&
-                            session.currentPhase == GamePhase.main &&
-                            _selectedCardIndex == null,
+                            isMyTurn && session.currentPhase == GamePhase.main,
                         onIncrementPI: incrementPI,
                         onDecrementPI: decrementPI,
                         onManualDrawCard: manualDrawCard,
@@ -469,8 +502,15 @@ class _GameScreenState extends ConsumerState<GameScreen>
       builder: (context) {
         return Dialog(
           backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 16,
+          ),
           child: Container(
-            constraints: const BoxConstraints(maxWidth: 520, maxHeight: 520),
+            constraints: BoxConstraints(
+              maxWidth: 520,
+              maxHeight: MediaQuery.of(context).size.height * 0.82,
+            ),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -585,21 +625,28 @@ class _GameScreenState extends ConsumerState<GameScreen>
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6DD5FA),
-                        foregroundColor: Colors.black87,
+                    child: TextButton(
+                      style: TextButton.styleFrom(
+                        backgroundColor: const Color(
+                          0xFF6DD5FA,
+                        ).withValues(alpha: 0.25),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(
+                            color: const Color(
+                              0xFF6DD5FA,
+                            ).withValues(alpha: 0.45),
+                          ),
                         ),
                       ),
                       onPressed: () => Navigator.of(context).pop(),
                       child: const Text(
-                        'OK',
+                        'Fermer',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
+                          color: Color(0xFF6DD5FA),
                         ),
                       ),
                     ),
@@ -619,6 +666,10 @@ class _GameScreenState extends ConsumerState<GameScreen>
         barrierDismissible: false,
         builder: (context) {
           return AlertDialog(
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 16,
+            ),
             backgroundColor: const Color(0xFF2d4263),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
@@ -628,32 +679,68 @@ class _GameScreenState extends ConsumerState<GameScreen>
               children: const [
                 Icon(Icons.check_circle_outline, color: Color(0xFF6DD5FA)),
                 SizedBox(width: 12),
-                Text(
-                  'Action enchantement',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Text(
+                    'Action enchantement',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
-            content: Text(
-              action.actionText,
-              style: const TextStyle(color: Colors.white70, fontSize: 16),
+            content: SingleChildScrollView(
+              child: Text(
+                action.actionText,
+                style: const TextStyle(color: Colors.white70, fontSize: 16),
+              ),
             ),
             actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Non', style: TextStyle(color: Colors.red)),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6DD5FA),
-                  foregroundColor: Colors.black87,
+              SizedBox(
+                width: double.infinity,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      style: TextButton.styleFrom(
+                        backgroundColor: const Color(
+                          0xFF6DD5FA,
+                        ).withValues(alpha: 0.25),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text(
+                        'Oui',
+                        style: TextStyle(
+                          color: Color(0xFF6DD5FA),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.red.withValues(alpha: 0.20),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text(
+                        'Non',
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                child: const Text('Oui'),
               ),
             ],
           );

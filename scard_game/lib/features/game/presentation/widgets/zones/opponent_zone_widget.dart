@@ -18,10 +18,13 @@ class OpponentZoneWidget extends StatelessWidget {
     final isSmallMobile = screenWidth < 380;
 
     return Container(
-      padding: EdgeInsets.all(isSmallMobile ? 6 : (isMobile ? 8 : 16)),
-      decoration: BoxDecoration(
-        color: Colors.transparent,
+      padding: EdgeInsets.fromLTRB(
+        isSmallMobile ? 6 : (isMobile ? 8 : 12),
+        isSmallMobile ? 5 : (isMobile ? 7 : 10),
+        isSmallMobile ? 6 : (isMobile ? 8 : 12),
+        isSmallMobile ? 3 : (isMobile ? 4 : 6),
       ),
+      decoration: BoxDecoration(color: Colors.transparent),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -31,12 +34,10 @@ class OpponentZoneWidget extends StatelessWidget {
           else
             _buildDesktopLayout(),
 
-          SizedBox(height: isSmallMobile ? 4 : (isMobile ? 6 : 8)),
+          SizedBox(height: isSmallMobile ? 3 : (isMobile ? 4 : 6)),
 
           // Barre de tension
-          TensionBarWidget(tension: opponentData.tension),
-
-          SizedBox(height: isSmallMobile ? 2 : (isMobile ? 4 : 8)),
+          TensionBarWidget(tension: opponentData.tension, compact: true),
         ],
       ),
     );
@@ -55,26 +56,26 @@ class OpponentZoneWidget extends StatelessWidget {
                   ? Icons.male
                   : Icons.female,
               color: Colors.white70,
-              size: isSmallMobile ? 16 : 18,
+              size: isSmallMobile ? 15 : 17,
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 5),
             Expanded(
               child: Text(
                 opponentData.name,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: isSmallMobile ? 12 : 14,
+                  fontSize: isSmallMobile ? 11 : 13,
                   fontWeight: FontWeight.bold,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             _buildInhibitionPointsBadge(
               isMobile: true,
               isSmallMobile: isSmallMobile,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             _buildHandCountBadge(isMobile: true, isSmallMobile: isSmallMobile),
           ],
         ),
@@ -102,14 +103,14 @@ class OpponentZoneWidget extends StatelessWidget {
                     ? Icons.male
                     : Icons.female,
                 color: Colors.white70,
-                size: 20,
+                size: 18,
               ),
               const SizedBox(width: 8),
               Text(
                 opponentData.name,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -138,7 +139,7 @@ class OpponentZoneWidget extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: isSmallMobile ? 6 : (isMobile ? 10 : 14),
-        vertical: isSmallMobile ? 4 : (isMobile ? 6 : 8),
+        vertical: isSmallMobile ? 3 : (isMobile ? 5 : 7),
       ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(
@@ -164,7 +165,7 @@ class OpponentZoneWidget extends StatelessWidget {
         '${opponentData.inhibitionPoints} PI',
         style: TextStyle(
           color: Colors.white,
-          fontSize: isSmallMobile ? 10 : (isMobile ? 12 : 16),
+          fontSize: isSmallMobile ? 10 : (isMobile ? 11 : 14),
           fontWeight: FontWeight.bold,
           shadows: const [
             Shadow(color: Colors.black38, offset: Offset(0, 1), blurRadius: 3),
@@ -182,7 +183,7 @@ class OpponentZoneWidget extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: isSmallMobile ? 5 : (isMobile ? 8 : 12),
-        vertical: isSmallMobile ? 4 : (isMobile ? 6 : 8),
+        vertical: isSmallMobile ? 3 : (isMobile ? 5 : 7),
       ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(
@@ -210,7 +211,7 @@ class OpponentZoneWidget extends StatelessWidget {
           Icon(
             Icons.style,
             color: Colors.white,
-            size: isSmallMobile ? 10 : (isMobile ? 12 : 16),
+            size: isSmallMobile ? 10 : (isMobile ? 11 : 14),
             shadows: const [
               Shadow(
                 color: Colors.black38,
@@ -224,7 +225,7 @@ class OpponentZoneWidget extends StatelessWidget {
             '${opponentData.handCardIds.length}',
             style: TextStyle(
               color: Colors.white,
-              fontSize: isSmallMobile ? 9 : (isMobile ? 11 : 13),
+              fontSize: isSmallMobile ? 9 : (isMobile ? 10 : 12),
               fontWeight: FontWeight.w500,
               shadows: const [
                 Shadow(

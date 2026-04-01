@@ -12,11 +12,13 @@ class DeckCounterWidget extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 600;
     final isSmallMobile = screenWidth < 380;
+    final countFontSize = isSmallMobile ? 11.0 : (isMobile ? 14.0 : 16.0);
+    final labelFontSize = isSmallMobile ? 0.0 : (isMobile ? 9.0 : 10.0);
 
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: isSmallMobile ? 6 : (isMobile ? 10 : 14),
-        vertical: isSmallMobile ? 4 : (isMobile ? 6 : 8),
+        horizontal: isSmallMobile ? 7 : (isMobile ? 10 : 12),
+        vertical: isSmallMobile ? 5 : (isMobile ? 6 : 7),
       ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(isSmallMobile ? 12 : 16),
@@ -24,19 +26,19 @@ class DeckCounterWidget extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            _getCounterColor().withValues(alpha: 0.3),
-            _getCounterColor().withValues(alpha: 0.2),
+            _getCounterColor().withValues(alpha: 0.22),
+            _getCounterColor().withValues(alpha: 0.14),
           ],
         ),
         border: Border.all(
-          color: _getCounterColor().withValues(alpha: 0.6),
+          color: _getCounterColor().withValues(alpha: 0.45),
           width: isSmallMobile ? 1.0 : 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: _getCounterColor().withValues(alpha: 0.3),
-            blurRadius: isSmallMobile ? 4 : 8,
-            spreadRadius: isSmallMobile ? 0 : 1,
+            color: _getCounterColor().withValues(alpha: 0.18),
+            blurRadius: isSmallMobile ? 3 : 6,
+            spreadRadius: 0,
           ),
         ],
       ),
@@ -44,9 +46,9 @@ class DeckCounterWidget extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            Icons.style,
+            Icons.layers_outlined,
             color: Colors.white,
-            size: isSmallMobile ? 12 : (isMobile ? 16 : 18),
+            size: isSmallMobile ? 12 : (isMobile ? 15 : 17),
             shadows: const [
               Shadow(
                 color: Colors.black54,
@@ -57,12 +59,10 @@ class DeckCounterWidget extends StatelessWidget {
           ),
           SizedBox(width: isSmallMobile ? 3 : (isMobile ? 6 : 8)),
           Text(
-            isSmallMobile
-                ? '$remainingCards'
-                : '$remainingCards carte${remainingCards > 1 ? 's' : ''}',
+            '$remainingCards',
             style: TextStyle(
               color: Colors.white,
-              fontSize: isSmallMobile ? 9 : (isMobile ? 12 : 14),
+              fontSize: countFontSize,
               fontWeight: FontWeight.bold,
               letterSpacing: 0.5,
               shadows: const [
@@ -74,6 +74,18 @@ class DeckCounterWidget extends StatelessWidget {
               ],
             ),
           ),
+          if (!isSmallMobile) ...[
+            SizedBox(width: isMobile ? 5 : 6),
+            Text(
+              'DECK',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: labelFontSize,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.0,
+              ),
+            ),
+          ],
         ],
       ),
     );

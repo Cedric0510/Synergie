@@ -408,35 +408,64 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 16,
+          ),
           backgroundColor: const Color(0xFF2d4263),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
             side: const BorderSide(color: Color(0xFF6DD5FA), width: 2),
           ),
-          title: const Text(
-            'Choisir le palier',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (final tier in available)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(_tierColorValue(tier)),
-                      foregroundColor: Colors.white,
-                    ),
-                    onPressed: () => Navigator.pop(context, tier),
-                    child: Text(_tierLabel(tier)),
+          title: Row(
+            children: const [
+              Icon(Icons.layers_outlined, color: Color(0xFF6DD5FA), size: 24),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Choisir le palier',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
+              ),
             ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final tier in available)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(_tierColorValue(tier)),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onPressed: () => Navigator.pop(context, tier),
+                        child: Text(
+                          _tierLabel(tier),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         );
       },

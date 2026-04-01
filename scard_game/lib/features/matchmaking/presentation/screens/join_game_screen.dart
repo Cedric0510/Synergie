@@ -77,6 +77,7 @@ class _JoinGameScreenState extends ConsumerState<JoinGameScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
+        constraints: const BoxConstraints.expand(),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,

@@ -67,6 +67,7 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
+        constraints: const BoxConstraints.expand(),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,

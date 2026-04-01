@@ -35,18 +35,15 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
     try {
       final session = await gameSessionService.getSession(sessionId);
 
-      // EXÉCUTER LES ACTIONS PENDANTES (sort non contré)
       if (session.pendingSpellActions.isNotEmpty) {
         await executePendingActions(session);
       }
 
       final allCards = await cardService.loadAllCards();
 
-      // Trouver la carte principale qui nécessite validation (rituels uniquement)
       String? cardToValidate;
       for (final cardId in session.resolutionStack) {
         final card = allCards.firstWhere((c) => c.id == cardId);
-        // Valider uniquement les rituels (pas les enchantements)
         if (card.damageIfRefused > 0 && card.type == CardType.ritual) {
           cardToValidate = cardId;
           break;
@@ -59,241 +56,23 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
       }
 
       final card = allCards.firstWhere((c) => c.id == cardToValidate);
-
-      // Récupérer le tier sélectionné et extraire l'énoncé correspondant
       final selectedTierKey = session.playedCardTiers[cardToValidate];
-      final effectText = _getEffectTextForTier(card, selectedTierKey);
       final tierTitle =
           selectedTierKey != null ? card.tierTitles[selectedTierKey] : null;
+      final effectText = _getEffectTextForTier(card, selectedTierKey);
 
-      if (!mounted) return;
-
-      // Boucle de validation avec support du timer
       dynamic actionCompleted;
       do {
         if (!mounted) return;
-        // Validation simple
-        actionCompleted = await showDialog<dynamic>(
-          context: context,
-          barrierDismissible: false,
-          builder:
-              (context) => Dialog(
-                backgroundColor: Colors.transparent,
-                insetPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 16,
-                ),
-                child: Container(
-                  constraints: BoxConstraints(
-                    maxWidth: 400,
-                    maxHeight: MediaQuery.of(context).size.height * 0.82,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        const Color(0xFF2d4263),
-                        const Color(0xFF1a2332),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: const Color(0xFF8E44AD).withValues(alpha: 0.5),
-                      width: 2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF8E44AD).withValues(alpha: 0.3),
-                        blurRadius: 30,
-                        spreadRadius: 0,
-                      ),
-                    ],
-                  ),
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // En-tête avec icône
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                const Color(0xFF8E44AD).withValues(alpha: 0.3),
-                                const Color(0xFF8E44AD).withValues(alpha: 0.1),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: const Color(
-                                    0xFF8E44AD,
-                                  ).withValues(alpha: 0.2),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.check_circle_outline,
-                                  color: Color(0xFF8E44AD),
-                                  size: 28,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              const Expanded(
-                                child: Text(
-                                  'Validation de l\'action',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        // Contenu
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.05),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.1),
-                              width: 1,
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              const Text(
-                                'L\'adversaire a-t-il effectué l\'action suivante ?',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.white70,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 12),
-                              // Afficher le titre du tier si disponible
-                              if (tierTitle != null) ...[
-                                Text(
-                                  tierTitle,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: _getTierColor(selectedTierKey),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 8),
-                              ],
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: const Color(
-                                    0xFF8E44AD,
-                                  ).withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  '"$effectText"',
-                                  style: const TextStyle(
-                                    fontSize: 15,
-                                    color: Colors.white,
-                                    fontStyle: FontStyle.italic,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Raccourcis timer
-                        Text(
-                          '⏱️ Démarrer un timer',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.7),
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          alignment: WrapAlignment.center,
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            _buildTimerShortcut(context, ref, 0.5, '30s'),
-                            _buildTimerShortcut(context, ref, 1, '1min'),
-                            _buildTimerShortcut(context, ref, 2, '2min'),
-                            _buildTimerShortcut(context, ref, 3, '3min'),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Boutons
-                        _buildGlassButton(
-                          label: 'Action effectuée',
-                          color: Colors.green,
-                          onPressed: () => Navigator.pop(context, true),
-                        ),
-                        const SizedBox(height: 12),
-                        _buildGlassButton(
-                          label: 'Action refusée',
-                          color: Colors.red,
-                          onPressed: () => Navigator.pop(context, false),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+        actionCompleted = await _showActionValidationDialog(
+          effectText: effectText,
+          selectedTierKey: selectedTierKey,
+          tierTitle: tierTitle,
         );
+        await _handleValidationTimerIfNeeded(actionCompleted);
+      } while (actionCompleted == 'timer');
 
-        // Si un timer a été démarré, afficher le popup de décompte
-        if (actionCompleted == 'timer') {
-          if (!mounted) return;
-
-          // Afficher le dialog de décompte
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (context) => const TimerCountdownDialog(),
-          );
-
-          // Écouter l'état du timer jusqu'à ce qu'il soit terminé
-          await Future.doWhile(() async {
-            final timerState = ref.read(gameTimerProvider);
-            if (timerState.status == TimerStatus.finished ||
-                timerState.status == TimerStatus.idle) {
-              return false; // Timer terminé, sortir de la boucle
-            }
-            await Future.delayed(const Duration(milliseconds: 500));
-            return true; // Continuer à attendre
-          });
-
-          // Attendre un petit délai pour que l'utilisateur voit le timer terminé
-          await Future.delayed(const Duration(seconds: 1));
-
-          // Fermer le dialog de décompte
-          if (mounted) {
-            Navigator.of(context).pop();
-          }
-        }
-      } while (actionCompleted == 'timer'); // Reboucler si timer lancé
-
-      if (actionCompleted != null && actionCompleted is bool) {
+      if (actionCompleted is bool) {
         await resolveEffectsWithValidation(
           cardToValidate,
           actionCompleted,
@@ -303,7 +82,7 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ Erreur: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -317,7 +96,6 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
     try {
       final session = await gameSessionService.getSession(sessionId);
 
-      // Pas de carte à valider si pile vide
       if (session.resolutionStack.isEmpty) {
         await resolveEffectsWithoutValidation();
         return;
@@ -325,19 +103,14 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
 
       final allCards = await cardService.loadAllCards();
 
-      // Vérifier s'il y a une carte de réponse (2+ cartes dans la pile)
       if (session.resolutionStack.length > 1) {
-        // Il y a une réponse - demander au joueur actif l'effet
         await showResponseEffectDialog();
         return;
       }
 
-      // Pas de réponse - validation normale
-      // Trouver la première carte qui nécessite validation (rituels uniquement)
       String? cardToValidate;
       for (final cardId in session.resolutionStack) {
         final card = allCards.firstWhere((c) => c.id == cardId);
-        // Valider uniquement les rituels (pas les enchantements)
         if (card.damageIfRefused > 0 && card.type == CardType.ritual) {
           cardToValidate = cardId;
           break;
@@ -345,319 +118,276 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
       }
 
       if (cardToValidate == null) {
-        // Aucune carte nécessite validation
         await resolveEffectsWithoutValidation();
         return;
       }
 
       final card = allCards.firstWhere((c) => c.id == cardToValidate);
-
-      // Récupérer le tier sélectionné et extraire l'énoncé correspondant
       final selectedTierKey = session.playedCardTiers[cardToValidate];
-      final effectText = _getEffectTextForTier(card, selectedTierKey);
       final tierTitle =
           selectedTierKey != null ? card.tierTitles[selectedTierKey] : null;
+      final effectText = _getEffectTextForTier(card, selectedTierKey);
 
-      // Déterminer qui doit valider
       final isMyTurn = session.currentPlayerId == playerId;
-      // Pour l'instant: seul le joueur actif valide
       if (!isMyTurn) {
-        // Attendre que le joueur actif valide
         return;
       }
 
-      if (mounted) {
-        // Boucle de validation avec support du timer
-        dynamic actionCompleted;
-        do {
-          if (!mounted) return;
-          actionCompleted = await showDialog<dynamic>(
-            context: context,
-            barrierDismissible: false,
-            builder:
-                (context) => Dialog(
-                  backgroundColor: Colors.transparent,
-                  insetPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 16,
-                  ),
-                  child: Container(
-                    constraints: BoxConstraints(
-                      maxWidth: 400,
-                      maxHeight: MediaQuery.of(context).size.height * 0.82,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          const Color(0xFF2d4263),
-                          const Color(0xFF1a2332),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                        color: const Color(0xFF6DD5FA).withValues(alpha: 0.5),
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF6DD5FA).withValues(alpha: 0.3),
-                          blurRadius: 30,
-                          spreadRadius: 0,
-                        ),
-                      ],
-                    ),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Header avec brillance crystal
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  const Color(
-                                    0xFF6DD5FA,
-                                  ).withValues(alpha: 0.3),
-                                  const Color(
-                                    0xFF6DD5FA,
-                                  ).withValues(alpha: 0.1),
-                                ],
-                              ),
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(22),
-                                topRight: Radius.circular(22),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: const Color(
-                                      0xFF6DD5FA,
-                                    ).withValues(alpha: 0.2),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.check_circle_outline,
-                                    color: Color(0xFF6DD5FA),
-                                    size: 28,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                const Expanded(
-                                  child: Text(
-                                    'Validation de l\'action',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 0.5,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+      dynamic actionCompleted;
+      do {
+        if (!mounted) return;
+        actionCompleted = await _showActionValidationDialog(
+          effectText: effectText,
+          selectedTierKey: selectedTierKey,
+          tierTitle: tierTitle,
+        );
+        await _handleValidationTimerIfNeeded(actionCompleted);
+      } while (actionCompleted == 'timer');
 
-                          // Contenu avec couleur tapis de jeu
-                          Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Column(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF1a2332),
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: const Color(
-                                        0xFF6DD5FA,
-                                      ).withValues(alpha: 0.2),
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      const Text(
-                                        'L\'adversaire a-t-il effectué l\'action suivante ?',
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          color: Color(0xFFB0B0B0),
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      const SizedBox(height: 12),
-                                      // Afficher le titre du tier si disponible
-                                      if (tierTitle != null) ...[
-                                        Text(
-                                          tierTitle,
-                                          style: TextStyle(
-                                            fontSize: 17,
-                                            color: _getTierColor(
-                                              selectedTierKey,
-                                            ),
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                        const SizedBox(height: 10),
-                                      ],
-                                      Container(
-                                        padding: const EdgeInsets.all(14),
-                                        decoration: BoxDecoration(
-                                          color: const Color(
-                                            0xFF6DD5FA,
-                                          ).withValues(alpha: 0.08),
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          border: Border.all(
-                                            color: const Color(
-                                              0xFF6DD5FA,
-                                            ).withValues(alpha: 0.15),
-                                            width: 1,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          '"$effectText"',
-                                          style: const TextStyle(
-                                            fontSize: 15,
-                                            color: Color(0xFFE0E0E0),
-                                            fontStyle: FontStyle.italic,
-                                            fontWeight: FontWeight.w600,
-                                            height: 1.4,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 20),
-
-                                // Raccourcis timer
-                                Text(
-                                  '⏱️ Démarrer un timer',
-                                  style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.7),
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                Wrap(
-                                  alignment: WrapAlignment.center,
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: [
-                                    _buildTimerShortcut(
-                                      context,
-                                      ref,
-                                      0.5,
-                                      '30s',
-                                    ),
-                                    _buildTimerShortcut(
-                                      context,
-                                      ref,
-                                      1,
-                                      '1min',
-                                    ),
-                                    _buildTimerShortcut(
-                                      context,
-                                      ref,
-                                      2,
-                                      '2min',
-                                    ),
-                                    _buildTimerShortcut(
-                                      context,
-                                      ref,
-                                      3,
-                                      '3min',
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 20),
-
-                                // Boutons crystal en relief
-                                _buildGlassButton(
-                                  label: 'Action effectuée',
-                                  color: Colors.green,
-                                  onPressed: () => Navigator.pop(context, true),
-                                ),
-                                const SizedBox(height: 12),
-                                _buildGlassButton(
-                                  label: 'Action refusée',
-                                  color: Colors.red,
-                                  onPressed:
-                                      () => Navigator.pop(context, false),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-          );
-
-          // Si un timer a été démarré, afficher le popup de décompte
-          if (actionCompleted == 'timer') {
-            if (!mounted) return;
-
-            // Afficher le dialog de décompte
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (context) => const TimerCountdownDialog(),
-            );
-
-            // Écouter l'état du timer jusqu'à ce qu'il soit terminé
-            await Future.doWhile(() async {
-              final timerState = ref.read(gameTimerProvider);
-              if (timerState.status == TimerStatus.finished ||
-                  timerState.status == TimerStatus.idle) {
-                return false; // Timer terminé, sortir de la boucle
-              }
-              await Future.delayed(const Duration(milliseconds: 500));
-              return true; // Continuer à attendre
-            });
-
-            // Attendre un petit délai pour que l'utilisateur voit le timer terminé
-            await Future.delayed(const Duration(seconds: 1));
-
-            // Fermer le dialog de décompte
-            if (mounted) {
-              Navigator.of(context).pop();
-            }
-          }
-        } while (actionCompleted == 'timer'); // Reboucler si timer lancé
-
-        if (actionCompleted != null && actionCompleted is bool) {
-          await resolveEffectsWithValidation(
-            cardToValidate,
-            actionCompleted,
-            card.damageIfRefused,
-          );
-        }
+      if (actionCompleted is bool) {
+        await resolveEffectsWithValidation(
+          cardToValidate,
+          actionCompleted,
+          card.damageIfRefused,
+        );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ Erreur validation: $e'),
+            content: Text('Erreur validation: $e'),
             backgroundColor: Colors.red,
           ),
         );
       }
     }
+  }
+
+  Future<dynamic> _showActionValidationDialog({
+    required String effectText,
+    required String? selectedTierKey,
+    String? tierTitle,
+  }) {
+    const accent = Color(0xFF6DD5FA);
+
+    return showDialog<dynamic>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 16,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 420,
+              maxHeight: MediaQuery.of(dialogContext).size.height * 0.84,
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF2d4263), Color(0xFF1a2332)],
+                ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: accent.withValues(alpha: 0.45),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: accent.withValues(alpha: 0.28),
+                    blurRadius: 24,
+                    spreadRadius: 0,
+                  ),
+                ],
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            accent.withValues(alpha: 0.30),
+                            accent.withValues(alpha: 0.10),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: accent.withValues(alpha: 0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.check_circle_outline,
+                              color: accent,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Text(
+                              'Validation de l\'action',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 19,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.10),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          const Text(
+                            'L\'adversaire a-t-il effectué l\'action suivante ?',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.white70,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 10),
+                          if (tierTitle != null) ...[
+                            Text(
+                              tierTitle,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: _getTierColor(selectedTierKey),
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: accent.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: accent.withValues(alpha: 0.18),
+                              ),
+                            ),
+                            child: Text(
+                              '"$effectText"',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                color: Color(0xFFE0E0E0),
+                                fontStyle: FontStyle.italic,
+                                fontWeight: FontWeight.w600,
+                                height: 1.35,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Demarrer un timer',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _buildTimerShortcut(dialogContext, ref, 0.5, '30s'),
+                        _buildTimerShortcut(dialogContext, ref, 1, '1 min'),
+                        _buildTimerShortcut(dialogContext, ref, 2, '2 min'),
+                        _buildTimerShortcut(dialogContext, ref, 3, '3 min'),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _buildGlassButton(
+                      label: 'Action effectuée',
+                      color: Colors.green,
+                      onPressed: () => Navigator.pop(dialogContext, true),
+                    ),
+                    const SizedBox(height: 10),
+                    _buildGlassButton(
+                      label: 'Action refusée',
+                      color: Colors.red,
+                      onPressed: () => Navigator.pop(dialogContext, false),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _handleValidationTimerIfNeeded(dynamic actionCompleted) async {
+    if (actionCompleted != 'timer' || !mounted) return;
+
+    var timerDialogStillOpen = true;
+    var timerFinishedNaturally = false;
+
+    final timerDialogFuture = showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const TimerCountdownDialog(),
+    ).whenComplete(() {
+      timerDialogStillOpen = false;
+    });
+
+    await Future.doWhile(() async {
+      final timerState = ref.read(gameTimerProvider);
+      if (timerState.status == TimerStatus.finished) {
+        timerFinishedNaturally = true;
+        return false;
+      }
+      if (timerState.status == TimerStatus.idle) {
+        return false;
+      }
+      await Future.delayed(const Duration(milliseconds: 500));
+      return true;
+    });
+
+    if (timerFinishedNaturally) {
+      await Future.delayed(const Duration(seconds: 1));
+      if (mounted && timerDialogStillOpen) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+    }
+
+    await timerDialogFuture;
   }
 
   /// Affiche le dialogue d'effet de réponse
@@ -691,7 +421,7 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
     try {
       final session = await gameSessionService.getSession(sessionId);
 
-      // EXÉCUTER LES ACTIONS PENDANTES (sort non contré)
+      // EXECUTER LES ACTIONS PENDANTES (sort non contre)
       if (session.pendingSpellActions.isNotEmpty) {
         await executePendingActions(session);
       }
@@ -713,16 +443,16 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
       // Nettoyer le plateau (supprimer cartes sauf enchantements)
       await sessionStateService.clearPlayedCards(sessionId);
 
-      // Auto-transition: Résolution → Fin de tour
+      // Auto-transition: Resolution -> Fin de tour
       await turnService.nextPhase(sessionId);
 
-      // Auto-transition: Fin → Tour suivant (Draw du prochain joueur)
+      // Auto-transition: Fin -> Tour suivant (Draw du prochain joueur)
       await turnService.nextPhase(sessionId);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Effets résolus - Tour suivant'),
+            content: Text('Effets resolus - Tour suivant'),
             backgroundColor: Colors.purple,
             duration: Duration(seconds: 1),
           ),
@@ -732,7 +462,7 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ Erreur résolution: $e'),
+            content: Text('Erreur resolution: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -784,10 +514,10 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
       // Nettoyer le plateau (supprimer cartes sauf enchantements)
       await sessionStateService.clearPlayedCards(sessionId);
 
-      // Auto-transition: Résolution → Fin de tour
+      // Auto-transition: Resolution -> Fin de tour
       await turnService.nextPhase(sessionId);
 
-      // Auto-transition: Fin → Tour suivant (Draw du prochain joueur)
+      // Auto-transition: Fin -> Tour suivant (Draw du prochain joueur)
       await turnService.nextPhase(sessionId);
 
       if (mounted) {
@@ -795,8 +525,8 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
           SnackBar(
             content: Text(
               actionCompleted
-                  ? '✅ Action validée - Effets résolus'
-                  : '❌ Action refusée - 3 PI retirés',
+                  ? 'Action validee - Effets resolus'
+                  : 'Action refusee - 3 PI retires',
             ),
             backgroundColor: actionCompleted ? Colors.green : Colors.orange,
             duration: const Duration(seconds: 4),
@@ -807,7 +537,7 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ Erreur résolution: $e'),
+            content: Text('Erreur resolution: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -867,8 +597,8 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
       await turnService.nextPhase(sessionId);
 
       if (mounted) {
-        final p1Status = player1Completed ? '✅' : '❌';
-        final p2Status = player2Completed ? '✅' : '❌';
+        final p1Status = player1Completed ? 'OK' : 'KO';
+        final p2Status = player2Completed ? 'OK' : 'KO';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -883,7 +613,7 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ Erreur résolution: $e'),
+            content: Text('Erreur resolution: $e'),
             backgroundColor: Colors.red,
           ),
         );

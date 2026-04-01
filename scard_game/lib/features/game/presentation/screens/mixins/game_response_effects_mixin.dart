@@ -36,6 +36,10 @@ mixin GameResponseEffectsMixin<T extends ConsumerStatefulWidget>
       barrierDismissible: false,
       builder:
           (context) => AlertDialog(
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 16,
+            ),
             backgroundColor: const Color(0xFF2d4263),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
@@ -45,59 +49,65 @@ mixin GameResponseEffectsMixin<T extends ConsumerStatefulWidget>
               children: [
                 Icon(Icons.reply, color: Color(0xFF6DD5FA), size: 28),
                 const SizedBox(width: 12),
-                const Text(
-                  'Carte de réponse jouée',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
+                const Expanded(
+                  child: Text(
+                    'Carte de réponse jouée',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Votre adversaire a joué une réponse.\nQue se passe-t-il ?',
-                  style: TextStyle(fontSize: 16, color: Colors.white70),
-                ),
-                const SizedBox(height: 20),
-                DropdownButtonFormField<ResponseEffect>(
-                  dropdownColor: const Color(0xFF2d4263),
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    labelText: 'Effet de la réponse',
-                    labelStyle: const TextStyle(color: Color(0xFF6DD5FA)),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFF6DD5FA)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: Color(0xFF6DD5FA).withValues(alpha: 0.5),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Votre adversaire a joué une réponse.\nQue se passe-t-il ?',
+                    style: TextStyle(fontSize: 16, color: Colors.white70),
+                  ),
+                  const SizedBox(height: 20),
+                  DropdownButtonFormField<ResponseEffect>(
+                    dropdownColor: const Color(0xFF2d4263),
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'Effet de la réponse',
+                      labelStyle: const TextStyle(color: Color(0xFF6DD5FA)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFF6DD5FA)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: Color(0xFF6DD5FA).withValues(alpha: 0.5),
+                        ),
                       ),
                     ),
+                    items:
+                        ResponseEffect.values.map((effect) {
+                          return DropdownMenuItem(
+                            value: effect,
+                            child: Text(
+                              effect.displayName,
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          );
+                        }).toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        Navigator.pop(context, value);
+                      }
+                    },
                   ),
-                  items:
-                      ResponseEffect.values.map((effect) {
-                        return DropdownMenuItem(
-                          value: effect,
-                          child: Text(
-                            effect.displayName,
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        );
-                      }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      Navigator.pop(context, value);
-                    }
-                  },
-                ),
-              ],
+                ],
+              ),
             ),
           ),
     );
@@ -216,6 +226,10 @@ mixin GameResponseEffectsMixin<T extends ConsumerStatefulWidget>
           return StatefulBuilder(
             builder: (context, setState) {
               return AlertDialog(
+                insetPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 16,
+                ),
                 backgroundColor: const Color(0xFF2d4263),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
@@ -229,60 +243,66 @@ mixin GameResponseEffectsMixin<T extends ConsumerStatefulWidget>
                       size: 28,
                     ),
                     const SizedBox(width: 12),
-                    const Text(
-                      'Validation (Miroir)',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+                    const Expanded(
+                      child: Text(
+                        'Validation (Miroir)',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Color(0xFFFFC107).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'Les 2 joueurs doivent effectuer :\n"${card.targetEffect ?? card.gameEffect}"',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.white70,
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Color(0xFFFFC107).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          'Les 2 joueurs doivent effectuer :\n"${card.targetEffect ?? card.gameEffect}"',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.white70,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    CheckboxListTile(
-                      title: const Text(
-                        'Vous avez effectué l\'action',
-                        style: TextStyle(color: Colors.white),
+                      const SizedBox(height: 20),
+                      CheckboxListTile(
+                        title: const Text(
+                          'Vous avez effectué l\'action',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        value: player1Completed ?? false,
+                        activeColor: Color(0xFF6DD5FA),
+                        checkColor: Colors.white,
+                        onChanged: (value) {
+                          setState(() => player1Completed = value);
+                        },
                       ),
-                      value: player1Completed ?? false,
-                      activeColor: Color(0xFF6DD5FA),
-                      checkColor: Colors.white,
-                      onChanged: (value) {
-                        setState(() => player1Completed = value);
-                      },
-                    ),
-                    CheckboxListTile(
-                      title: const Text(
-                        'Adversaire a effectué l\'action',
-                        style: TextStyle(color: Colors.white),
+                      CheckboxListTile(
+                        title: const Text(
+                          'Adversaire a effectué l\'action',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        value: player2Completed ?? false,
+                        activeColor: Color(0xFF6DD5FA),
+                        checkColor: Colors.white,
+                        onChanged: (value) {
+                          setState(() => player2Completed = value);
+                        },
                       ),
-                      value: player2Completed ?? false,
-                      activeColor: Color(0xFF6DD5FA),
-                      checkColor: Colors.white,
-                      onChanged: (value) {
-                        setState(() => player2Completed = value);
-                      },
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 actions: [
                   TextButton(

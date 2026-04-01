@@ -150,9 +150,9 @@ class CardWidget extends StatelessWidget {
         builder: (context, constraints) {
           return Column(
             children: [
-              // Image principale (70% de la hauteur)
+              // Image principale (68% de la hauteur)
               SizedBox(
-                height: constraints.maxHeight * 0.70,
+                height: constraints.maxHeight * 0.68,
                 width: double.infinity,
                 child: Container(
                   decoration: BoxDecoration(
@@ -187,9 +187,9 @@ class CardWidget extends StatelessWidget {
                   ),
                 ),
               ),
-              // Nom de la carte (20% de la hauteur)
+              // Nom de la carte (22% de la hauteur)
               Container(
-                height: constraints.maxHeight * 0.20,
+                height: constraints.maxHeight * 0.22,
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                 decoration: BoxDecoration(color: _getBorderColor(card.color)),
@@ -197,7 +197,7 @@ class CardWidget extends StatelessWidget {
                   child: Text(
                     card.name,
                     style: TextStyle(
-                      fontSize: (constraints.maxHeight * 0.08).clamp(8.0, 12.0),
+                      fontSize: (constraints.maxHeight * 0.09).clamp(9.0, 13.0),
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -223,13 +223,16 @@ class CardWidget extends StatelessWidget {
                   child: Text(
                     _getCardTypeLabel(card.type),
                     style: TextStyle(
-                      fontSize: (constraints.maxHeight * 0.06).clamp(6.0, 10.0),
+                      fontSize: (constraints.maxHeight * 0.065).clamp(
+                        8.0,
+                        11.0,
+                      ),
                       fontWeight: FontWeight.w600,
                       color: _getBorderColor(card.color),
                     ),
                     textAlign: TextAlign.center,
                     maxLines: 1,
-                    overflow: TextOverflow.clip,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ),

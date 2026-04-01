@@ -7,7 +7,6 @@ import '../../../domain/models/game_card.dart';
 import '../../../domain/enums/game_phase.dart';
 import '../card_widget.dart';
 import '../counters/ultima_counter_widget.dart';
-import '../../../../../core/widgets/game_button.dart';
 import '../../../../../core/widgets/game_timer_widget.dart';
 import '../dialogs/rules_dialog.dart';
 import 'player_zone_widget.dart';
@@ -19,7 +18,6 @@ class PlayZoneWidget extends ConsumerStatefulWidget {
   final GameSession session;
   final bool isMyTurn;
   final String playerId;
-  final VoidCallback onSkipResponse;
 
   /// Callback appelé quand une carte est droppée sur la zone de jeu
   final Function(int cardIndex, GameCard card)? onCardDropped;
@@ -38,7 +36,6 @@ class PlayZoneWidget extends ConsumerStatefulWidget {
     required this.session,
     required this.isMyTurn,
     required this.playerId,
-    required this.onSkipResponse,
     this.onCardDropped,
     this.onCardReturnedToHand,
     this.pendingCard,
@@ -109,17 +106,17 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
       builder: (context, constraints) {
         // Calcul des dimensions des cartes
         const cardRatio = 1.55;
-        final dividerFactor = isSmallMobile ? 2.5 : 2.3;
+        final dividerFactor = isSmallMobile ? 2.35 : 2.1;
         final availableHeightPerZone =
             (constraints.maxHeight - 20) / dividerFactor;
         final availableWidth =
-            constraints.maxWidth * (isSmallMobile ? 0.45 : 0.35);
+            constraints.maxWidth * (isSmallMobile ? 0.52 : 0.43);
 
         double cardWidth = availableHeightPerZone / cardRatio;
         if (cardWidth > availableWidth) cardWidth = availableWidth;
 
-        final minWidth = isSmallMobile ? 55.0 : (isMobile ? 65.0 : 85.0);
-        final maxWidth = isSmallMobile ? 95.0 : (isMobile ? 130.0 : 180.0);
+        final minWidth = isSmallMobile ? 62.0 : (isMobile ? 76.0 : 96.0);
+        final maxWidth = isSmallMobile ? 118.0 : (isMobile ? 160.0 : 198.0);
         cardWidth = cardWidth.clamp(minWidth, maxWidth);
         final cardHeight = cardWidth * cardRatio;
 
@@ -325,19 +322,6 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
                           },
                         ),
                       ),
-                      // Bouton Accepter en phase response (accepte l'action du partenaire)
-                      if (!widget.isMyTurn &&
-                          widget.session.currentPhase == GamePhase.response)
-                        Positioned(
-                          right: 8,
-                          bottom: 8,
-                          child: GameButton(
-                            label: 'Accepter',
-                            style: GameButtonStyle.secondary,
-                            height: isMobile ? 35 : 40,
-                            onPressed: widget.onSkipResponse,
-                          ),
-                        ),
                     ],
                   ),
                 ),
@@ -514,12 +498,12 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
         children: [
           Icon(
             Icons.layers_outlined,
-            size: isSmallMobile ? 11 : 14,
+            size: isSmallMobile ? 12 : 15,
             color: Colors.white70,
           ),
           SizedBox(width: isSmallMobile ? 4 : 6),
           Text(
-            'Phase: ${widget.session.currentPhase.displayName}',
+            widget.session.currentPhase.displayName,
             style: TextStyle(
               color: Colors.white,
               fontSize: smallFontSize,
@@ -533,8 +517,8 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
 
   /// Bouton menu pour accéder aux règles et au timer sans encombrer l'UI
   Widget _buildQuickMenuButton(bool isSmallMobile) {
-    final size = isSmallMobile ? 32.0 : 40.0;
-    final iconSize = isSmallMobile ? 16.0 : 20.0;
+    final size = isSmallMobile ? 44.0 : 48.0;
+    final iconSize = isSmallMobile ? 20.0 : 22.0;
 
     return Material(
       color: Colors.transparent,
