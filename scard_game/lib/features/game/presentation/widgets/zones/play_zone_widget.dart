@@ -18,6 +18,7 @@ class PlayZoneWidget extends ConsumerStatefulWidget {
   final GameSession session;
   final bool isMyTurn;
   final String playerId;
+  final bool showSecretArt;
 
   /// Callback appelé quand une carte est droppée sur la zone de jeu
   final Function(int cardIndex, GameCard card)? onCardDropped;
@@ -36,6 +37,7 @@ class PlayZoneWidget extends ConsumerStatefulWidget {
     required this.session,
     required this.isMyTurn,
     required this.playerId,
+    required this.showSecretArt,
     this.onCardDropped,
     this.onCardReturnedToHand,
     this.pendingCard,
@@ -146,6 +148,7 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
                 showOnlySelectedTier: true,
                 enableTapPreview: true,
                 displayTierKey: widget.session.playedCardTiers[firstCardId],
+                showSecretArt: widget.showSecretArt,
               );
 
               if (firstCardIsMe) {
@@ -171,6 +174,7 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
                   enableTapPreview: true,
                   displayTierKey:
                       widget.session.playedCardTiers[responseCardId],
+                  showSecretArt: widget.showSecretArt,
                 );
 
                 if (firstCardIsMe) {
@@ -193,6 +197,7 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
                 width: cardWidth,
                 compact: true,
                 showPreviewOnHover: true,
+                showSecretArt: widget.showSecretArt,
               );
             }
 
@@ -282,6 +287,7 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
                                       card: cardData,
                                       width: cardWidth * 1.3,
                                       compact: true,
+                                      showSecretArt: widget.showSecretArt,
                                     ),
                                   ),
                                 ),

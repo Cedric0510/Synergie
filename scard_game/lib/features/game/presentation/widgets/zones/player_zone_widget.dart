@@ -40,6 +40,7 @@ class PlayerZoneWidget extends ConsumerStatefulWidget {
   final GameSession session;
   final int? selectedCardIndex;
   final bool isDiscardMode;
+  final bool showSecretArt;
   final Function(int) onSelectCard;
   final int remainingDeckCards;
   final VoidCallback onEndTurn;
@@ -66,6 +67,7 @@ class PlayerZoneWidget extends ConsumerStatefulWidget {
     required this.session,
     required this.selectedCardIndex,
     required this.isDiscardMode,
+    required this.showSecretArt,
     required this.onSelectCard,
     required this.remainingDeckCards,
     required this.onEndTurn,
@@ -464,6 +466,7 @@ class _PlayerZoneWidgetState extends ConsumerState<PlayerZoneWidget>
             width: cardWidth * 1.3,
             compact: true,
             currentLevel: effectiveLevel,
+            showSecretArt: widget.showSecretArt,
           ),
         ),
       ),
@@ -562,6 +565,7 @@ class _PlayerZoneWidgetState extends ConsumerState<PlayerZoneWidget>
             compact: true,
             showPreviewOnHover: true,
             currentLevel: effectiveLevel,
+            showSecretArt: widget.showSecretArt,
           ),
           // Overlay rouge pour les cartes non jouables en response
           if (isPlayableInResponse)
@@ -869,6 +873,7 @@ class _PlayerZoneWidgetState extends ConsumerState<PlayerZoneWidget>
                 height: 440,
                 compact: false,
                 currentLevel: widget.myData.currentLevel,
+                showSecretArt: widget.showSecretArt,
               ),
             ),
           ),

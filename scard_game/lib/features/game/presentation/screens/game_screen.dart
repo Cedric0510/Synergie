@@ -172,6 +172,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
           final opponentData =
               isPlayer1 ? session.player2Data! : session.player1Data;
           final isMyTurn = session.currentPlayerId == widget.playerId;
+          final showSecretArt = _shouldUseSecretArt(session.player1Data.name);
 
           if (session.currentPhase == GamePhase.draw &&
               isMyTurn &&
@@ -329,6 +330,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
                           session: session,
                           isMyTurn: isMyTurn,
                           playerId: widget.playerId,
+                          showSecretArt: showSecretArt,
                           onCardDropped: _handleCardDropped,
                           onCardReturnedToHand: _handleCardReturnedToHand,
                           pendingCard: _pendingDroppedCard,
@@ -345,6 +347,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
                         session: session,
                         selectedCardIndex: _selectedCardIndex,
                         isDiscardMode: _isDiscardMode,
+                        showSecretArt: showSecretArt,
                         onSelectCard:
                             (index) => selectCard(index, _selectedCardIndex),
                         remainingDeckCards: myData.deckCardIds.length,
@@ -766,6 +769,13 @@ class _GameScreenState extends ConsumerState<GameScreen>
     if (tension >= 50) return 'yellow';
     if (tension >= 25) return 'blue';
     return 'white';
+  }
+
+  bool _shouldUseSecretArt(String creatorName) {
+    final normalized = creatorName.trim().toLowerCase();
+    return normalized == 'cédr!c' ||
+        normalized == 'cedr!c' ||
+        normalized == 'laet!';
   }
 
   String _effectTextForTier(String gameEffect, String tierKey) {

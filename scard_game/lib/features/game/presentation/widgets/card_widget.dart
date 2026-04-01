@@ -13,6 +13,7 @@ class CardWidget extends StatelessWidget {
   final bool showPreviewOnHover;
   final CardLevel? currentLevel;
   final String? displayTierKey;
+  final bool showSecretArt;
 
   /// Si true et displayTierKey fourni, n'affiche que l'effet du tier sélectionné dans la preview
   final bool showOnlySelectedTier;
@@ -29,6 +30,7 @@ class CardWidget extends StatelessWidget {
     this.showPreviewOnHover = false,
     this.currentLevel,
     this.displayTierKey,
+    this.showSecretArt = false,
     this.showOnlySelectedTier = false,
     this.enableTapPreview = false,
   });
@@ -86,6 +88,7 @@ class CardWidget extends StatelessWidget {
                 compact: false,
                 currentLevel: currentLevel,
                 displayTierKey: displayTierKey,
+                showSecretArt: showSecretArt,
                 showOnlySelectedTier: showOnlySelectedTier,
               ),
             ),
@@ -121,6 +124,7 @@ class CardWidget extends StatelessWidget {
                 compact: false,
                 currentLevel: currentLevel,
                 displayTierKey: displayTierKey,
+                showSecretArt: showSecretArt,
                 showOnlySelectedTier: showOnlySelectedTier,
               ),
             ),
@@ -167,23 +171,7 @@ class CardWidget extends StatelessWidget {
                       topLeft: Radius.circular(8),
                       topRight: Radius.circular(8),
                     ),
-                    child:
-                        card.imageUrl != null
-                            ? Image.asset(
-                              _normalizeAssetPath(card.imageUrl)!,
-                              fit: BoxFit.cover,
-                              errorBuilder:
-                                  (_, __, ___) => const Icon(
-                                    Icons.image_not_supported,
-                                    size: 30,
-                                    color: Colors.grey,
-                                  ),
-                            )
-                            : const Icon(
-                              Icons.image_not_supported,
-                              size: 30,
-                              color: Colors.grey,
-                            ),
+                    child: _buildCardImage(fit: BoxFit.cover),
                   ),
                 ),
               ),
@@ -265,7 +253,6 @@ class CardWidget extends StatelessWidget {
 
   /// Tiers supérieur : Image de la carte
   Widget _buildImageSection() {
-    final imageUrl = _resolveImageUrl();
     return Expanded(
       flex: 11,
       child: Container(
@@ -277,16 +264,7 @@ class CardWidget extends StatelessWidget {
           ),
           color: Colors.grey[200],
         ),
-        child: ClipRRect(
-          child:
-              imageUrl != null
-                  ? Image.asset(imageUrl, fit: BoxFit.cover)
-                  : const Icon(
-                    Icons.image_not_supported,
-                    size: 40,
-                    color: Colors.grey,
-                  ),
-        ),
+        child: ClipRRect(child: _buildCardImage(fit: BoxFit.cover)),
       ),
     );
   }
@@ -496,10 +474,74 @@ class CardWidget extends StatelessWidget {
     return null;
   }
 
-  String? _resolveImageUrl() {
-    // Temporairement simplifié : toujours utiliser l'image de base (blanc)
-    // TODO: Réactiver les images par tier quand les nouvelles images seront prêtes
-    return _normalizeAssetPath(card.imageUrl);
+  Widget _buildCardImage({BoxFit fit = BoxFit.cover}) {
+    final paths = _resolveImagePaths();
+    final primary = paths.primary;
+    final fallback = paths.fallback;
+
+    if (primary == null) {
+      return const Icon(
+        Icons.image_not_supported,
+        size: 40,
+        color: Colors.grey,
+      );
+    }
+
+    return Image.asset(
+      primary,
+      fit: fit,
+      errorBuilder: (_, __, ___) {
+        if (fallback != null) {
+          return Image.asset(
+            fallback,
+            fit: fit,
+            errorBuilder:
+                (_, __, ___) => const Icon(
+                  Icons.image_not_supported,
+                  size: 40,
+                  color: Colors.grey,
+                ),
+          );
+        }
+        return const Icon(
+          Icons.image_not_supported,
+          size: 40,
+          color: Colors.grey,
+        );
+      },
+    );
+  }
+
+  _ResolvedImagePaths _resolveImagePaths() {
+    final original = _normalizeAssetPath(card.imageUrl);
+    final publicVariant = _toPublicImagePath(original);
+
+    if (showSecretArt) {
+      return _ResolvedImagePaths(
+        primary: original,
+        fallback: publicVariant != original ? publicVariant : null,
+      );
+    }
+
+    return _ResolvedImagePaths(
+      primary: publicVariant ?? original,
+      fallback: publicVariant != original ? original : null,
+    );
+  }
+
+  String? _toPublicImagePath(String? path) {
+    if (path == null || path.isEmpty) return path;
+    final segments = path.split('/');
+    if (segments.isEmpty) return path;
+
+    final filename = segments.removeLast();
+    if (filename.isEmpty || filename.startsWith('p')) {
+      return path;
+    }
+
+    final publicFilename = 'p$filename';
+    segments.add(publicFilename);
+    return segments.join('/');
   }
 
   /// Normalise un chemin d'asset en ajoutant le préfixe 'assets/' si absent.
@@ -564,4 +606,11 @@ class _TierEffect {
     required this.color,
     this.title,
   });
+}
+
+class _ResolvedImagePaths {
+  final String? primary;
+  final String? fallback;
+
+  const _ResolvedImagePaths({required this.primary, required this.fallback});
 }

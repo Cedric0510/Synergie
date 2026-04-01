@@ -253,18 +253,33 @@ class _CardDistributionScreenState
           );
         }
 
-        return GridView.builder(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            childAspectRatio: 0.64, // Ratio largeur/hauteur des cartes
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-          ),
-          itemCount: handCards.length,
-          itemBuilder: (context, index) {
-            return CardWidget(
-              card: handCards[index],
-              // Taille automatique selon la grille
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final maxWidth = constraints.maxWidth;
+            final spacing = maxWidth < 360 ? 8.0 : 12.0;
+            final minCardWidth = maxWidth < 360 ? 116.0 : 128.0;
+
+            var crossAxisCount =
+                ((maxWidth + spacing) / (minCardWidth + spacing)).floor();
+            crossAxisCount = crossAxisCount.clamp(2, 4);
+            if (handCards.length < crossAxisCount) {
+              crossAxisCount = handCards.length;
+            }
+
+            return GridView.builder(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                childAspectRatio: 0.64, // Ratio largeur/hauteur des cartes
+                crossAxisSpacing: spacing,
+                mainAxisSpacing: spacing,
+              ),
+              itemCount: handCards.length,
+              itemBuilder: (context, index) {
+                return CardWidget(
+                  card: handCards[index],
+                  // Taille automatique selon la grille
+                );
+              },
             );
           },
         );
