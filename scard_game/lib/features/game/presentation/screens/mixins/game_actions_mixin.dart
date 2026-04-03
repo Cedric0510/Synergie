@@ -254,8 +254,13 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
 
         // Logique spéciale pour les cartes vertes (Négociations)
         if (card.color == CardColor.green) {
-          await _handleGreenCardNegotiation(session, isPlayer1, myData, cardId);
-          return true; // Green card negotiation launched successfully
+          final negotiationLaunched = await _handleGreenCardNegotiation(
+            session,
+            isPlayer1,
+            myData,
+            cardId,
+          );
+          return negotiationLaunched;
         }
       }
 
@@ -344,7 +349,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   }
 
   /// Gère la négociation pour les cartes vertes
-  Future<void> _handleGreenCardNegotiation(
+  Future<bool> _handleGreenCardNegotiation(
     GameSession session,
     bool isPlayer1,
     PlayerData myData,
@@ -374,6 +379,8 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
 
       setState(() {
         selectedCardIndex = null;
+        pendingCardValidation = false;
+        _clearPendingDropState();
       });
 
       if (mounted) {
@@ -387,6 +394,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
           ),
         );
       }
+      return true;
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -396,6 +404,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
           ),
         );
       }
+      return false;
     }
   }
 
@@ -403,72 +412,220 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
     final available = _tiersForLevel(effectiveLevel);
     if (available.isEmpty) return null;
 
+    const accent = Color(0xFF6DD5FA);
+
     return showDialog<CardColor>(
       context: context,
       barrierDismissible: false,
-      builder: (context) {
-        return AlertDialog(
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
           insetPadding: const EdgeInsets.symmetric(
             horizontal: 12,
             vertical: 16,
           ),
-          backgroundColor: const Color(0xFF2d4263),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: const BorderSide(color: Color(0xFF6DD5FA), width: 2),
-          ),
-          title: Row(
-            children: const [
-              Icon(Icons.layers_outlined, color: Color(0xFF6DD5FA), size: 24),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Choisir le palier',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 420,
+              maxHeight: MediaQuery.of(dialogContext).size.height * 0.82,
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF2d4263), Color(0xFF1a2332)],
                 ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: accent.withValues(alpha: 0.45),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: accent.withValues(alpha: 0.28),
+                    blurRadius: 24,
+                  ),
+                ],
               ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (final tier in available)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(_tierColorValue(tier)),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            accent.withValues(alpha: 0.30),
+                            accent.withValues(alpha: 0.10),
+                          ],
                         ),
-                        onPressed: () => Navigator.pop(context, tier),
-                        child: Text(
-                          _tierLabel(tier),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: accent.withValues(alpha: 0.20),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.layers_outlined,
+                              color: accent,
+                              size: 24,
+                            ),
                           ),
-                        ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Text(
+                              'Choisir le palier',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-              ],
+                    const SizedBox(height: 14),
+                    Text(
+                      'Sélectionnez le palier à jouer pour cette carte.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.82),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        height: 1.25,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    for (int i = 0; i < available.length; i++) ...[
+                      _buildTierChoiceButton(dialogContext, available[i]),
+                      if (i < available.length - 1) const SizedBox(height: 10),
+                    ],
+                  ],
+                ),
+              ),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildTierChoiceButton(BuildContext dialogContext, CardColor tier) {
+    final baseColor =
+        tier == CardColor.white
+            ? const Color(0xFFE0E0E0)
+            : Color(_tierColorValue(tier));
+
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  baseColor.withValues(alpha: 0.34),
+                  baseColor.withValues(alpha: 0.16),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: baseColor.withValues(alpha: 0.80),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: baseColor.withValues(alpha: 0.20),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 18,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.white.withValues(alpha: 0.38),
+                    Colors.white.withValues(alpha: 0.0),
+                  ],
+                ),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(14),
+                  topRight: Radius.circular(14),
+                ),
+              ),
+            ),
+          ),
+          Positioned.fill(
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: () => Navigator.pop(dialogContext, tier),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: baseColor,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: baseColor.withValues(alpha: 0.65),
+                              blurRadius: 4,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          _tierLabel(tier),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ),
+                      const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 16,
+                        color: Colors.white70,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -926,6 +1083,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
 
       final originalCardId = session.resolutionStack.first;
       final negotiationCardId = session.resolutionStack.last;
+      final wasResponsePhase = session.currentPhase == GamePhase.response;
 
       final currentIsPlayer1 = session.currentPlayerId == session.player1Id;
       final currentData =
@@ -936,23 +1094,37 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       GameSession updatedSession;
 
       if (agreement) {
-        // Entente trouvée → sort contré, carte négociation DÉFAUSSÉE (perdue)
+        // Entente trouvee : les 2 cartes quittent le plateau.
         final updatedCurrentHand = List<String>.from(currentData.handCardIds);
+        final updatedCurrentGraveyard = List<String>.from(
+          currentData.graveyardCardIds,
+        );
+        final updatedCurrentPlayed = List<String>.from(
+          currentData.playedCardIds,
+        )..remove(originalCardId);
+
         if (originalCardId.contains(GameConstants.ultimaCardId)) {
           updatedCurrentHand.add(originalCardId);
+        } else {
+          updatedCurrentGraveyard.add(originalCardId);
         }
 
-        // Ajouter la carte négociation au cimetière du répondeur
         final updatedResponderGraveyard = List<String>.from(
           responderData.graveyardCardIds,
         )..add(negotiationCardId);
+        final updatedResponderPlayed = List<String>.from(
+          responderData.playedCardIds,
+        )..remove(negotiationCardId);
 
         final updatedCurrentData = currentData.copyWith(
           handCardIds: updatedCurrentHand,
+          graveyardCardIds: updatedCurrentGraveyard,
+          playedCardIds: updatedCurrentPlayed,
         );
 
         final updatedResponderData = responderData.copyWith(
           graveyardCardIds: updatedResponderGraveyard,
+          playedCardIds: updatedResponderPlayed,
         );
 
         updatedSession =
@@ -972,18 +1144,23 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
                   pendingSpellActions: [],
                 );
       } else {
-        // Pas d'entente → retirer la négociation de la pile, la REMÉLANGER dans le deck
+        // Pas d'entente : la negociation est retiree, le sort initial continue.
         final updatedStack = List<String>.from(session.resolutionStack)
           ..removeLast();
+        final updatedPlayedTiers = Map<String, String>.from(
+          session.playedCardTiers,
+        )..remove(negotiationCardId);
 
-        // Remettre la carte négociation dans le deck et mélanger
-        final updatedResponderDeck =
-            List<String>.from(responderData.deckCardIds)
-              ..add(negotiationCardId)
-              ..shuffle();
+        final updatedResponderGraveyard = List<String>.from(
+          responderData.graveyardCardIds,
+        )..add(negotiationCardId);
+        final updatedResponderPlayed = List<String>.from(
+          responderData.playedCardIds,
+        )..remove(negotiationCardId);
 
         final updatedResponderData = responderData.copyWith(
-          deckCardIds: updatedResponderDeck,
+          graveyardCardIds: updatedResponderGraveyard,
+          playedCardIds: updatedResponderPlayed,
         );
 
         updatedSession =
@@ -992,24 +1169,28 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
                   player1Data: currentData,
                   player2Data: updatedResponderData,
                   resolutionStack: updatedStack,
+                  playedCardTiers: updatedPlayedTiers,
                 )
                 : session.copyWith(
                   player1Data: updatedResponderData,
                   player2Data: currentData,
                   resolutionStack: updatedStack,
+                  playedCardTiers: updatedPlayedTiers,
                 );
       }
 
       await gameSessionService.updateSession(sessionId, updatedSession);
-      await turnService.nextPhase(sessionId);
+      if (wasResponsePhase) {
+        await turnService.nextPhase(sessionId);
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               agreement
-                  ? "🤝 Entente trouvée - Sort contré (négociation perdue)"
-                  : "❌ Pas d'entente - Le sort se résout (négociation remélangée)",
+                  ? 'Entente trouvee : les cartes quittent le jeu'
+                  : 'Pas d\'entente : le sort initial continue',
             ),
             backgroundColor: agreement ? Colors.green : Colors.orange,
             duration: const Duration(seconds: 2),
@@ -1020,7 +1201,7 @@ mixin GameActionsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("❌ Erreur résolution négociation: $e"),
+            content: Text('Erreur resolution negociation: $e'),
             backgroundColor: Colors.red,
           ),
         );

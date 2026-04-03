@@ -1,6 +1,7 @@
 import 'dart:math';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/errors/game_exceptions.dart';
+import '../../../../core/services/logger_service.dart';
 import '../../domain/enums/card_color.dart';
 import '../../domain/models/deck_configuration.dart';
 import '../../domain/models/game_card.dart';
@@ -11,16 +12,18 @@ import 'custom_deck_service.dart';
 final deckServiceProvider = Provider<DeckService>((ref) {
   final cardService = ref.watch(cardServiceProvider);
   final customDeckService = ref.watch(customDeckServiceProvider);
-  return DeckService(cardService, customDeckService);
+  final logger = ref.watch(loggerServiceProvider);
+  return DeckService(cardService, customDeckService, logger);
 });
 
 /// Service de gestion des decks de cartes
 class DeckService {
   final CardService _cardService;
   final CustomDeckService _customDeckService;
+  final LoggerService _logger;
   final Random _random = Random();
 
-  DeckService(this._cardService, this._customDeckService);
+  DeckService(this._cardService, this._customDeckService, this._logger);
 
   /// Génère un deck complet selon les règles :
   /// - 2 exemplaires par carte (deck de base)
@@ -33,8 +36,10 @@ class DeckService {
     final allCards = await _cardService.loadAllCards();
     final List<String> deck = [];
 
-    debugPrint('📦 Génération deck - Couleurs autorisées: $allowedColors');
-    debugPrint('📦 Total cartes chargées: ${allCards.length}');
+    _logger.debug(
+      'DeckService',
+      'Génération deck - Couleurs: $allowedColors, ${allCards.length} cartes chargées',
+    );
 
     // Séparer les cartes vertes (négociations) des autres
     final greenCards =
@@ -51,7 +56,7 @@ class DeckService {
 
       // Nouvelle règle : 2 exemplaires par défaut, sauf Ultima (1 seul)
       final int count = (card.maxPerDeck == 1) ? 1 : 2;
-      debugPrint('  ✅ ${card.id} (${card.color}) × $count');
+      _logger.debug('DeckService', '${card.id} (${card.color}) × $count');
 
       // Ajouter uniquement les cartes qui existent réellement dans cards.json
       for (int i = 0; i < count; i++) {
@@ -67,13 +72,14 @@ class DeckService {
 
       for (int i = 0; i < maxGreenCards && i < shuffledGreen.length; i++) {
         deck.add(shuffledGreen[i].id);
-        debugPrint(
-          '  ✅ ${shuffledGreen[i].id} (green) × 1 [négociation ${i + 1}/$maxGreenCards]',
+        _logger.debug(
+          'DeckService',
+          '${shuffledGreen[i].id} (green) × 1 [négociation ${i + 1}/$maxGreenCards]',
         );
       }
     }
 
-    debugPrint('📦 Deck généré: ${deck.length} cartes');
+    _logger.info('DeckService', 'Deck généré: ${deck.length} cartes');
     return deck;
   }
 
@@ -84,12 +90,14 @@ class DeckService {
   }) async {
     final List<String> deck = [];
 
-    debugPrint('📦 Génération deck personnalisé: ${config.name}');
-    debugPrint('📦 Total cartes dans config: ${config.totalCards}');
+    _logger.debug(
+      'DeckService',
+      'Génération deck personnalisé: ${config.name}, ${config.totalCards} cartes',
+    );
 
     // Vérifier que la config est valide
     if (!config.isValid) {
-      throw Exception(
+      throw DeckException(
         'Configuration de deck invalide : ${config.totalCards} cartes '
         '(25 requises)',
       );
@@ -105,11 +113,14 @@ class DeckService {
         for (int i = 0; i < count; i++) {
           deck.add(cardId);
         }
-        debugPrint('  ✅ $cardId × $count');
+        _logger.debug('DeckService', '$cardId × $count');
       }
     }
 
-    debugPrint('📦 Deck personnalisé généré: ${deck.length} cartes');
+    _logger.info(
+      'DeckService',
+      'Deck personnalisé généré: ${deck.length} cartes',
+    );
     return deck;
   }
 
@@ -142,23 +153,23 @@ class DeckService {
   }) async {
     // Génération du deck complet
     final List<String> fullDeck;
-    
+
     // Essayer de charger le deck personnalisé si pas fourni
     if (customConfig == null) {
       try {
         customConfig = await _customDeckService.loadDeckConfiguration();
       } catch (e) {
-        debugPrint('⚠️ Pas de deck personnalisé trouvé');
+        _logger.warning('DeckService', 'Pas de deck personnalisé trouvé');
       }
     }
-    
+
     if (customConfig != null && customConfig.isValid) {
       // Utiliser la configuration personnalisée
-      debugPrint('✅ Utilisation du deck personnalisé: ${customConfig.name}');
+      _logger.info('DeckService', 'Deck personnalisé: ${customConfig.name}');
       fullDeck = await generateDeckFromConfig(config: customConfig);
     } else {
       // Utiliser la génération par défaut
-      debugPrint('📦 Utilisation du deck par défaut');
+      _logger.info('DeckService', 'Deck par défaut');
       fullDeck = await generateDeck(allowedColors: allowedColors);
     }
 
@@ -185,7 +196,7 @@ class DeckService {
     startingHand.addAll(blueCards.take(2));
 
     if (startingHand.length < 6) {
-      throw Exception(
+      throw DeckException(
         'Pas assez de cartes blanches et bleues pour la main de départ ! '
         'Trouvées: ${startingHand.length}, requis: 6',
       );
@@ -201,8 +212,10 @@ class DeckService {
     // Mélanger la main pour ne pas avoir toutes les blanches d'abord
     startingHand.shuffle(_random);
 
-    debugPrint('🎴 Main initiale: 4 blanches + 2 bleues');
-    debugPrint('🎴 Deck restant: ${remainingDeck.length} cartes');
+    _logger.info(
+      'DeckService',
+      'Main initiale: 4 blanches + 2 bleues, deck restant: ${remainingDeck.length}',
+    );
 
     return (hand: startingHand, deck: remainingDeck);
   }
@@ -211,22 +224,28 @@ class DeckService {
   Future<List<String>> generatePlayerDeck({
     required List<CardColor> allowedColors,
   }) async {
-    debugPrint('📦 Chargement deck joueur...');
-    
+    _logger.debug('DeckService', 'Chargement deck joueur...');
+
     try {
       // Essayer de charger le deck personnalisé
       final customConfig = await _customDeckService.loadDeckConfiguration();
-      
+
       if (customConfig.isValid && customConfig.cardCounts.isNotEmpty) {
-        debugPrint('✅ Deck personnalisé trouvé: ${customConfig.name}');
+        _logger.info(
+          'DeckService',
+          'Deck personnalisé trouvé: ${customConfig.name}',
+        );
         return await generateDeckFromConfig(config: customConfig);
       }
     } catch (e) {
-      debugPrint('⚠️ Pas de deck personnalisé, utilisation du deck par défaut');
+      _logger.warning(
+        'DeckService',
+        'Pas de deck personnalisé, utilisation du deck par défaut',
+      );
     }
-    
+
     // Sinon, utiliser le deck par défaut
-    debugPrint('📦 Utilisation du deck par défaut');
+    _logger.info('DeckService', 'Utilisation du deck par défaut');
     return await generateDeck(allowedColors: allowedColors);
   }
 

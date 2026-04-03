@@ -18,153 +18,153 @@ class SessionStateService {
     String sessionId,
     ResponseEffect effect,
   ) async {
-    final session = await _gameSessionService.getSession(sessionId);
-    final updatedSession = session.copyWith(
-      responseEffect: effect,
-      updatedAt: DateTime.now(),
-    );
-    await _gameSessionService.updateSession(sessionId, updatedSession);
+    await _gameSessionService.runTransaction(sessionId, (session) {
+      return session.copyWith(
+        responseEffect: effect,
+        updatedAt: DateTime.now(),
+      );
+    });
   }
 
   Future<void> clearResolutionStack(String sessionId) async {
-    final session = await _gameSessionService.getSession(sessionId);
-    final updatedSession = session.copyWith(
-      resolutionStack: [],
-      playedCardTiers: {},
-      updatedAt: DateTime.now(),
-    );
-    await _gameSessionService.updateSession(sessionId, updatedSession);
-  }
-
-  Future<void> clearPlayedCards(String sessionId) async {
-    final session = await _gameSessionService.getSession(sessionId);
-    if (session.resolutionStack.isEmpty) return;
-
-    final allCards = await _cardService.loadAllCards();
-    final cardsById = {for (final card in allCards) card.id: card};
-
-    final enchantments = <String>[
-      for (final cardId in session.resolutionStack)
-        if (cardsById[cardId]?.isEnchantment ?? false) cardId,
-    ];
-
-    final currentPlayerId = session.currentPlayerId;
-    if (currentPlayerId == null) {
-      final updatedSession = session.copyWith(
+    await _gameSessionService.runTransaction(sessionId, (session) {
+      return session.copyWith(
         resolutionStack: [],
         playedCardTiers: {},
         updatedAt: DateTime.now(),
       );
-      await _gameSessionService.updateSession(sessionId, updatedSession);
-      return;
-    }
+    });
+  }
 
-    final isPlayer1 = currentPlayerId == session.player1Id;
-    final ownerData = isPlayer1 ? session.player1Data : session.player2Data;
-    if (ownerData == null) return;
+  Future<void> clearPlayedCards(String sessionId) async {
+    // Charger les cartes avant la transaction (appel async)
+    final allCards = await _cardService.loadAllCards();
+    final cardsById = {for (final card in allCards) card.id: card};
 
-    final currentEnchantments = LinkedHashSet<String>.from(
-      ownerData.activeEnchantmentIds,
-    )..addAll(enchantments);
-    final currentEnchantmentTiers = Map<String, String>.from(
-      ownerData.activeEnchantmentTiers,
-    );
-    final currentStatusModifiers = _cloneStatusModifiers(
-      ownerData.activeStatusModifiers,
-    );
-    final opponentData = isPlayer1 ? session.player2Data : session.player1Data;
-    final otherStatusModifiers = _cloneStatusModifiers(
-      opponentData?.activeStatusModifiers ?? const <String, List<String>>{},
-    );
+    await _gameSessionService.runTransaction(sessionId, (session) {
+      if (session.resolutionStack.isEmpty) return session;
 
-    for (final enchantmentId in LinkedHashSet<String>.from(enchantments)) {
-      final card = cardsById[enchantmentId];
-      final tierKey =
-          session.playedCardTiers[enchantmentId] ?? card?.color.name ?? 'white';
-      currentEnchantmentTiers[enchantmentId] = tierKey;
-      if (card != null) {
-        _applyStatusModifiers(
-          modifiers: card.statusModifiers,
-          enchantmentId: enchantmentId,
-          tierKey: tierKey,
-          ownerStatusModifiers: currentStatusModifiers,
-          opponentStatusModifiers: otherStatusModifiers,
-          add: true,
+      final enchantments = <String>[
+        for (final cardId in session.resolutionStack)
+          if (cardsById[cardId]?.isEnchantment ?? false) cardId,
+      ];
+
+      final currentPlayerId = session.currentPlayerId;
+      if (currentPlayerId == null) {
+        return session.copyWith(
+          resolutionStack: [],
+          playedCardTiers: {},
+          updatedAt: DateTime.now(),
         );
       }
-    }
 
-    String? newUltimaOwnerId = session.ultimaOwnerId;
-    int newUltimaTurnCount = session.ultimaTurnCount;
-    DateTime? newUltimaPlayedAt = session.ultimaPlayedAt;
+      final isPlayer1 = currentPlayerId == session.player1Id;
+      final ownerData = isPlayer1 ? session.player1Data : session.player2Data;
+      if (ownerData == null) return session;
 
-    final ultimaJustPlayed = enchantments.any((id) => id.contains('red_016'));
-    if (ultimaJustPlayed) {
-      if (newUltimaOwnerId == null) {
-        newUltimaOwnerId = currentPlayerId;
-        newUltimaTurnCount = 0;
-        newUltimaPlayedAt = DateTime.now();
+      final currentEnchantments = LinkedHashSet<String>.from(
+        ownerData.activeEnchantmentIds,
+      )..addAll(enchantments);
+      final currentEnchantmentTiers = Map<String, String>.from(
+        ownerData.activeEnchantmentTiers,
+      );
+      final currentStatusModifiers = _cloneStatusModifiers(
+        ownerData.activeStatusModifiers,
+      );
+      final opponentData =
+          isPlayer1 ? session.player2Data : session.player1Data;
+      final otherStatusModifiers = _cloneStatusModifiers(
+        opponentData?.activeStatusModifiers ?? const <String, List<String>>{},
+      );
+
+      for (final enchantmentId in LinkedHashSet<String>.from(enchantments)) {
+        final card = cardsById[enchantmentId];
+        final tierKey =
+            session.playedCardTiers[enchantmentId] ??
+            card?.color.name ??
+            'white';
+        currentEnchantmentTiers[enchantmentId] = tierKey;
+        if (card != null) {
+          _applyStatusModifiers(
+            modifiers: card.statusModifiers,
+            enchantmentId: enchantmentId,
+            tierKey: tierKey,
+            ownerStatusModifiers: currentStatusModifiers,
+            opponentStatusModifiers: otherStatusModifiers,
+            add: true,
+          );
+        }
       }
-    }
 
-    final updatedSession =
-        isPlayer1
-            ? session.copyWith(
-              player1Data: session.player1Data.copyWith(
-                activeEnchantmentIds: currentEnchantments.toList(),
-                activeEnchantmentTiers: currentEnchantmentTiers,
-                activeStatusModifiers: currentStatusModifiers,
-              ),
-              player2Data: session.player2Data?.copyWith(
-                activeStatusModifiers: otherStatusModifiers,
-              ),
-              resolutionStack: [],
-              playedCardTiers: {},
-              ultimaOwnerId: newUltimaOwnerId,
-              ultimaTurnCount: newUltimaTurnCount,
-              ultimaPlayedAt: newUltimaPlayedAt,
-              updatedAt: DateTime.now(),
-            )
-            : session.copyWith(
-              player2Data: session.player2Data!.copyWith(
-                activeEnchantmentIds: currentEnchantments.toList(),
-                activeEnchantmentTiers: currentEnchantmentTiers,
-                activeStatusModifiers: currentStatusModifiers,
-              ),
-              player1Data: session.player1Data.copyWith(
-                activeStatusModifiers: otherStatusModifiers,
-              ),
-              resolutionStack: [],
-              playedCardTiers: {},
-              ultimaOwnerId: newUltimaOwnerId,
-              ultimaTurnCount: newUltimaTurnCount,
-              ultimaPlayedAt: newUltimaPlayedAt,
-              updatedAt: DateTime.now(),
-            );
+      String? newUltimaOwnerId = session.ultimaOwnerId;
+      int newUltimaTurnCount = session.ultimaTurnCount;
+      DateTime? newUltimaPlayedAt = session.ultimaPlayedAt;
 
-    await _gameSessionService.updateSession(sessionId, updatedSession);
+      final ultimaJustPlayed = enchantments.any((id) => id.contains('red_016'));
+      if (ultimaJustPlayed) {
+        if (newUltimaOwnerId == null) {
+          newUltimaOwnerId = currentPlayerId;
+          newUltimaTurnCount = 0;
+          newUltimaPlayedAt = DateTime.now();
+        }
+      }
+
+      return isPlayer1
+          ? session.copyWith(
+            player1Data: session.player1Data.copyWith(
+              activeEnchantmentIds: currentEnchantments.toList(),
+              activeEnchantmentTiers: currentEnchantmentTiers,
+              activeStatusModifiers: currentStatusModifiers,
+            ),
+            player2Data: session.player2Data?.copyWith(
+              activeStatusModifiers: otherStatusModifiers,
+            ),
+            resolutionStack: [],
+            playedCardTiers: {},
+            ultimaOwnerId: newUltimaOwnerId,
+            ultimaTurnCount: newUltimaTurnCount,
+            ultimaPlayedAt: newUltimaPlayedAt,
+            updatedAt: DateTime.now(),
+          )
+          : session.copyWith(
+            player2Data: session.player2Data!.copyWith(
+              activeEnchantmentIds: currentEnchantments.toList(),
+              activeEnchantmentTiers: currentEnchantmentTiers,
+              activeStatusModifiers: currentStatusModifiers,
+            ),
+            player1Data: session.player1Data.copyWith(
+              activeStatusModifiers: otherStatusModifiers,
+            ),
+            resolutionStack: [],
+            playedCardTiers: {},
+            ultimaOwnerId: newUltimaOwnerId,
+            ultimaTurnCount: newUltimaTurnCount,
+            ultimaPlayedAt: newUltimaPlayedAt,
+            updatedAt: DateTime.now(),
+          );
+    });
   }
 
   Future<void> storePendingActions(
     String sessionId,
     List pendingActions,
   ) async {
-    final session = await _gameSessionService.getSession(sessionId);
     final actionsJson = pendingActions.map(_toActionJson).toList();
-    final updatedSession = session.copyWith(
-      pendingSpellActions: actionsJson,
-      updatedAt: DateTime.now(),
-    );
-    await _gameSessionService.updateSession(sessionId, updatedSession);
+    await _gameSessionService.runTransaction(sessionId, (session) {
+      return session.copyWith(
+        pendingSpellActions: actionsJson,
+        updatedAt: DateTime.now(),
+      );
+    });
   }
 
   Future<void> clearPendingActions(String sessionId) async {
-    final session = await _gameSessionService.getSession(sessionId);
-    final updatedSession = session.copyWith(
-      pendingSpellActions: [],
-      updatedAt: DateTime.now(),
-    );
-    await _gameSessionService.updateSession(sessionId, updatedSession);
+    await _gameSessionService.runTransaction(sessionId, (session) {
+      return session.copyWith(
+        pendingSpellActions: [],
+        updatedAt: DateTime.now(),
+      );
+    });
   }
 
   Future<void> removeEnchantment(
@@ -172,103 +172,104 @@ class SessionStateService {
     String playerId,
     String enchantmentId,
   ) async {
-    final session = await _gameSessionService.getSession(sessionId);
-    final isPlayer1 = session.player1Id == playerId;
-    final playerData = isPlayer1 ? session.player1Data : session.player2Data;
-    if (playerData == null) return;
-
-    final updatedEnchantments = List<String>.from(
-      playerData.activeEnchantmentIds,
-    )..removeWhere((id) => id == enchantmentId);
-    final updatedEnchantmentTiers = Map<String, String>.from(
-      playerData.activeEnchantmentTiers,
-    )..remove(enchantmentId);
-    final updatedStatusModifiers = _cloneStatusModifiers(
-      playerData.activeStatusModifiers,
-    );
-
-    final opponentData = isPlayer1 ? session.player2Data : session.player1Data;
-    final updatedOpponentStatusModifiers = _cloneStatusModifiers(
-      opponentData?.activeStatusModifiers ?? const <String, List<String>>{},
-    );
-
+    // Charger les cartes avant la transaction (appel async)
     final allCards = await _cardService.loadAllCards();
     final cardsById = {for (final card in allCards) card.id: card};
-    final card = cardsById[enchantmentId];
-    final tierKey = playerData.activeEnchantmentTiers[enchantmentId];
-    if (card != null) {
-      _applyStatusModifiers(
-        modifiers: card.statusModifiers,
-        enchantmentId: enchantmentId,
-        tierKey: tierKey,
-        ownerStatusModifiers: updatedStatusModifiers,
-        opponentStatusModifiers: updatedOpponentStatusModifiers,
-        add: false,
+
+    await _gameSessionService.runTransaction(sessionId, (session) {
+      final isPlayer1 = session.player1Id == playerId;
+      final playerData = isPlayer1 ? session.player1Data : session.player2Data;
+      if (playerData == null) return session;
+
+      final updatedEnchantments = List<String>.from(
+        playerData.activeEnchantmentIds,
+      )..removeWhere((id) => id == enchantmentId);
+      final updatedEnchantmentTiers = Map<String, String>.from(
+        playerData.activeEnchantmentTiers,
+      )..remove(enchantmentId);
+      final updatedStatusModifiers = _cloneStatusModifiers(
+        playerData.activeStatusModifiers,
       );
-    }
 
-    final updatedHand = List<String>.from(playerData.handCardIds);
-    final isUltima = enchantmentId.contains('red_016');
-    if (isUltima) {
-      updatedHand.add(enchantmentId);
-    }
+      final opponentData =
+          isPlayer1 ? session.player2Data : session.player1Data;
+      final updatedOpponentStatusModifiers = _cloneStatusModifiers(
+        opponentData?.activeStatusModifiers ?? const <String, List<String>>{},
+      );
 
-    String? newUltimaOwnerId = session.ultimaOwnerId;
-    int newUltimaTurnCount = session.ultimaTurnCount;
-    DateTime? newUltimaPlayedAt = session.ultimaPlayedAt;
-
-    if (isUltima && session.ultimaOwnerId == playerId) {
-      final opponentHasUltima =
-          opponentData?.activeEnchantmentIds.any(
-            (id) => id.contains('red_016'),
-          ) ??
-          false;
-
-      if (opponentHasUltima) {
-        newUltimaOwnerId = isPlayer1 ? session.player2Id : session.player1Id;
-        newUltimaTurnCount = 0;
-        newUltimaPlayedAt = DateTime.now();
-      } else {
-        newUltimaOwnerId = null;
-        newUltimaTurnCount = 0;
-        newUltimaPlayedAt = null;
+      final card = cardsById[enchantmentId];
+      final tierKey = playerData.activeEnchantmentTiers[enchantmentId];
+      if (card != null) {
+        _applyStatusModifiers(
+          modifiers: card.statusModifiers,
+          enchantmentId: enchantmentId,
+          tierKey: tierKey,
+          ownerStatusModifiers: updatedStatusModifiers,
+          opponentStatusModifiers: updatedOpponentStatusModifiers,
+          add: false,
+        );
       }
-    }
 
-    final updatedSession =
-        isPlayer1
-            ? session.copyWith(
-              player1Data: playerData.copyWith(
-                activeEnchantmentIds: updatedEnchantments,
-                activeEnchantmentTiers: updatedEnchantmentTiers,
-                activeStatusModifiers: updatedStatusModifiers,
-                handCardIds: updatedHand,
-              ),
-              player2Data: session.player2Data?.copyWith(
-                activeStatusModifiers: updatedOpponentStatusModifiers,
-              ),
-              ultimaOwnerId: newUltimaOwnerId,
-              ultimaTurnCount: newUltimaTurnCount,
-              ultimaPlayedAt: newUltimaPlayedAt,
-              updatedAt: DateTime.now(),
-            )
-            : session.copyWith(
-              player2Data: playerData.copyWith(
-                activeEnchantmentIds: updatedEnchantments,
-                activeEnchantmentTiers: updatedEnchantmentTiers,
-                activeStatusModifiers: updatedStatusModifiers,
-                handCardIds: updatedHand,
-              ),
-              player1Data: session.player1Data.copyWith(
-                activeStatusModifiers: updatedOpponentStatusModifiers,
-              ),
-              ultimaOwnerId: newUltimaOwnerId,
-              ultimaTurnCount: newUltimaTurnCount,
-              ultimaPlayedAt: newUltimaPlayedAt,
-              updatedAt: DateTime.now(),
-            );
+      final updatedHand = List<String>.from(playerData.handCardIds);
+      final isUltima = enchantmentId.contains('red_016');
+      if (isUltima) {
+        updatedHand.add(enchantmentId);
+      }
 
-    await _gameSessionService.updateSession(sessionId, updatedSession);
+      String? newUltimaOwnerId = session.ultimaOwnerId;
+      int newUltimaTurnCount = session.ultimaTurnCount;
+      DateTime? newUltimaPlayedAt = session.ultimaPlayedAt;
+
+      if (isUltima && session.ultimaOwnerId == playerId) {
+        final opponentHasUltima =
+            opponentData?.activeEnchantmentIds.any(
+              (id) => id.contains('red_016'),
+            ) ??
+            false;
+
+        if (opponentHasUltima) {
+          newUltimaOwnerId = isPlayer1 ? session.player2Id : session.player1Id;
+          newUltimaTurnCount = 0;
+          newUltimaPlayedAt = DateTime.now();
+        } else {
+          newUltimaOwnerId = null;
+          newUltimaTurnCount = 0;
+          newUltimaPlayedAt = null;
+        }
+      }
+
+      return isPlayer1
+          ? session.copyWith(
+            player1Data: playerData.copyWith(
+              activeEnchantmentIds: updatedEnchantments,
+              activeEnchantmentTiers: updatedEnchantmentTiers,
+              activeStatusModifiers: updatedStatusModifiers,
+              handCardIds: updatedHand,
+            ),
+            player2Data: session.player2Data?.copyWith(
+              activeStatusModifiers: updatedOpponentStatusModifiers,
+            ),
+            ultimaOwnerId: newUltimaOwnerId,
+            ultimaTurnCount: newUltimaTurnCount,
+            ultimaPlayedAt: newUltimaPlayedAt,
+            updatedAt: DateTime.now(),
+          )
+          : session.copyWith(
+            player2Data: playerData.copyWith(
+              activeEnchantmentIds: updatedEnchantments,
+              activeEnchantmentTiers: updatedEnchantmentTiers,
+              activeStatusModifiers: updatedStatusModifiers,
+              handCardIds: updatedHand,
+            ),
+            player1Data: session.player1Data.copyWith(
+              activeStatusModifiers: updatedOpponentStatusModifiers,
+            ),
+            ultimaOwnerId: newUltimaOwnerId,
+            ultimaTurnCount: newUltimaTurnCount,
+            ultimaPlayedAt: newUltimaPlayedAt,
+            updatedAt: DateTime.now(),
+          );
+    });
   }
 
   Map<String, dynamic> _toActionJson(dynamic action) {

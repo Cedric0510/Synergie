@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../game/data/services/game_session_service.dart';
 import '../../../game/data/services/player_service.dart';
+import '../../../game/domain/enums/game_status.dart';
 import '../../../game/domain/enums/player_gender.dart';
 import '../../../game/domain/models/game_session.dart';
 import 'card_distribution_screen.dart';
@@ -22,6 +23,81 @@ class WaitingRoomScreen extends ConsumerStatefulWidget {
 }
 
 class _WaitingRoomScreenState extends ConsumerState<WaitingRoomScreen> {
+  bool _isStartingFlow = false;
+  bool _hasScheduledNavigation = false;
+
+  void _scheduleNavigationToDistribution() {
+    if (_hasScheduledNavigation || !mounted) return;
+    _hasScheduledNavigation = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => CardDistributionScreen(
+                sessionId: widget.sessionId,
+                playerId: widget.playerId,
+              ),
+        ),
+      );
+    });
+  }
+
+  Future<void> _handleReadyOrStart(PlayerService playerService) async {
+    final gameSessionService = ref.read(gameSessionServiceProvider);
+    final currentSession = await gameSessionService.getSession(
+      widget.sessionId,
+    );
+    final isPlayer1 = currentSession.player1Id == widget.playerId;
+    final myData =
+        isPlayer1 ? currentSession.player1Data : currentSession.player2Data;
+    final opponentData =
+        isPlayer1 ? currentSession.player2Data : currentSession.player1Data;
+
+    if (myData == null || opponentData == null) {
+      return;
+    }
+
+    if (!myData.isReady) {
+      await playerService.setPlayerReady(
+        widget.sessionId,
+        widget.playerId,
+        true,
+      );
+    }
+
+    final refreshedSession = await gameSessionService.getSession(
+      widget.sessionId,
+    );
+    final refreshedIsPlayer1 = refreshedSession.player1Id == widget.playerId;
+    final refreshedMyData =
+        refreshedIsPlayer1
+            ? refreshedSession.player1Data
+            : refreshedSession.player2Data;
+    final refreshedOpponentData =
+        refreshedIsPlayer1
+            ? refreshedSession.player2Data
+            : refreshedSession.player1Data;
+
+    if (refreshedMyData == null || refreshedOpponentData == null) {
+      return;
+    }
+
+    final bothReady = refreshedMyData.isReady && refreshedOpponentData.isReady;
+    if (bothReady && refreshedSession.status == GameStatus.waiting) {
+      await playerService.determineStartingPlayer(widget.sessionId);
+    }
+  }
+
+  void _showErrorSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final gameSessionService = ref.watch(gameSessionServiceProvider);
@@ -91,6 +167,10 @@ class _WaitingRoomScreenState extends ConsumerState<WaitingRoomScreen> {
                     ],
                   ),
                 );
+              }
+
+              if (session.status == GameStatus.playing) {
+                _scheduleNavigationToDistribution();
               }
 
               return Padding(
@@ -347,36 +427,21 @@ class _WaitingRoomScreenState extends ConsumerState<WaitingRoomScreen> {
                     // Bouton Prêt / Lancer
                     if (opponentData != null)
                       GestureDetector(
-                        onTap: () async {
-                          // Si je ne suis pas prêt, je me marque comme prêt
-                          if (!myData.isReady) {
-                            await playerService.setPlayerReady(
-                              widget.sessionId,
-                              widget.playerId,
-                              true,
-                            );
-                          }
-                          // Si les deux joueurs sont prêts, on lance la partie
-                          else if (myData.isReady && opponentData.isReady) {
-                            await playerService.determineStartingPlayer(
-                              widget.sessionId,
-                            );
-
-                            if (!context.mounted) return;
-                            if (mounted) {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder:
-                                      (context) => CardDistributionScreen(
-                                        sessionId: widget.sessionId,
-                                        playerId: widget.playerId,
-                                      ),
-                                ),
-                              );
-                            }
-                          }
-                        },
+                        onTap:
+                            _isStartingFlow
+                                ? null
+                                : () async {
+                                  setState(() => _isStartingFlow = true);
+                                  try {
+                                    await _handleReadyOrStart(playerService);
+                                  } catch (e) {
+                                    _showErrorSnackBar('Erreur: $e');
+                                  } finally {
+                                    if (mounted) {
+                                      setState(() => _isStartingFlow = false);
+                                    }
+                                  }
+                                },
                         child: Container(
                           height: 60,
                           decoration: BoxDecoration(

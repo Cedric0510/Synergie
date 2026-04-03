@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/interfaces/i_game_session_service.dart';
-import '../../domain/models/game_session.dart';
 import '../../domain/models/player_data.dart';
 import '../../domain/enums/player_gender.dart';
 import '../../domain/enums/game_status.dart';
@@ -20,25 +19,22 @@ class PlayerService {
 
   /// Met à jour l'activité du joueur (heartbeat)
   Future<void> updatePlayerActivity(String sessionId, String playerId) async {
-    final session = await _gameSessionService.getSession(sessionId);
-    final now = DateTime.now();
+    await _gameSessionService.runTransaction(sessionId, (session) {
+      final now = DateTime.now();
 
-    GameSession updatedSession;
-    if (session.player1Id == playerId) {
-      updatedSession = session.copyWith(
-        player1Data: session.player1Data.copyWith(lastActivityAt: now),
-        updatedAt: now,
-      );
-    } else if (session.player2Id == playerId) {
-      updatedSession = session.copyWith(
-        player2Data: session.player2Data?.copyWith(lastActivityAt: now),
-        updatedAt: now,
-      );
-    } else {
-      return;
-    }
-
-    await _gameSessionService.updateSession(sessionId, updatedSession);
+      if (session.player1Id == playerId) {
+        return session.copyWith(
+          player1Data: session.player1Data.copyWith(lastActivityAt: now),
+          updatedAt: now,
+        );
+      } else if (session.player2Id == playerId) {
+        return session.copyWith(
+          player2Data: session.player2Data?.copyWith(lastActivityAt: now),
+          updatedAt: now,
+        );
+      }
+      return session;
+    });
   }
 
   /// Marque le joueur comme prêt
@@ -47,24 +43,22 @@ class PlayerService {
     String playerId,
     bool ready,
   ) async {
-    final session = await _gameSessionService.getSession(sessionId);
-    final now = DateTime.now();
-    GameSession updatedSession;
+    await _gameSessionService.runTransaction(sessionId, (session) {
+      final now = DateTime.now();
 
-    if (session.player1Id == playerId) {
-      updatedSession = session.copyWith(
-        player1Data: session.player1Data.copyWith(isReady: ready),
-        updatedAt: now,
-      );
-    } else if (session.player2Id == playerId) {
-      updatedSession = session.copyWith(
-        player2Data: session.player2Data?.copyWith(isReady: ready),
-        updatedAt: now,
-      );
-    } else {
-      return; // Joueur inconnu
-    }
-    await _gameSessionService.updateSession(sessionId, updatedSession);
+      if (session.player1Id == playerId) {
+        return session.copyWith(
+          player1Data: session.player1Data.copyWith(isReady: ready),
+          updatedAt: now,
+        );
+      } else if (session.player2Id == playerId) {
+        return session.copyWith(
+          player2Data: session.player2Data?.copyWith(isReady: ready),
+          updatedAt: now,
+        );
+      }
+      return session;
+    });
   }
 
   /// Marque le joueur comme ayant vu ses cartes de départ et prêt à jouer
@@ -74,42 +68,51 @@ class PlayerService {
 
   /// Détermine quel joueur commence
   Future<void> determineStartingPlayer(String sessionId) async {
-    final session = await _gameSessionService.getSession(sessionId);
+    await _gameSessionService.runTransaction(sessionId, (session) {
+      // Vérifier que player2 est connecté
+      if (session.player2Data == null) return session;
+      // Les deux joueurs doivent etre prets
+      if (!session.player1Data.isReady || !session.player2Data!.isReady) {
+        return session;
+      }
+      // Ne demarrer qu\'une seule fois (idempotent)
+      if (session.status != GameStatus.waiting) {
+        return session;
+      }
 
-    // Vérifier que player2 est connecté
-    if (session.player2Data == null) return;
+      String startingPlayerId;
 
-    String startingPlayerId;
-
-    // Si sexes différents, la femme commence
-    if (session.player1Data.gender != session.player2Data!.gender) {
-      if (session.player1Data.gender == PlayerGender.female) {
-        startingPlayerId = session.player1Id;
-      } else if (session.player2Data!.gender == PlayerGender.female) {
-        startingPlayerId = session.player2Id!;
+      // Si sexes différents, la femme commence
+      if (session.player1Data.gender != session.player2Data!.gender) {
+        if (session.player1Data.gender == PlayerGender.female) {
+          startingPlayerId = session.player1Id;
+        } else if (session.player2Data!.gender == PlayerGender.female) {
+          startingPlayerId = session.player2Id!;
+        } else {
+          // Si aucun n'est female, tirage aléatoire
+          startingPlayerId =
+              DateTime.now().millisecond % 2 == 0
+                  ? session.player1Id
+                  : session.player2Id!;
+        }
       } else {
-        // Si aucun n'est female, tirage aléatoire
+        // Même sexe : tirage aléatoire
         startingPlayerId =
             DateTime.now().millisecond % 2 == 0
                 ? session.player1Id
                 : session.player2Id!;
       }
-    } else {
-      // Même sexe : tirage aléatoire
-      startingPlayerId =
-          DateTime.now().millisecond % 2 == 0
-              ? session.player1Id
-              : session.player2Id!;
-    }
 
-    final now = DateTime.now();
-    final updatedSession = session.copyWith(
-      currentPlayerId: startingPlayerId,
-      status: GameStatus.playing,
-      startedAt: now,
-      updatedAt: now,
-    );
-    await _gameSessionService.updateSession(sessionId, updatedSession);
+      final now = DateTime.now();
+      return session.copyWith(
+        currentPlayerId: startingPlayerId,
+        status: GameStatus.playing,
+        player1Data: session.player1Data.copyWith(isReady: false),
+        player2Data: session.player2Data!.copyWith(isReady: false),
+        startedAt: now,
+        updatedAt: now,
+      );
+    });
   }
 
   /// Sauvegarde les cartes du joueur (main et deck)
@@ -119,30 +122,28 @@ class PlayerService {
     required List<String> handCardIds,
     required List<String> deckCardIds,
   }) async {
-    final session = await _gameSessionService.getSession(sessionId);
-    final now = DateTime.now();
-    GameSession updatedSession;
+    await _gameSessionService.runTransaction(sessionId, (session) {
+      final now = DateTime.now();
 
-    if (session.player1Id == playerId) {
-      updatedSession = session.copyWith(
-        player1Data: session.player1Data.copyWith(
-          handCardIds: handCardIds,
-          deckCardIds: deckCardIds,
-        ),
-        updatedAt: now,
-      );
-    } else if (session.player2Id == playerId) {
-      updatedSession = session.copyWith(
-        player2Data: session.player2Data?.copyWith(
-          handCardIds: handCardIds,
-          deckCardIds: deckCardIds,
-        ),
-        updatedAt: now,
-      );
-    } else {
-      return; // Joueur inconnu
-    }
-    await _gameSessionService.updateSession(sessionId, updatedSession);
+      if (session.player1Id == playerId) {
+        return session.copyWith(
+          player1Data: session.player1Data.copyWith(
+            handCardIds: handCardIds,
+            deckCardIds: deckCardIds,
+          ),
+          updatedAt: now,
+        );
+      } else if (session.player2Id == playerId) {
+        return session.copyWith(
+          player2Data: session.player2Data?.copyWith(
+            handCardIds: handCardIds,
+            deckCardIds: deckCardIds,
+          ),
+          updatedAt: now,
+        );
+      }
+      return session;
+    });
   }
 
   /// Ajoute ou retire des PI d'un joueur
@@ -151,30 +152,29 @@ class PlayerService {
     String playerId,
     int delta,
   ) async {
-    final session = await _gameSessionService.getSession(sessionId);
-    final isPlayer1 = session.player1Id == playerId;
-    final playerData = isPlayer1 ? session.player1Data : session.player2Data!;
+    await _gameSessionService.runTransaction(sessionId, (session) {
+      final isPlayer1 = session.player1Id == playerId;
+      final playerData = isPlayer1 ? session.player1Data : session.player2Data!;
 
-    // Vérifier le lock PI
-    if (_isPiLocked(playerData)) {
-      return; // PI verrouillés, ne pas modifier
-    }
+      // Vérifier le lock PI
+      if (_isPiLocked(playerData)) {
+        return session; // PI verrouillés, ne pas modifier
+      }
 
-    final newPI = (playerData.inhibitionPoints + delta).clamp(0, 99);
+      final newPI = (playerData.inhibitionPoints + delta).clamp(0, 99);
 
-    GameSession updatedSession;
-    if (isPlayer1) {
-      updatedSession = session.copyWith(
-        player1Data: session.player1Data.copyWith(inhibitionPoints: newPI),
-        updatedAt: DateTime.now(),
-      );
-    } else {
-      updatedSession = session.copyWith(
-        player2Data: session.player2Data!.copyWith(inhibitionPoints: newPI),
-        updatedAt: DateTime.now(),
-      );
-    }
-    await _gameSessionService.updateSession(sessionId, updatedSession);
+      if (isPlayer1) {
+        return session.copyWith(
+          player1Data: session.player1Data.copyWith(inhibitionPoints: newPI),
+          updatedAt: DateTime.now(),
+        );
+      } else {
+        return session.copyWith(
+          player2Data: session.player2Data!.copyWith(inhibitionPoints: newPI),
+          updatedAt: DateTime.now(),
+        );
+      }
+    });
   }
 
   /// Met à jour la tension d'un joueur
@@ -183,30 +183,29 @@ class PlayerService {
     String playerId,
     double delta,
   ) async {
-    final session = await _gameSessionService.getSession(sessionId);
-    final isPlayer1 = session.player1Id == playerId;
-    final playerData = isPlayer1 ? session.player1Data : session.player2Data!;
+    await _gameSessionService.runTransaction(sessionId, (session) {
+      final isPlayer1 = session.player1Id == playerId;
+      final playerData = isPlayer1 ? session.player1Data : session.player2Data!;
 
-    // Vérifier le lock tension
-    if (_isTensionLocked(playerData)) {
-      return; // Tension verrouillée, ne pas modifier
-    }
+      // Vérifier le lock tension
+      if (_isTensionLocked(playerData)) {
+        return session; // Tension verrouillée, ne pas modifier
+      }
 
-    final newTension = (playerData.tension + delta).clamp(0.0, 100.0);
+      final newTension = (playerData.tension + delta).clamp(0.0, 100.0);
 
-    GameSession updatedSession;
-    if (isPlayer1) {
-      updatedSession = session.copyWith(
-        player1Data: session.player1Data.copyWith(tension: newTension),
-        updatedAt: DateTime.now(),
-      );
-    } else {
-      updatedSession = session.copyWith(
-        player2Data: session.player2Data!.copyWith(tension: newTension),
-        updatedAt: DateTime.now(),
-      );
-    }
-    await _gameSessionService.updateSession(sessionId, updatedSession);
+      if (isPlayer1) {
+        return session.copyWith(
+          player1Data: session.player1Data.copyWith(tension: newTension),
+          updatedAt: DateTime.now(),
+        );
+      } else {
+        return session.copyWith(
+          player2Data: session.player2Data!.copyWith(tension: newTension),
+          updatedAt: DateTime.now(),
+        );
+      }
+    });
   }
 
   /// Vérifie si les PI sont verrouillés par un enchantement

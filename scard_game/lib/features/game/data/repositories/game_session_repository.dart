@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/errors/game_exceptions.dart';
 import '../../../../core/interfaces/i_game_session_repository.dart';
 import '../../domain/models/game_session.dart';
 import '../../domain/models/player_data.dart';
@@ -39,7 +40,7 @@ class GameSessionRepository implements IGameSessionRepository {
   Future<GameSession> getSession(String sessionId) async {
     final doc = await _collection.doc(sessionId).get();
     if (!doc.exists) {
-      throw Exception('Session non trouvée: $sessionId');
+      throw SessionNotFoundException(sessionId);
     }
     return GameSession.fromJson(doc.data()!);
   }
@@ -49,7 +50,7 @@ class GameSessionRepository implements IGameSessionRepository {
   Stream<GameSession> watchSession(String sessionId) {
     return _collection.doc(sessionId).snapshots().map((snapshot) {
       if (!snapshot.exists) {
-        throw Exception('Session non trouvée: $sessionId');
+        throw SessionNotFoundException(sessionId);
       }
       return GameSession.fromJson(snapshot.data()!);
     });

@@ -55,9 +55,6 @@ class _CardDistributionScreenState
       // Charger la configuration de deck personnalisée
       final customConfig = await customDeckService.loadDeckConfiguration();
 
-      debugPrint('🎴 Utilisation du deck: ${customConfig.name}');
-      debugPrint('🎴 Cartes dans le deck: ${customConfig.totalCards}');
-
       // Génère le deck avec la configuration personnalisée
       // Si pas de config custom, utilise le deck par défaut
       final result = await deckService.initializePlayerDeck(
@@ -85,9 +82,6 @@ class _CardDistributionScreenState
         deckCardIds: result.deck,
       );
     } catch (e, stackTrace) {
-      debugPrint('❌ ERREUR DISTRIBUTION: $e');
-      debugPrint('❌ STACK: $stackTrace');
-
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -239,7 +233,6 @@ class _CardDistributionScreenState
             final card = allCards.firstWhere((c) => c.id == id);
             handCards.add(card);
           } catch (e) {
-            debugPrint('⚠️ Carte non trouvée: $id');
             // Ignorer les cartes qui n'existent pas
           }
         }

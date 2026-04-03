@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:scard_game/core/services/logger_service.dart';
 import 'package:scard_game/features/game/data/services/deck_service.dart';
 import 'package:scard_game/features/game/data/services/card_service.dart';
 import 'package:scard_game/features/game/data/services/custom_deck_service.dart';
@@ -7,6 +8,8 @@ import 'package:scard_game/features/game/domain/models/game_card.dart';
 
 // Mock CardService pour les tests
 class MockCardService extends CardService {
+  MockCardService() : super(LoggerService());
+
   @override
   Future<List<GameCard>> loadAllCards() async {
     // Retourner une liste vide pour les tests de shuffle/draw
@@ -19,7 +22,11 @@ void main() {
     late DeckService deckService;
 
     setUp(() {
-      deckService = DeckService(MockCardService(), CustomDeckService());
+      deckService = DeckService(
+        MockCardService(),
+        CustomDeckService(),
+        LoggerService(),
+      );
     });
 
     test('shuffleDeck returns same cards in different order', () {
@@ -94,7 +101,11 @@ void main() {
     late DeckService deckService;
 
     setUp(() {
-      deckService = DeckService(MockCardService(), CustomDeckService());
+      deckService = DeckService(
+        MockCardService(),
+        CustomDeckService(),
+        LoggerService(),
+      );
     });
 
     test('drawCards returns correct number of cards', () {
@@ -158,7 +169,11 @@ void main() {
     late DeckService deckService;
 
     setUp(() {
-      deckService = DeckService(MockCardService(), CustomDeckService());
+      deckService = DeckService(
+        MockCardService(),
+        CustomDeckService(),
+        LoggerService(),
+      );
     });
 
     test('drawSingleCard returns first card', () async {

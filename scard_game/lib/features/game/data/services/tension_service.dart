@@ -1,9 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/game_constants.dart';
 import '../../../../core/extensions/extensions.dart';
 import '../../../../core/interfaces/i_game_session_service.dart';
 import '../../../../core/interfaces/i_tension_service.dart';
+import '../../../../core/services/logger_service.dart';
 import '../../domain/enums/card_level.dart';
 import '../../domain/enums/card_color.dart';
 import 'game_session_service.dart';
@@ -12,8 +12,9 @@ import 'game_session_service.dart';
 /// Implémente ITensionService pour respecter le principe D (Dependency Inversion)
 class TensionService implements ITensionService {
   final IGameSessionService _gameSessionService;
+  final LoggerService _logger;
 
-  TensionService(this._gameSessionService);
+  TensionService(this._gameSessionService, this._logger);
 
   /// Incrémente la tension d'un joueur
   /// Retourne true si le niveau a changé (pour déclencher une pioche)
@@ -22,42 +23,35 @@ class TensionService implements ITensionService {
     String playerId,
     double amount,
   ) async {
-    final session = await _gameSessionService.getSession(sessionId);
-    final playerData = session.getPlayerData(playerId);
+    bool levelChanged = false;
 
-    // Sauvegarder l'ancien niveau
-    final oldLevel = playerData.currentLevel;
+    await _gameSessionService.runTransaction(sessionId, (session) {
+      final playerData = session.getPlayerData(playerId);
 
-    // Calculer la nouvelle tension (max 100%)
-    final newTension = (playerData.tension + amount).clamp(
-      GameConstants.minTension,
-      GameConstants.maxTension,
-    );
+      // Sauvegarder l'ancien niveau
+      final oldLevel = playerData.currentLevel;
 
-    // Déterminer le nouveau niveau basé sur la tension
-    final newLevel = getEffectiveLevel(newTension);
+      // Calculer la nouvelle tension (max 100%)
+      final newTension = (playerData.tension + amount).clamp(
+        GameConstants.minTension,
+        GameConstants.maxTension,
+      );
 
-    // Mettre à jour
-    final updatedPlayerData = playerData.copyWith(
-      tension: newTension,
-      currentLevel: newLevel,
-    );
+      // Déterminer le nouveau niveau basé sur la tension
+      final newLevel = getEffectiveLevel(newTension);
 
-    final updatedSession = session.updatePlayerData(
-      playerId,
-      updatedPlayerData,
-    );
+      // Mettre à jour
+      final updatedPlayerData = playerData.copyWith(
+        tension: newTension,
+        currentLevel: newLevel,
+      );
 
-    // Debug
-    debugPrint(
-      '📊 increaseTension - Ancienne tension: ${playerData.tension}%, Nouveau: $newTension% - Ancien niveau: $oldLevel, Nouveau: $newLevel',
-    );
+      levelChanged = oldLevel != newLevel;
 
-    // Sauvegarder
-    await _gameSessionService.updateSession(sessionId, updatedSession);
+      return session.updatePlayerData(playerId, updatedPlayerData);
+    });
 
-    // Retourner true si le niveau a changé
-    return oldLevel != newLevel;
+    return levelChanged;
   }
 
   /// Détermine le niveau basé sur la tension
@@ -88,9 +82,9 @@ class TensionService implements ITensionService {
     final colorString = cardColor.toString().split('.').last;
     final canPlay = currentLevel.availableColors.contains(colorString);
 
-    // Debug
-    debugPrint(
-      '🎴 canPlayCard - Color: $colorString, Level: $currentLevel, Available: ${currentLevel.availableColors}, CanPlay: $canPlay',
+    _logger.debug(
+      'TensionService',
+      'canPlayCard - Color: $colorString, Level: $currentLevel, CanPlay: $canPlay',
     );
 
     return canPlay;
@@ -151,5 +145,6 @@ class TensionService implements ITensionService {
 /// Provider pour le service de tension
 final tensionServiceProvider = Provider<TensionService>((ref) {
   final gameSessionService = ref.watch(gameSessionServiceProvider);
-  return TensionService(gameSessionService);
+  final logger = ref.watch(loggerServiceProvider);
+  return TensionService(gameSessionService, logger);
 });

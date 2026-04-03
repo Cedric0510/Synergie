@@ -69,7 +69,6 @@ class _HomeScreenState extends State<HomeScreen>
         });
       }
     } catch (e) {
-      debugPrint('Erreur initialisation vidéo: $e');
       if (mounted) {
         setState(() {
           _videoError = true;

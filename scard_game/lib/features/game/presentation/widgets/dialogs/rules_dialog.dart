@@ -48,7 +48,6 @@ class _RulesDialogState extends State<RulesDialog> {
         _isLoading = false;
       });
     } catch (e) {
-      debugPrint('Erreur chargement règles: $e');
       setState(() {
         _isLoading = false;
       });

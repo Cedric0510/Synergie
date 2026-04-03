@@ -27,6 +27,15 @@ abstract class IGameSessionService {
   /// Met à jour une session existante
   Future<void> updateSession(String sessionId, GameSession session);
 
+  /// Exécute une transformation atomique de la session.
+  /// Le [updater] reçoit le snapshot courant et retourne la session modifiée.
+  /// En production, cela utilise une transaction Firestore pour garantir
+  /// qu'aucune écriture concurrente ne peut corrompre l'état.
+  Future<GameSession> runTransaction(
+    String sessionId,
+    GameSession Function(GameSession current) updater,
+  );
+
   /// Vérifie si une session existe
   Future<bool> sessionExists(String sessionId);
 

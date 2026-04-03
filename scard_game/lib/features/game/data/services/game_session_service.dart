@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/errors/game_exceptions.dart';
 import '../../../../core/interfaces/i_auth_service.dart';
 import '../../../../core/interfaces/i_game_session_service.dart';
 import '../../domain/models/game_session.dart';
@@ -85,7 +86,8 @@ class GameSessionService implements IGameSessionService {
 
       return session;
     } catch (e) {
-      throw Exception('Erreur lors de la création de la partie: $e');
+      if (e is GameException) rethrow;
+      throw GameplayException('Erreur lors de la création de la partie');
     }
   }
 
@@ -107,13 +109,13 @@ class GameSessionService implements IGameSessionService {
       final doc = await docRef.get();
 
       if (!doc.exists) {
-        throw Exception('Code de partie invalide');
+        throw InvalidGameCodeException();
       }
 
       final session = GameSession.fromJson(doc.data()!);
 
       if (session.player2Id != null) {
-        throw Exception('Cette partie est déjà complète');
+        throw GameFullException();
       }
 
       // Création des données joueur 2
@@ -143,7 +145,8 @@ class GameSessionService implements IGameSessionService {
 
       return updatedSession;
     } catch (e) {
-      throw Exception('Erreur lors de la connexion à la partie: $e');
+      if (e is GameException) rethrow;
+      throw GameplayException('Erreur lors de la connexion à la partie');
     }
   }
 
@@ -152,7 +155,7 @@ class GameSessionService implements IGameSessionService {
   Future<GameSession> getSession(String sessionId) async {
     final doc = await _firestore.collection(_collection).doc(sessionId).get();
     if (!doc.exists) {
-      throw Exception('Session introuvable');
+      throw SessionNotFoundException(sessionId);
     }
     return GameSession.fromJson(doc.data()!);
   }
@@ -164,7 +167,7 @@ class GameSessionService implements IGameSessionService {
       doc,
     ) {
       if (!doc.exists) {
-        throw Exception('Session introuvable');
+        throw SessionNotFoundException(sessionId);
       }
       return GameSession.fromJson(doc.data()!);
     });
@@ -179,6 +182,34 @@ class GameSessionService implements IGameSessionService {
       sessionJson['player2Data'] = session.player2Data!.toJson();
     }
     await _firestore.collection(_collection).doc(sessionId).set(sessionJson);
+  }
+
+  /// Transaction atomique : lit la session, applique l'updater, écrit le résultat.
+  /// Firestore rejouera le callback en cas de conflit d'écriture concurrent.
+  @override
+  Future<GameSession> runTransaction(
+    String sessionId,
+    GameSession Function(GameSession current) updater,
+  ) async {
+    final docRef = _firestore.collection(_collection).doc(sessionId);
+
+    return _firestore.runTransaction<GameSession>((transaction) async {
+      final snapshot = await transaction.get(docRef);
+      if (!snapshot.exists) {
+        throw SessionNotFoundException(sessionId);
+      }
+
+      final current = GameSession.fromJson(snapshot.data()!);
+      final updated = updater(current);
+
+      final sessionJson = updated.toJson();
+      sessionJson['player1Data'] = updated.player1Data.toJson();
+      if (updated.player2Data != null) {
+        sessionJson['player2Data'] = updated.player2Data!.toJson();
+      }
+      transaction.set(docRef, sessionJson);
+      return updated;
+    });
   }
 
   /// Vérifie si une session existe

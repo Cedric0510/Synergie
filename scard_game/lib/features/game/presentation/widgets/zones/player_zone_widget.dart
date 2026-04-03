@@ -654,7 +654,9 @@ class _PlayerZoneWidgetState extends ConsumerState<PlayerZoneWidget>
     if (widget.isMyTurn && widget.session.currentPhase == GamePhase.main) {
       return _TurnActionButtonType.pass;
     }
-    if (!widget.isMyTurn && widget.session.currentPhase == GamePhase.response) {
+    if (!widget.isMyTurn &&
+        widget.session.currentPhase == GamePhase.response &&
+        widget.session.resolutionStack.length <= 1) {
       return _TurnActionButtonType.accept;
     }
     return null;

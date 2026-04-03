@@ -1,14 +1,15 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/interfaces/i_card_service.dart';
+import '../../../../core/services/logger_service.dart';
 import '../../domain/models/game_card.dart';
 import '../../domain/enums/card_color.dart' as game;
 
 /// Provider pour le service de cartes
 final cardServiceProvider = Provider<CardService>((ref) {
-  return CardService();
+  final logger = ref.watch(loggerServiceProvider);
+  return CardService(logger);
 });
 
 /// Provider pour charger toutes les cartes
@@ -27,9 +28,16 @@ final cardsByColorProvider =
 /// Service pour gérer les cartes
 /// Implémente ICardService pour respecter le principe D (Dependency Inversion)
 class CardService implements ICardService {
-  /// Charge toutes les cartes depuis le fichier JSON
+  final LoggerService _logger;
+  List<GameCard>? _cachedCards;
+
+  CardService(this._logger);
+
+  /// Charge toutes les cartes depuis le fichier JSON (avec cache in-memory)
   @override
   Future<List<GameCard>> loadAllCards() async {
+    if (_cachedCards != null) return _cachedCards!;
+
     try {
       // Charger le fichier JSON
       final jsonString = await rootBundle.loadString('assets/data/cards.json');
@@ -45,17 +53,15 @@ class CardService implements ICardService {
           final card = GameCard.fromJson(cardJson);
           cards.add(card);
         } catch (e) {
-          debugPrint(
-            '❌ CardService: Erreur lors du chargement de la carte à l\'index $i: $e',
-          );
-          debugPrint('CardService: JSON de la carte: ${cardsJson[i]}');
+          _logger.error('CardService', 'Erreur chargement carte index $i: $e');
           rethrow;
         }
       }
 
-      return cards;
+      _cachedCards = List.unmodifiable(cards);
+      return _cachedCards!;
     } catch (e) {
-      debugPrint('❌ CardService: Erreur lors du chargement des cartes: $e');
+      _logger.error('CardService', 'Erreur chargement cartes', e);
       rethrow;
     }
   }

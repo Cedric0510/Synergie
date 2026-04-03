@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel in-progress runs on the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: scard_game
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos
+
+      - name: Run tests
+        run: flutter test
+
+  build-web:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    defaults:
+      run:
+        working-directory: scard_game
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Build web
+        run: flutter build web --release --tree-shake-icons
+
+      - name: Upload web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: scard_game/build/web
+          retention-days: 7
+
+  deploy:
+    needs: build-web
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download web build
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: scard_game/build/web
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          channelId: live
+          projectId: fir-card-f1873
+          entryPoint: scard_game

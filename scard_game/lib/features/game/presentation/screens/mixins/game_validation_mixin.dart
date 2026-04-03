@@ -8,6 +8,8 @@ import '../../../data/services/player_service.dart';
 import '../../../data/services/turn_service.dart';
 import '../../../data/services/card_effect_service.dart';
 import '../../../data/services/session_state_service.dart';
+import '../../../domain/enums/card_color.dart';
+import '../../../domain/enums/game_phase.dart';
 import '../../../domain/models/game_card.dart';
 import '../../../domain/models/game_session.dart';
 import '../../../domain/enums/card_type.dart';
@@ -104,6 +106,34 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
       final allCards = await cardService.loadAllCards();
 
       if (session.resolutionStack.length > 1) {
+        final responseCardId = session.resolutionStack.last;
+        final responseCard = allCards.firstWhere(
+          (c) => c.id == responseCardId,
+          orElse: () => allCards.first,
+        );
+
+        // Les cartes de reponse vertes sont des negociations: modale dediee.
+        if (responseCard.color == CardColor.green) {
+          if (!mounted) return;
+          final agreement = await GameDialogs.showNegotiationDialog(context);
+          if (agreement == null) return;
+
+          await resolveNegotiation(agreement);
+
+          // Fallback defensif: si on est deja en resolution, poursuivre le flow.
+          final refreshedSession = await gameSessionService.getSession(
+            sessionId,
+          );
+          if (refreshedSession.currentPhase == GamePhase.resolution) {
+            if (refreshedSession.resolutionStack.isEmpty) {
+              await resolveEffectsWithoutValidation();
+            } else if (refreshedSession.resolutionStack.length == 1) {
+              await continueValidationAfterResponse();
+            }
+          }
+          return;
+        }
+
         await showResponseEffectDialog();
         return;
       }
@@ -390,8 +420,11 @@ mixin GameValidationMixin<T extends ConsumerStatefulWidget>
     await timerDialogFuture;
   }
 
-  /// Affiche le dialogue d'effet de réponse
+  /// Affiche le dialogue d'effet de reponse
   Future<void> showResponseEffectDialog();
+
+  /// Resout une negociation (cartes de reponse vertes).
+  Future<void> resolveNegotiation(bool agreement);
 
   /// Modale de confirmation pour supprimer un enchantement
   Future<bool?> showDeleteEnchantmentDialog(

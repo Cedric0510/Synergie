@@ -64,7 +64,7 @@ class _JoinGameScreenState extends ConsumerState<JoinGameScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
     } finally {
       if (mounted) {

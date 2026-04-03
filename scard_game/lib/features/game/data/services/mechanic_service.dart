@@ -687,52 +687,287 @@ class MechanicService {
 
     if (!context.mounted) return null;
 
+    const accent = Color(0xFF6DD5FA);
+    final isEnchantmentDialog = title.toLowerCase().contains('enchantement');
+
     return await showDialog<String>(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text(title),
-            content: SizedBox(
-              width: double.maxFinite,
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: availableCards.length,
-                itemBuilder: (context, index) {
-                  final card = availableCards[index];
-                  return MouseRegion(
-                    cursor: SystemMouseCursors.click,
-                    child: Tooltip(
-                      richMessage: WidgetSpan(
-                        child: Material(
-                          color: Colors.transparent,
-                          child: _buildCardPreview(card),
-                        ),
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 16,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 520,
+              maxHeight: MediaQuery.of(dialogContext).size.height * 0.82,
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF2d4263), Color(0xFF1a2332)],
+                ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: accent.withValues(alpha: 0.45),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: accent.withValues(alpha: 0.28),
+                    blurRadius: 24,
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          accent.withValues(alpha: 0.30),
+                          accent.withValues(alpha: 0.10),
+                        ],
                       ),
-                      decoration: const BoxDecoration(),
-                      padding: EdgeInsets.zero,
-                      preferBelow: false,
-                      verticalOffset: 20,
-                      child: ListTile(
-                        title: Text(card.name),
-                        subtitle: Text(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(24),
+                        topRight: Radius.circular(24),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: accent.withValues(alpha: 0.20),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            isEnchantmentDialog
+                                ? Icons.auto_fix_off
+                                : Icons.touch_app_outlined,
+                            color: accent,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Flexible(
+                    child: ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+                      itemCount: availableCards.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 8),
+                      itemBuilder: (_, index) {
+                        final card = availableCards[index];
+                        return _buildSelectionTile(
+                          dialogContext: dialogContext,
+                          card: card,
+                        );
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                    child: _buildDialogActionButton(
+                      label: 'Annuler',
+                      onTap: () => Navigator.of(dialogContext).pop(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSelectionTile({
+    required BuildContext dialogContext,
+    required GameCard card,
+  }) {
+    const accent = Color(0xFF6DD5FA);
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: Tooltip(
+        richMessage: WidgetSpan(
+          child: Material(
+            color: Colors.transparent,
+            child: _buildCardPreview(card),
+          ),
+        ),
+        decoration: const BoxDecoration(),
+        padding: EdgeInsets.zero,
+        preferBelow: false,
+        verticalOffset: 20,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => Navigator.of(dialogContext).pop(card.id),
+            borderRadius: BorderRadius.circular(12),
+            splashColor: accent.withValues(alpha: 0.22),
+            highlightColor: accent.withValues(alpha: 0.10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.10),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                    margin: const EdgeInsets.only(top: 5),
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.8),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: accent.withValues(alpha: 0.4),
+                          blurRadius: 6,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          card.name,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
                           card.gameEffect,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.72),
+                            fontSize: 13,
+                            height: 1.25,
+                          ),
                         ),
-                        onTap: () => Navigator.of(context).pop(card.id),
-                      ),
+                      ],
                     ),
-                  );
-                },
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 15,
+                    color: accent.withValues(alpha: 0.85),
+                  ),
+                ],
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Annuler'),
-              ),
-            ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDialogActionButton({
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    const accent = Color(0xFF6DD5FA);
+
+    return SizedBox(
+      width: double.infinity,
+      height: 48,
+      child: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  accent.withValues(alpha: 0.20),
+                  accent.withValues(alpha: 0.10),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: accent.withValues(alpha: 0.40),
+                width: 1.2,
+              ),
+            ),
+          ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 17,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.white.withValues(alpha: 0.35),
+                    Colors.white.withValues(alpha: 0.0),
+                  ],
+                ),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(14),
+                  topRight: Radius.circular(14),
+                ),
+              ),
+            ),
+          ),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(14),
+              child: Center(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

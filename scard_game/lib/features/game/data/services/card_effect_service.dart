@@ -44,8 +44,8 @@ class CardEffectService {
 
   /// Vide la pile de résolution.
   Future<void> _clearResolutionStack(String sessionId) async {
-    final session = await _gameSessionService.getSession(sessionId);
-    final updatedSession = session.copyWith(resolutionStack: []);
-    await _gameSessionService.updateSession(sessionId, updatedSession);
+    await _gameSessionService.runTransaction(sessionId, (session) {
+      return session.copyWith(resolutionStack: []);
+    });
   }
 }

@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/errors/game_exceptions.dart';
 import '../../../../core/interfaces/i_auth_service.dart';
 
 /// Provider pour le service d'authentification
@@ -26,7 +27,7 @@ class AuthService implements IAuthService {
       final userCredential = await _auth.signInAnonymously();
       return userCredential.user!.uid;
     } catch (e) {
-      throw Exception('Erreur de connexion: $e');
+      throw AuthException('Erreur de connexion', e);
     }
   }
 

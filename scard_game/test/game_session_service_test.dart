@@ -95,6 +95,20 @@ class MockGameSessionService implements IGameSessionService {
     _sessions.remove(sessionId);
   }
 
+  @override
+  Future<GameSession> runTransaction(
+    String sessionId,
+    GameSession Function(GameSession current) updater,
+  ) async {
+    final current = _sessions[sessionId];
+    if (current == null) {
+      throw Exception('Session introuvable');
+    }
+    final updated = updater(current);
+    _sessions[sessionId] = updated;
+    return updated;
+  }
+
   void reset() {
     _sessions.clear();
     _sessionCounter = 0;

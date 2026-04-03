@@ -174,6 +174,20 @@ class _GameScreenState extends ConsumerState<GameScreen>
           final isMyTurn = session.currentPlayerId == widget.playerId;
           final showSecretArt = _shouldUseSecretArt(session.player1Data.name);
 
+          // === PHASE CHANGE DETECTION & FLAG RESET ===
+          // Doit être AVANT les conditions de microtask pour que les flags
+          // soient correctement réinitialisés avant évaluation
+          if (_lastPhase != session.currentPhase) {
+            _resetFlagsForPhase(session.currentPhase);
+            _lastPhase = session.currentPhase;
+          }
+
+          if (session.currentPhase == GamePhase.response &&
+              session.resolutionStack.length < 2) {
+            _hasShownNegotiationDialog = false;
+          }
+
+          // === DRAW PHASE: Auto-pioche + enchantements ===
           if (session.currentPhase == GamePhase.draw &&
               isMyTurn &&
               !session.drawDoneThisTurn &&
@@ -197,42 +211,24 @@ class _GameScreenState extends ConsumerState<GameScreen>
             Future.microtask(() => _applyRecurringEnchantmentEffects());
           }
 
-          // PHASE ENCHANTEMENT & PIOCHE : Passage automatique
-          // Le joueur passe directement en phase Main après la pioche et la popup enchantements
-
-          // Afficher la modal de validation quand on entre en phase Resolution
+          // === RESOLUTION PHASE: Validation dialog ===
           if (session.currentPhase == GamePhase.resolution &&
-              _lastPhase != GamePhase.resolution &&
               !_hasShownValidationDialog &&
               isMyTurn) {
             _hasShownValidationDialog = true;
-            // NE PAS exécuter les actions pendantes ici !
-            // Elles seront exécutées dans handleResponseEffect() après validation
             Future.microtask(() => showValidationDialog());
           }
 
-          // Reset du flag de validation quand on change de phase
-          if (_lastPhase != session.currentPhase) {
-            _lastPhase = session.currentPhase;
-            if (session.currentPhase != GamePhase.resolution) {
-              _hasShownValidationDialog = false;
-            }
-            if (session.currentPhase != GamePhase.response) {
-              _hasShownNegotiationDialog = false;
-            }
-            if (session.currentPhase != GamePhase.draw) {
-              _hasShownEnchantmentEffects = false;
-            }
-          }
-
+          // === RESPONSE PHASE: Negotiation dialog ===
           if (session.currentPhase == GamePhase.response &&
-              session.resolutionStack.length < 2) {
-            _hasShownNegotiationDialog = false;
+              session.resolutionStack.length > 1 &&
+              isMyTurn &&
+              !_hasShownNegotiationDialog) {
+            Future.microtask(() => _maybeShowNegotiationDialog(session));
           }
 
-          // ULTIMA : Donner automatiquement la carte Ultima à 100% de tension
+          // === ULTIMA: Donner automatiquement la carte à 100% de tension ===
           if (myData.tension >= 100 && !_hasReceivedUltima) {
-            // Vérifier si le joueur n'a pas déjà Ultima en main ou en jeu
             final hasUltimaInHand = myData.handCardIds.contains(
               GameConstants.ultimaCardId,
             );
@@ -246,24 +242,17 @@ class _GameScreenState extends ConsumerState<GameScreen>
             }
           }
 
-          // Réinitialiser le flag si la tension redescend sous 100%
           if (myData.tension < 100) {
             _hasReceivedUltima = false;
           }
 
-          // === VÉRIFICATION VICTOIRE ULTIMA ===
+          // === VÉRIFICATION VICTOIRE ===
           if (session.status == GameStatus.finished &&
               session.winnerId != null) {
             return VictoryScreenWidget(
               session: session,
               playerId: widget.playerId,
             );
-          }
-
-          if (session.currentPhase == GamePhase.response &&
-              session.resolutionStack.length > 1 &&
-              isMyTurn) {
-            Future.microtask(() => _maybeShowNegotiationDialog(session));
           }
 
           return Container(
@@ -376,9 +365,12 @@ class _GameScreenState extends ConsumerState<GameScreen>
   }
 
   Future<void> _maybeShowNegotiationDialog(GameSession session) async {
-    if (_hasShownNegotiationDialog || !mounted) return;
+    if (!mounted || _hasShownNegotiationDialog) return;
     if (session.currentPlayerId != widget.playerId) return;
+    if (session.currentPhase != GamePhase.response) return;
     if (session.resolutionStack.length < 2) return;
+
+    _hasShownNegotiationDialog = true;
 
     final cardService = ref.read(cardServiceProvider);
     final allCards = await cardService.loadAllCards();
@@ -388,13 +380,16 @@ class _GameScreenState extends ConsumerState<GameScreen>
       orElse: () => allCards.first,
     );
 
-    if (responseCard.color != CardColor.green) return;
-
-    _hasShownNegotiationDialog = true;
+    if (responseCard.color != CardColor.green) {
+      _hasShownNegotiationDialog = false;
+      return;
+    }
     if (!mounted) return;
     final agreement = await GameDialogs.showNegotiationDialog(context);
     if (agreement != null) {
       await resolveNegotiation(agreement);
+    } else {
+      _hasShownNegotiationDialog = false;
     }
   }
 
@@ -771,6 +766,19 @@ class _GameScreenState extends ConsumerState<GameScreen>
     return 'white';
   }
 
+  /// Réinitialise les flags de phase quand on change de phase.
+  void _resetFlagsForPhase(GamePhase newPhase) {
+    if (newPhase != GamePhase.resolution) {
+      _hasShownValidationDialog = false;
+    }
+    if (newPhase != GamePhase.response) {
+      _hasShownNegotiationDialog = false;
+    }
+    if (newPhase != GamePhase.draw) {
+      _hasShownEnchantmentEffects = false;
+    }
+  }
+
   bool _shouldUseSecretArt(String creatorName) {
     final normalized = creatorName.trim().toLowerCase();
     return normalized == 'cédr!c' ||
@@ -827,6 +835,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
       await turnService.setEnchantmentEffectsDoneThisTurn(sessionId, true);
       final session = await gameSessionService.getSession(sessionId);
       if (session.currentPlayerId != widget.playerId) return;
+      if (session.currentPhase != GamePhase.draw) return; // Phase déjà avancée
 
       final allCards = await cardService.loadAllCards();
 

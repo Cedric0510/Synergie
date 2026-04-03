@@ -73,7 +73,13 @@ mixin GameUtilsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   /// Passe la phase réponse sans jouer de carte
   Future<void> skipResponse() async {
     final turnService = ref.read(turnServiceProvider);
+    final gameSessionService = ref.read(gameSessionServiceProvider);
     try {
+      final session = await gameSessionService.getSession(sessionId);
+      if (session.resolutionStack.length > 1) {
+        return;
+      }
+
       // Réponse → Résolution
       await turnService.nextPhase(sessionId);
 

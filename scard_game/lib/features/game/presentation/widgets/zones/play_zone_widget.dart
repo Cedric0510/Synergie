@@ -129,6 +129,8 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
             Widget? opponentCard;
             Widget? myCard;
             GameCard? myCardData; // Pour le drag de retour
+            String? opponentCardTierKey;
+            String? myCardTierKey;
 
             if (snapshot.hasData && widget.session.resolutionStack.isNotEmpty) {
               final allCards = snapshot.data!;
@@ -137,6 +139,8 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
                 (c) => c.id == firstCardId,
                 orElse: () => allCards.first,
               );
+              final firstCardTierKey =
+                  widget.session.playedCardTiers[firstCardId];
               final firstCardIsMe = widget.isMyTurn;
 
               // Première carte
@@ -147,15 +151,17 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
                 showPreviewOnHover: true,
                 showOnlySelectedTier: true,
                 enableTapPreview: true,
-                displayTierKey: widget.session.playedCardTiers[firstCardId],
+                displayTierKey: firstCardTierKey,
                 showSecretArt: widget.showSecretArt,
               );
 
               if (firstCardIsMe) {
                 myCard = firstCardWidget;
                 myCardData = firstCard;
+                myCardTierKey = firstCardTierKey;
               } else {
                 opponentCard = firstCardWidget;
+                opponentCardTierKey = firstCardTierKey;
               }
 
               // Carte de réponse
@@ -176,12 +182,16 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
                       widget.session.playedCardTiers[responseCardId],
                   showSecretArt: widget.showSecretArt,
                 );
+                final responseCardTierKey =
+                    widget.session.playedCardTiers[responseCardId];
 
                 if (firstCardIsMe) {
                   opponentCard = responseCardWidget;
+                  opponentCardTierKey = responseCardTierKey;
                 } else {
                   myCard = responseCardWidget;
                   myCardData = responseCardData;
+                  myCardTierKey = responseCardTierKey;
                 }
               }
             }
@@ -232,6 +242,7 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
                       label: 'Adversaire',
                       isOpponent: true,
                       isMobile: isMobile,
+                      playedTierKey: opponentCardTierKey,
                     ),
                   ),
                 ),
@@ -299,6 +310,7 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
                                   isOpponent: false,
                                   isMobile: isMobile,
                                   isHighlighted: false,
+                                  playedTierKey: null,
                                 ),
                                 onDragStarted: () {
                                   HapticFeedback.mediumImpact();
@@ -312,6 +324,7 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
                                   isMobile: isMobile,
                                   isHighlighted: _isDragOver,
                                   isPending: true, // Indicateur visuel
+                                  playedTierKey: myCardTierKey,
                                 ),
                               );
                             }
@@ -324,6 +337,7 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
                               isOpponent: false,
                               isMobile: isMobile,
                               isHighlighted: _isDragOver,
+                              playedTierKey: myCardTierKey,
                             );
                           },
                         ),
@@ -349,6 +363,7 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
     required bool isMobile,
     bool isHighlighted = false,
     bool isPending = false,
+    String? playedTierKey,
   }) {
     final slotPadding = isMobile ? 6.0 : 10.0;
     final slotWidth = cardWidth + slotPadding * 2;
@@ -438,9 +453,64 @@ class _PlayZoneWidgetState extends ConsumerState<PlayZoneWidget> {
                 ),
               ),
             ),
+
+          // Pastille du palier/couleur choisi pour l'effet de carte
+          if (card != null && playedTierKey != null)
+            Positioned(
+              top: isMobile ? 6 : 8,
+              right: isMobile ? 6 : 8,
+              child: _buildTierBadge(playedTierKey, isMobile),
+            ),
         ],
       ),
     );
+  }
+
+  Widget _buildTierBadge(String tierKey, bool isMobile) {
+    final badgeColor = _tierBadgeColor(tierKey);
+
+    return Container(
+      width: isMobile ? 18 : 20,
+      height: isMobile ? 18 : 20,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.38),
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: badgeColor.withValues(alpha: 0.9),
+          width: 1.4,
+        ),
+        boxShadow: [
+          BoxShadow(color: badgeColor.withValues(alpha: 0.35), blurRadius: 7),
+        ],
+      ),
+      child: Container(
+        width: isMobile ? 9 : 10,
+        height: isMobile ? 9 : 10,
+        decoration: BoxDecoration(
+          color: badgeColor,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(color: badgeColor.withValues(alpha: 0.6), blurRadius: 4),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _tierBadgeColor(String tierKey) {
+    switch (tierKey.toLowerCase()) {
+      case 'white':
+        return const Color(0xFFECECEC);
+      case 'blue':
+        return const Color(0xFF42A5F5);
+      case 'yellow':
+        return const Color(0xFFFFC107);
+      case 'red':
+        return const Color(0xFFF44336);
+      default:
+        return const Color(0xFF9E9E9E);
+    }
   }
 
   /// Contenu d'un slot vide avec icône et texte
